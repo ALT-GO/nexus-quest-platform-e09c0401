@@ -227,6 +227,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                               </Badge>
                             )}
                             {task.assignee_name && (
+                              <p className="text-xs text-muted-foreground">👤 {task.assignee_name}</p>
                             )}
                             {(() => {
                               const cl = Array.isArray(task.checklist) ? task.checklist : [];
