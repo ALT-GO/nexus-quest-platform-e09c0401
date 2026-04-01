@@ -299,6 +299,7 @@ export function UserManagementTab() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
+                <TableHead>E-mail</TableHead>
                 <TableHead>Nível</TableHead>
                 <TableHead className="text-right">Permissões</TableHead>
               </TableRow>
@@ -307,27 +308,30 @@ export function UserManagementTab() {
               {users.map((u) => (
                 <TableRow key={u.id}>
                   <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{u.email || "—"}</TableCell>
                   <TableCell>
                     <Badge variant={ROLE_COLORS[u.role] as any}>
                       {ROLE_LABELS[u.role] || u.role}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1.5"
-                      onClick={() => openPermEditor(u)}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                      Editar Acessos
-                    </Button>
+                    {isAdmin && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5"
+                        onClick={() => openPermEditor(u)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Editar Acessos
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
               {users.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
                     Nenhum usuário encontrado.
                   </TableCell>
                 </TableRow>
