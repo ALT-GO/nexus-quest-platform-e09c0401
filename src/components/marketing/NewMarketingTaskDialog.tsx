@@ -13,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCreateMarketingTask, MarketingStage } from "@/hooks/use-marketing";
+import { MarketingSprint } from "@/hooks/use-sprints";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -22,9 +23,10 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   stages: MarketingStage[];
   teamMembers: { id: string; name: string }[];
+  sprints?: MarketingSprint[];
 }
 
-export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers }: Props) {
+export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers, sprints }: Props) {
   const { user } = useAuth();
   const { data: profileData } = useQuery({
     queryKey: ["my-profile", user?.id],
@@ -46,12 +48,13 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
   const [dueDate, setDueDate] = useState<Date | undefined>();
   const [isRecurring, setIsRecurring] = useState(false);
   const [recurrenceRule, setRecurrenceRule] = useState("weekly");
+  const [sprintId, setSprintId] = useState("");
+  const [storyPoints, setStoryPoints] = useState<number | undefined>();
 
   const handleSubmit = () => {
     if (!title.trim()) return;
     const assignee = teamMembers.find(m => m.id === assigneeId);
 
-    // Calculate next_recurrence_date based on rule
     let nextRecurrenceDate: string | null = null;
     if (isRecurring) {
       const base = dueDate || startDate || new Date();
@@ -78,11 +81,14 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
       is_recurring: isRecurring,
       recurrence_rule: isRecurring ? recurrenceRule : null,
       next_recurrence_date: nextRecurrenceDate,
+      sprint_id: sprintId && sprintId !== "none" ? sprintId : null,
+      story_points: storyPoints ?? null,
     } as any, {
       onSuccess: () => {
         setTitle(""); setDescription(""); setStageId(""); setPriority("medium"); setProgress("Não iniciado"); setAssigneeId("");
         setStartDate(undefined); setDueDate(undefined);
         setIsRecurring(false); setRecurrenceRule("weekly");
+        setSprintId(""); setStoryPoints(undefined);
         onOpenChange(false);
       }
     });
@@ -179,6 +185,31 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
                   <Calendar mode="single" selected={dueDate} onSelect={setDueDate} locale={ptBR} initialFocus className="p-3 pointer-events-auto" />
                 </PopoverContent>
               </Popover>
+            </div>
+          </div>
+          {/* Sprint & Story Points */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Sprint</Label>
+              <Select value={sprintId} onValueChange={setSprintId}>
+                <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhuma</SelectItem>
+                  {(sprints || []).filter(s => s.status !== "completed").map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Story Points</Label>
+              <Input
+                type="number"
+                min={0}
+                value={storyPoints ?? ""}
+                onChange={(e) => setStoryPoints(e.target.value ? parseInt(e.target.value) : undefined)}
+                placeholder="0"
+              />
             </div>
           </div>
           {/* Recurrence */}

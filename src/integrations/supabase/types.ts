@@ -284,6 +284,39 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_sprints: {
+        Row: {
+          created_at: string
+          end_date: string
+          id: string
+          name: string
+          sprint_points_goal: number
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          end_date: string
+          id?: string
+          name: string
+          sprint_points_goal?: number
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          end_date?: string
+          id?: string
+          name?: string
+          sprint_points_goal?: number
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketing_stages: {
         Row: {
           created_at: string
@@ -452,8 +485,10 @@ export type Database = {
           recurrence_rule: string | null
           requester_id: string | null
           requester_name: string
+          sprint_id: string | null
           stage_id: string | null
           start_date: string | null
+          story_points: number | null
           time_estimate_minutes: number | null
           title: string
           updated_at: string
@@ -474,8 +509,10 @@ export type Database = {
           recurrence_rule?: string | null
           requester_id?: string | null
           requester_name?: string
+          sprint_id?: string | null
           stage_id?: string | null
           start_date?: string | null
+          story_points?: number | null
           time_estimate_minutes?: number | null
           title: string
           updated_at?: string
@@ -496,13 +533,22 @@ export type Database = {
           recurrence_rule?: string | null
           requester_id?: string | null
           requester_name?: string
+          sprint_id?: string | null
           stage_id?: string | null
           start_date?: string | null
+          story_points?: number | null
           time_estimate_minutes?: number | null
           title?: string
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "marketing_tasks_sprint_id_fkey"
+            columns: ["sprint_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_sprints"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "marketing_tasks_stage_id_fkey"
             columns: ["stage_id"]
