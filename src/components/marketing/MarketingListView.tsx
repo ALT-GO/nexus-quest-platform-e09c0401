@@ -276,9 +276,10 @@ export function MarketingListView({
                       </div>
                     ) : (
                       <span
-                        className="cursor-pointer hover:underline text-sm font-medium"
+                        className={`cursor-pointer hover:underline text-sm flex items-center gap-1.5 ${task.is_milestone ? "font-bold" : "font-medium"}`}
                         onClick={() => startEdit(task.id, "title", task.title)}
                       >
+                        {task.is_milestone && <Diamond className="h-3.5 w-3.5 text-amber-500 shrink-0 fill-amber-500" />}
                         {task.title}
                       </span>
                     )}

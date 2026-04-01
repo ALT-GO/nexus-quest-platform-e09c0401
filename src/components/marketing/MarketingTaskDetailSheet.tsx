@@ -515,6 +515,24 @@ export function MarketingTaskDetailSheet({
               </div>
             </div>
 
+            {/* Milestone Toggle */}
+            <div className="flex items-center justify-between rounded-lg border p-3 bg-amber-50/50 dark:bg-amber-950/10">
+              <div className="flex items-center gap-2">
+                <Diamond className="h-4 w-4 text-amber-500 fill-amber-500" />
+                <div>
+                  <Label className="text-sm font-medium">Milestone</Label>
+                  <p className="text-[11px] text-muted-foreground">Marcar como entrega crítica</p>
+                </div>
+              </div>
+              <Switch
+                checked={task.is_milestone ?? false}
+                onCheckedChange={(checked) => {
+                  updateTask.mutate({ id: task.id, is_milestone: checked } as any);
+                  logHistory("Milestone", checked ? "Marcada como milestone" : "Desmarcada como milestone");
+                }}
+              />
+            </div>
+
             {/* Story Points */}
             <div>
               <Label className="text-xs text-muted-foreground">Story Points</Label>

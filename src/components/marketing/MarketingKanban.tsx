@@ -183,14 +183,15 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                         <Card
                           ref={dragProvided.innerRef}
                           {...dragProvided.draggableProps}
-                          className={`transition-shadow ${dragSnapshot.isDragging ? "shadow-lg ring-2 ring-primary/30" : "hover:shadow-md"}`}
+                          className={`transition-shadow ${dragSnapshot.isDragging ? "shadow-lg ring-2 ring-primary/30" : "hover:shadow-md"} ${task.is_milestone ? "border-l-4 border-l-amber-500 bg-amber-50/30 dark:bg-amber-950/10" : ""}`}
                         >
                           <CardContent className="p-3 space-y-2">
                             <div className="flex items-start justify-between gap-2">
                               <div {...dragProvided.dragHandleProps} className="mt-0.5 cursor-grab active:cursor-grabbing">
                                 <GripVertical className="h-4 w-4 text-muted-foreground" />
                               </div>
-                              <p className="text-sm font-medium flex-1 cursor-pointer hover:text-primary" onClick={() => onTaskClick?.(task)}>
+                              <p className={`text-sm flex-1 cursor-pointer hover:text-primary flex items-center gap-1.5 ${task.is_milestone ? "font-bold" : "font-medium"}`} onClick={() => onTaskClick?.(task)}>
+                                {task.is_milestone && <Diamond className="h-3.5 w-3.5 text-amber-500 shrink-0 fill-amber-500" />}
                                 {task.title}
                               </p>
                               <MarketingTimerButton taskId={task.id} size="card" />
