@@ -247,9 +247,21 @@ export async function createTicket(data: {
     return { success: false };
   }
 
+  const ticketNumber = (result as any)?.ticket_number;
+  const ticketTitle = data.title || data.category;
+
+  // Notify all TI team members about the new ticket
+  const { notifyTITeam } = await import("@/lib/notifications");
+  notifyTITeam({
+    title: "Novo Chamado Aberto",
+    message: `${ticketNumber} — ${ticketTitle} (${data.category}) aberto por ${data.requester}.`,
+    type: "info",
+    link: "/ti/service-desk",
+  });
+
   return {
     success: true,
-    ticketNumber: (result as any)?.ticket_number,
+    ticketNumber,
     ticketId: (result as any)?.id,
   };
 }
