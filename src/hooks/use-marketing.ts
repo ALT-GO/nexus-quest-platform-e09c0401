@@ -36,6 +36,7 @@ export interface MarketingTask {
   is_recurring: boolean;
   recurrence_rule: string | null;
   next_recurrence_date: string | null;
+  time_estimate_minutes: number | null;
 }
 
 export function useMarketingStages() {
