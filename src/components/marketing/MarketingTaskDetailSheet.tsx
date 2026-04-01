@@ -29,7 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, Check, X, Plus, Trash2, CalendarIcon, MessageSquare, History, Send } from "lucide-react";
+import { AlertTriangle, Check, X, Plus, Trash2, CalendarIcon, MessageSquare, History, Send, Repeat } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { ptBR } from "date-fns/locale";
 import {
