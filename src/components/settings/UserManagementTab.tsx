@@ -294,6 +294,7 @@ export function UserManagementTab() {
               </div>
             </DialogContent>
           </Dialog>
+          )}
         </CardHeader>
         <CardContent>
           <Table>
