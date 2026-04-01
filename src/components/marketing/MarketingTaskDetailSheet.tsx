@@ -174,10 +174,6 @@ export function MarketingTaskDetailSheet({
   const isPendingApproval = currentStage?.meta_status === "pending_approval";
   const canApprove = isPendingApproval && isAdmin;
 
-  const checklist: ChecklistItem[] = Array.isArray(task.checklist) ? task.checklist : [];
-  const completedCount = checklist.filter((i) => i.completed).length;
-  const checklistProgress = checklist.length > 0 ? (completedCount / checklist.length) * 100 : 0;
-
   const authorName = profile?.full_name || "Usuário";
 
   const logHistory = (action: string, details: string) => {
@@ -187,31 +183,6 @@ export function MarketingTaskDetailSheet({
       action,
       details,
     });
-  };
-
-  const saveChecklist = (items: ChecklistItem[]) => {
-    updateTask.mutate({ id: task.id, checklist: items } as any);
-  };
-
-  const addChecklistItem = () => {
-    if (!newChecklistItem.trim()) return;
-    const item: ChecklistItem = {
-      id: crypto.randomUUID(),
-      text: newChecklistItem.trim(),
-      completed: false,
-    };
-    saveChecklist([...checklist, item]);
-    setNewChecklistItem("");
-  };
-
-  const toggleChecklistItem = (itemId: string) => {
-    saveChecklist(
-      checklist.map((i) => (i.id === itemId ? { ...i, completed: !i.completed } : i))
-    );
-  };
-
-  const removeChecklistItem = (itemId: string) => {
-    saveChecklist(checklist.filter((i) => i.id !== itemId));
   };
 
   const handleStageChange = (val: string) => {
