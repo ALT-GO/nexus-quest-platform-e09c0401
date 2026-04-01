@@ -515,7 +515,22 @@ export function MarketingTaskDetailSheet({
               </div>
             </div>
 
-            {/* Tags */}
+            {/* Story Points */}
+            <div>
+              <Label className="text-xs text-muted-foreground">Story Points</Label>
+              <Input
+                type="number"
+                min={0}
+                value={(task as any).story_points || ""}
+                onChange={(e) => {
+                  const val = parseInt(e.target.value) || null;
+                  updateTask.mutate({ id: task.id, story_points: val } as any);
+                }}
+                placeholder="0"
+                className="h-8 w-24 mt-1 text-sm"
+              />
+            </div>
+
             <div>
               <Label className="text-xs text-muted-foreground">Tags</Label>
               <div className="mt-1">
