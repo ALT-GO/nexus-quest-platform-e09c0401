@@ -24,6 +24,9 @@ import { MarketingTimerButton } from "./MarketingTimerButton";
 import { notifyAdminsForApproval } from "@/lib/marketing-notifications";
 import { useAuth } from "@/hooks/use-auth";
 import { useAllTaskTags, MarketingTag } from "@/hooks/use-marketing-tags";
+import { useTaskDependencies, isTaskBlocked } from "@/hooks/use-dependencies";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { toast } from "sonner";
 
 interface Props {
   stages: MarketingStage[];
