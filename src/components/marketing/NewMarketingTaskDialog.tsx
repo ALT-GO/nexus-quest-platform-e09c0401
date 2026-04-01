@@ -187,6 +187,31 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
               </Popover>
             </div>
           </div>
+          {/* Sprint & Story Points */}
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Sprint</Label>
+              <Select value={sprintId} onValueChange={setSprintId}>
+                <SelectTrigger><SelectValue placeholder="Nenhuma" /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">Nenhuma</SelectItem>
+                  {(sprints || []).filter(s => s.status !== "completed").map(s => (
+                    <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label>Story Points</Label>
+              <Input
+                type="number"
+                min={0}
+                value={storyPoints ?? ""}
+                onChange={(e) => setStoryPoints(e.target.value ? parseInt(e.target.value) : undefined)}
+                placeholder="0"
+              />
+            </div>
+          </div>
           {/* Recurrence */}
           <div className="flex items-center justify-between rounded-lg border p-3">
             <div>
