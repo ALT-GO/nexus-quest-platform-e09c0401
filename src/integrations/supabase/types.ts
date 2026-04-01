@@ -683,6 +683,13 @@ export type Database = {
         Returns: Database["public"]["Enums"]["app_role"][]
       }
       get_ti_admin_user_ids: { Args: never; Returns: string[] }
+      get_user_emails: {
+        Args: never
+        Returns: {
+          email: string
+          user_id: string
+        }[]
+      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]

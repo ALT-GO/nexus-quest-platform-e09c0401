@@ -101,7 +101,8 @@ const PERMISSION_CATEGORIES: PermissionCategory[] = [
 ];
 
 export function UserManagementTab() {
-  const { isAdmin } = useAuth();
+  const { isAdmin, hasRole } = useAuth();
+  const canView = isAdmin || hasRole("ti");
   const [users, setUsers] = useState<UserWithRole[]>([]);
   const [invites, setInvites] = useState<Invite[]>([]);
   const [loading, setLoading] = useState(true);
@@ -123,6 +124,11 @@ export function UserManagementTab() {
     const { data: profiles } = await supabase.from("profiles").select("id, full_name, permissions");
     const { data: roles } = await supabase.from("user_roles").select("user_id, role");
 
+    // Fetch emails via SECURITY DEFINER function
+    const { data: emailRows } = await supabase.rpc("get_user_emails") as { data: { user_id: string; email: string }[] | null };
+    const emailMap = new Map<string, string>();
+    (emailRows || []).forEach((r) => emailMap.set(r.user_id, r.email));
+
     if (profiles && roles) {
       const roleMap = new Map<string, string>();
       roles.forEach((r) => roleMap.set(r.user_id, r.role));
@@ -130,7 +136,7 @@ export function UserManagementTab() {
       const userList: UserWithRole[] = profiles.map((p) => ({
         id: p.id,
         full_name: p.full_name,
-        email: "",
+        email: emailMap.get(p.id) || "",
         role: roleMap.get(p.id) || "colaborador",
         permissions: { ...DEFAULT_PERMISSIONS, ...((p as any).permissions as Record<string, boolean> || {}) },
       }));
@@ -150,8 +156,8 @@ export function UserManagementTab() {
   };
 
   useEffect(() => {
-    if (isAdmin) fetchData();
-  }, [isAdmin]);
+    if (canView) fetchData();
+  }, [canView]);
 
   const handleInvite = async () => {
     if (!inviteEmail) {
@@ -226,11 +232,11 @@ export function UserManagementTab() {
 
   const pendingInvites = invites.filter((i) => !i.accepted_at);
 
-  if (!isAdmin) {
+  if (!canView) {
     return (
       <Card>
         <CardContent className="py-12 text-center text-muted-foreground">
-          Apenas administradores podem gerenciar usuários.
+          Apenas administradores e técnicos de TI podem visualizar a equipe.
         </CardContent>
       </Card>
     );
@@ -245,13 +251,14 @@ export function UserManagementTab() {
             <Users className="h-5 w-5" />
             Usuários ({users.length})
           </CardTitle>
-          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-              <Button size="sm" className="gap-2">
-                <UserPlus className="h-4 w-4" />
-                Convidar Novo Usuário
-              </Button>
-            </DialogTrigger>
+          {isAdmin && (
+            <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="gap-2">
+                  <UserPlus className="h-4 w-4" />
+                  Convidar Novo Usuário
+                </Button>
+              </DialogTrigger>
             <DialogContent>
               <DialogHeader>
                 <DialogTitle>Convidar Novo Usuário</DialogTitle>
@@ -287,12 +294,14 @@ export function UserManagementTab() {
               </div>
             </DialogContent>
           </Dialog>
+          )}
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
+                <TableHead>E-mail</TableHead>
                 <TableHead>Nível</TableHead>
                 <TableHead className="text-right">Permissões</TableHead>
               </TableRow>
@@ -301,27 +310,30 @@ export function UserManagementTab() {
               {users.map((u) => (
                 <TableRow key={u.id}>
                   <TableCell className="font-medium">{u.full_name || "—"}</TableCell>
+                  <TableCell className="text-muted-foreground">{u.email || "—"}</TableCell>
                   <TableCell>
                     <Badge variant={ROLE_COLORS[u.role] as any}>
                       {ROLE_LABELS[u.role] || u.role}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      className="gap-1.5"
-                      onClick={() => openPermEditor(u)}
-                    >
-                      <Pencil className="h-3.5 w-3.5" />
-                      Editar Acessos
-                    </Button>
+                    {isAdmin && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="gap-1.5"
+                        onClick={() => openPermEditor(u)}
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                        Editar Acessos
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))}
               {users.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={3} className="text-center text-muted-foreground">
+                  <TableCell colSpan={4} className="text-center text-muted-foreground">
                     Nenhum usuário encontrado.
                   </TableCell>
                 </TableRow>
