@@ -19,6 +19,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { MarketingTimerButton } from "./MarketingTimerButton";
+import { notifyAdminsForApproval } from "@/lib/marketing-notifications";
+import { useAuth } from "@/hooks/use-auth";
 
 interface Props {
   stages: MarketingStage[];
@@ -49,6 +51,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick }: Props) {
   const updateTask = useUpdateMarketingTask();
   const deleteTask = useDeleteMarketingTask();
   const qc = useQueryClient();
+  const { user } = useAuth();
 
   const tasksByStage = useMemo(() => {
     const map: Record<string, MarketingTask[]> = {};
@@ -110,8 +113,20 @@ export function MarketingKanban({ stages, tasks, onTaskClick }: Props) {
         )
       );
       qc.invalidateQueries({ queryKey: ["marketing_tasks"] });
+
+      // Check if moved to a pending_approval stage and notify admins
+      if (sourceStageId !== destStageId) {
+        const destStage = stages.find((s) => s.id === destStageId);
+        if (destStage?.meta_status === "pending_approval") {
+          notifyAdminsForApproval({
+            taskTitle: movedTask.title,
+            taskId: movedTask.id,
+            excludeUserId: user?.id,
+          });
+        }
+      }
     },
-    [tasksByStage, tasks, qc]
+    [tasksByStage, tasks, qc, stages, user]
   );
 
   return (
