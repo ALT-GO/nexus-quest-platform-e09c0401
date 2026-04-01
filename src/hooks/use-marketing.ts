@@ -41,6 +41,7 @@ export interface MarketingTask {
   sprint_id: string | null;
   story_points: number | null;
   is_milestone: boolean;
+  task_type_id: string | null;
 }
 
 export function useMarketingStages() {

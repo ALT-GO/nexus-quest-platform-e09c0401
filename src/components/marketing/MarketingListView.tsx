@@ -22,6 +22,8 @@ import { format, isBefore, isToday, startOfDay } from "date-fns";
 import { MarketingTask, MarketingStage, useUpdateMarketingTask } from "@/hooks/use-marketing";
 import { useTaskDependencies, isTaskBlocked } from "@/hooks/use-dependencies";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { useMarketingTaskTypes } from "@/hooks/use-task-types";
+import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
 
 type SortKey = "title" | "stage" | "priority" | "progress" | "assignee_name" | "due_date";
 type SortDir = "asc" | "desc";
@@ -65,6 +67,7 @@ export function MarketingListView({
 }: Props) {
   const updateTask = useUpdateMarketingTask();
   const { data: allDeps } = useTaskDependencies();
+  const { data: taskTypes } = useMarketingTaskTypes();
   const [sortKey, setSortKey] = useState<SortKey>("due_date");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
@@ -283,6 +286,10 @@ export function MarketingListView({
                         className={`cursor-pointer hover:underline text-sm flex items-center gap-1.5 ${task.is_milestone ? "font-bold" : "font-medium"}`}
                         onClick={() => startEdit(task.id, "title", task.title)}
                       >
+                        {(() => {
+                          const tt = task.task_type_id && taskTypes ? taskTypes.find(t => t.id === task.task_type_id) : null;
+                          return tt ? <DynamicLucideIcon name={tt.icon} className="h-3.5 w-3.5 shrink-0" style={{ color: `hsl(${tt.color})` }} /> : null;
+                        })()}
                         {task.is_milestone && <Diamond className="h-3.5 w-3.5 text-amber-500 shrink-0 fill-amber-500" />}
                         {task.title}
                       </span>

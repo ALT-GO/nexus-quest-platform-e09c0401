@@ -15,6 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMarketingStages, useMarketingTasks, MarketingTask } from "@/hooks/use-marketing";
 import { useMarketingTags } from "@/hooks/use-marketing-tags";
 import { useMarketingSprints } from "@/hooks/use-sprints";
+import { useMarketingTaskTypes } from "@/hooks/use-task-types";
+import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
 import { MarketingKanban } from "@/components/marketing/MarketingKanban";
 import { MarketingListView } from "@/components/marketing/MarketingListView";
 import { NewMarketingTaskDialog } from "@/components/marketing/NewMarketingTaskDialog";
@@ -30,6 +32,7 @@ export default function Solicitacoes() {
   const { data: tasks, isLoading: tasksLoading } = useMarketingTasks();
   const { data: tags } = useMarketingTags();
   const { data: sprints } = useMarketingSprints();
+  const { data: taskTypes } = useMarketingTaskTypes();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<MarketingTask | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
@@ -47,6 +50,7 @@ export default function Solicitacoes() {
   const [filterProgress, setFilterProgress] = useState("all");
   const [filterStage, setFilterStage] = useState("all");
   const [filterMilestoneOnly, setFilterMilestoneOnly] = useState(false);
+  const [filterTaskType, setFilterTaskType] = useState("all");
   useEffect(() => {
     supabase.from("profiles").select("id, full_name").then(({ data }) => {
       if (data) setTeamMembers(data.map(p => ({ id: p.id, name: p.full_name })));
@@ -79,7 +83,7 @@ export default function Solicitacoes() {
     );
   };
 
-  const hasActiveFilters = searchQuery || filterPriority !== "all" || filterAssignee !== "all" || filterProgress !== "all" || filterTagIds.length > 0 || filterMilestoneOnly;
+  const hasActiveFilters = searchQuery || filterPriority !== "all" || filterAssignee !== "all" || filterProgress !== "all" || filterTagIds.length > 0 || filterMilestoneOnly || filterTaskType !== "all";
 
   const clearAllFilters = () => {
     setSearchQuery("");
@@ -89,6 +93,7 @@ export default function Solicitacoes() {
     setFilterStage("all");
     setFilterTagIds([]);
     setFilterMilestoneOnly(false);
+    setFilterTaskType("all");
   };
 
   // Filter by sprint first, then by other filters
@@ -118,8 +123,11 @@ export default function Solicitacoes() {
     if (filterMilestoneOnly) {
       result = result.filter((t) => t.is_milestone);
     }
+    if (filterTaskType !== "all") {
+      result = result.filter((t) => t.task_type_id === filterTaskType);
+    }
     return result;
-  }, [tasks, selectedSprintId, searchQuery, filterPriority, filterAssignee, filterProgress, filterMilestoneOnly]);
+  }, [tasks, selectedSprintId, searchQuery, filterPriority, filterAssignee, filterProgress, filterMilestoneOnly, filterTaskType]);
 
   const activeSprint = sprints?.find((s) => s.id === selectedSprintId) || null;
   const loading = stagesLoading || tasksLoading;
@@ -215,6 +223,24 @@ export default function Solicitacoes() {
             <SelectItem value="Concluído">Concluído</SelectItem>
           </SelectContent>
         </Select>
+        {taskTypes && taskTypes.length > 0 && (
+          <Select value={filterTaskType} onValueChange={setFilterTaskType}>
+            <SelectTrigger className="w-36 h-8 text-xs">
+              <SelectValue placeholder="Tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Tipos</SelectItem>
+              {taskTypes.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  <div className="flex items-center gap-1.5">
+                    <DynamicLucideIcon name={t.icon} className="h-3 w-3" style={{ color: `hsl(${t.color})` }} />
+                    {t.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Button
           variant={filterMilestoneOnly ? "default" : "outline"}
           size="sm"

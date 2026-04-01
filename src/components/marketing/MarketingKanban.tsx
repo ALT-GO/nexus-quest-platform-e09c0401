@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { GripVertical, Trash2, CheckSquare, CalendarIcon, Timer, Diamond, Lock } from "lucide-react";
+import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
+import { useMarketingTaskTypes } from "@/hooks/use-task-types";
 import { fetchMarketingTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
 import { format, isToday, isBefore, startOfDay } from "date-fns";
 import {
@@ -62,6 +64,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
   const { data: allTaskTags } = useAllTaskTags();
   const [timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
   const { data: allDeps } = useTaskDependencies();
+  const { data: taskTypes } = useMarketingTaskTypes();
 
   // Build progress map for blocked checks
   const progressMap = useMemo(() => {
@@ -217,6 +220,10 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                 <GripVertical className="h-4 w-4 text-muted-foreground" />
                               </div>
                               <p className={`text-sm flex-1 cursor-pointer hover:text-primary flex items-center gap-1.5 ${task.is_milestone ? "font-bold" : "font-medium"}`} onClick={() => onTaskClick?.(task)}>
+                                {(() => {
+                                  const tt = task.task_type_id && taskTypes ? taskTypes.find(t => t.id === task.task_type_id) : null;
+                                  return tt ? <DynamicLucideIcon name={tt.icon} className="h-3.5 w-3.5 shrink-0" style={{ color: `hsl(${tt.color})` }} /> : null;
+                                })()}
                                 {task.is_milestone && <Diamond className="h-3.5 w-3.5 text-amber-500 shrink-0 fill-amber-500" />}
                                 {blocked && (
                                   <TooltipProvider>

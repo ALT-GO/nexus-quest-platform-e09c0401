@@ -57,6 +57,8 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTaskDependencies, isTaskBlocked } from "@/hooks/use-dependencies";
 import { useMarketingTasks } from "@/hooks/use-marketing";
 import { DependencySection } from "./DependencySection";
+import { useMarketingTaskTypes } from "@/hooks/use-task-types";
+import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
 
 interface Props {
   task: MarketingTask | null;
@@ -164,6 +166,7 @@ export function MarketingTaskDetailSheet({
   const addHistory = useAddMarketingHistory();
   const { data: allDeps } = useTaskDependencies();
   const { data: allTasks } = useMarketingTasks();
+  const { data: taskTypes } = useMarketingTaskTypes();
 
   if (!task) return null;
 
@@ -378,6 +381,35 @@ export function MarketingTaskDetailSheet({
           )}
 
           <div className="mt-6 space-y-5">
+            {/* Task Type */}
+            {taskTypes && taskTypes.length > 0 && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Tipo de Tarefa</Label>
+                <Select
+                  value={task.task_type_id || ""}
+                  onValueChange={(val) => {
+                    updateTask.mutate({ id: task.id, task_type_id: val || null } as any);
+                    const typeName = taskTypes.find(t => t.id === val)?.name || "—";
+                    logHistory("Tipo alterado", `Tipo → ${typeName}`);
+                  }}
+                >
+                  <SelectTrigger className="mt-1">
+                    <SelectValue placeholder="Selecione o tipo" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {taskTypes.map((t) => (
+                      <SelectItem key={t.id} value={t.id}>
+                        <div className="flex items-center gap-2">
+                          <DynamicLucideIcon name={t.icon} className="h-3.5 w-3.5" style={{ color: `hsl(${t.color})` }} />
+                          {t.name}
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
             {/* Timer */}
             <div>
               <Label className="text-xs text-muted-foreground">Timer</Label>
