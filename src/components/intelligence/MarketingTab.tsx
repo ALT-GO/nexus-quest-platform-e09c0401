@@ -59,7 +59,11 @@ const tooltipStyle = {
   borderRadius: "8px",
 };
 
-export function MarketingTab() {
+interface MarketingTabProps {
+  dateRange: { start: Date; end: Date };
+}
+
+export function MarketingTab({ dateRange }: MarketingTabProps) {
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [proposals, setProposals] = useState<Proposal[]>(initialProposals);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
@@ -71,12 +75,15 @@ export function MarketingTab() {
   const { tickets: allTickets } = useTickets();
   const [timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
 
-  // Filter marketing-related tickets (by department or category)
+  // Filter marketing-related tickets by department/category AND date range
   const marketingTickets = useMemo(() => {
-    return allTickets.filter(
-      (t) => t.department?.toLowerCase().includes("marketing") || t.category?.toLowerCase().includes("marketing")
-    );
-  }, [allTickets]);
+    return allTickets.filter((t) => {
+      const isMarketing = t.department?.toLowerCase().includes("marketing") || t.category?.toLowerCase().includes("marketing");
+      if (!isMarketing) return false;
+      const created = new Date(t.created_at);
+      return created >= dateRange.start && created <= dateRange.end;
+    });
+  }, [allTickets, dateRange]);
 
   useEffect(() => {
     const ids = marketingTickets.map((t) => t.id);
