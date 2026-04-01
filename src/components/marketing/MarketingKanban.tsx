@@ -178,6 +178,19 @@ export function MarketingKanban({ stages, tasks, onTaskClick }: Props) {
                             {task.assignee_name && (
                               <p className="text-xs text-muted-foreground">👤 {task.assignee_name}</p>
                             )}
+                            {(() => {
+                              const cl = Array.isArray(task.checklist) ? task.checklist : [];
+                              if (cl.length === 0) return null;
+                              const done = cl.filter((i: any) => i.completed).length;
+                              return (
+                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
+                                  <CheckSquare className="h-3 w-3" />
+                                  <span className={done === cl.length ? "text-green-600 dark:text-green-400 font-medium" : ""}>
+                                    {done}/{cl.length}
+                                  </span>
+                                </div>
+                              );
+                            })()}
                           </CardContent>
                         </Card>
                       )}
