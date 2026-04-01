@@ -3,7 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { GripVertical, Trash2, CheckSquare, CalendarIcon } from "lucide-react";
+import { GripVertical, Trash2, CheckSquare, CalendarIcon, Timer } from "lucide-react";
+import { fetchMarketingTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
 import { format, isToday, isBefore, startOfDay } from "date-fns";
 import {
   MarketingStage,
