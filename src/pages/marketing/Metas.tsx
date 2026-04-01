@@ -30,7 +30,7 @@ import {
 import { useMarketingTasks } from "@/hooks/use-marketing";
 import { GoalDialog } from "@/components/marketing/GoalDialog";
 import { GoalDetailSheet } from "@/components/marketing/GoalDetailSheet";
-import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+
 import {
   AlertDialog,
   AlertDialogAction,
