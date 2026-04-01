@@ -1,7 +1,8 @@
 import { useState, useEffect, useMemo } from "react";
 import { ActiveTimersCard } from "@/components/dashboard/ActiveTimersCard";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
+import { fetchTimesheetTotals, fetchMarketingTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
+import { useMarketingTasks, MarketingTask } from "@/hooks/use-marketing";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
