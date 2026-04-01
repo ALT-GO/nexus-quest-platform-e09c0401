@@ -3,8 +3,6 @@ import { DevolutionChecklistDialog } from "@/components/servicedesk/DevolutionCh
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
 } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -16,9 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Badge } from "@/components/ui/badge";
 import { SlaIndicator } from "@/components/sla/SlaIndicator";
@@ -33,7 +29,6 @@ import { SlaInfo } from "@/hooks/use-sla";
 import { Ticket, ChecklistItem } from "@/hooks/use-tickets";
 import {
   CheckCircle2,
-  X,
   Send,
   Clock,
   User,
@@ -51,47 +46,34 @@ import {
   CheckSquare,
   Circle,
   Trash2,
-  Pencil,
   FileText,
+  Target,
+  Flag,
+  Eye,
+  EyeOff,
+  Hash,
+  Mail,
+  Building,
+  Pencil,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
 
+/* ─── Checklist Section (unchanged logic) ─── */
 function ChecklistSection({
-  items,
-  checkedCount,
-  progressPercent,
-  isCompleted,
-  onToggle,
-  onDelete,
-  onEdit,
-  onAdd,
+  items, checkedCount, progressPercent, isCompleted,
+  onToggle, onDelete, onEdit, onAdd,
 }: {
-  items: ChecklistItem[];
-  checkedCount: number;
-  progressPercent: number;
-  isCompleted: boolean;
-  onToggle: (idx: number) => void;
-  onDelete: (idx: number) => void;
-  onEdit: (idx: number, text: string) => void;
-  onAdd: (text: string) => void;
+  items: ChecklistItem[]; checkedCount: number; progressPercent: number; isCompleted: boolean;
+  onToggle: (idx: number) => void; onDelete: (idx: number) => void;
+  onEdit: (idx: number, text: string) => void; onAdd: (text: string) => void;
 }) {
   const [editingIdx, setEditingIdx] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
-
-  const startEdit = (idx: number, text: string) => {
-    setEditingIdx(idx);
-    setEditText(text);
-  };
-
-  const commitEdit = () => {
-    if (editingIdx !== null) {
-      onEdit(editingIdx, editText);
-      setEditingIdx(null);
-    }
-  };
+  const startEdit = (idx: number, text: string) => { setEditingIdx(idx); setEditText(text); };
+  const commitEdit = () => { if (editingIdx !== null) { onEdit(editingIdx, editText); setEditingIdx(null); } };
 
   return (
     <div className="space-y-2">
@@ -103,51 +85,26 @@ function ChecklistSection({
       </div>
       {items.length > 0 && (
         <div className="h-1.5 w-full rounded-full bg-muted overflow-hidden">
-          <div
-            className="h-full rounded-full bg-primary transition-all duration-300"
-            style={{ width: `${progressPercent}%` }}
-          />
+          <div className="h-full rounded-full bg-primary transition-all duration-300" style={{ width: `${progressPercent}%` }} />
         </div>
       )}
       <div className="space-y-0.5">
         {items.map((item, idx) => (
-          <div
-            key={idx}
-            className="group flex items-center gap-2.5 w-full px-1 py-1.5 text-sm hover:bg-muted/50 rounded transition-colors"
-          >
+          <div key={idx} className="group flex items-center gap-2.5 w-full px-1 py-1.5 text-sm hover:bg-muted/50 rounded transition-colors">
             <button onClick={() => onToggle(idx)} className="flex-shrink-0">
-              {item.checked ? (
-                <CheckSquare className="h-4 w-4 text-primary" />
-              ) : (
-                <Square className="h-4 w-4 text-muted-foreground/50" />
-              )}
+              {item.checked ? <CheckSquare className="h-4 w-4 text-primary" /> : <Square className="h-4 w-4 text-muted-foreground/50" />}
             </button>
             {editingIdx === idx ? (
-              <input
-                type="text"
-                value={editText}
-                onChange={(e) => setEditText(e.target.value)}
-                onBlur={commitEdit}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") commitEdit();
-                  if (e.key === "Escape") setEditingIdx(null);
-                }}
-                autoFocus
-                className="flex-1 bg-transparent text-sm outline-none border-b border-primary"
-              />
+              <input type="text" value={editText} onChange={(e) => setEditText(e.target.value)} onBlur={commitEdit}
+                onKeyDown={(e) => { if (e.key === "Enter") commitEdit(); if (e.key === "Escape") setEditingIdx(null); }}
+                autoFocus className="flex-1 bg-transparent text-sm outline-none border-b border-primary" />
             ) : (
-              <span
-                className={cn("flex-1 cursor-default", item.checked && "line-through text-muted-foreground")}
-                onDoubleClick={() => !isCompleted && startEdit(idx, item.text)}
-              >
-                {item.text}
-              </span>
+              <span className={cn("flex-1 cursor-default", item.checked && "line-through text-muted-foreground")}
+                onDoubleClick={() => !isCompleted && startEdit(idx, item.text)}>{item.text}</span>
             )}
             {!isCompleted && editingIdx !== idx && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onDelete(idx); }}
-                className="opacity-0 group-hover:opacity-100 flex-shrink-0 text-muted-foreground hover:text-destructive transition-all"
-              >
+              <button onClick={(e) => { e.stopPropagation(); onDelete(idx); }}
+                className="opacity-0 group-hover:opacity-100 flex-shrink-0 text-muted-foreground hover:text-destructive transition-all">
                 <Trash2 className="h-3.5 w-3.5" />
               </button>
             )}
@@ -156,39 +113,42 @@ function ChecklistSection({
         {!isCompleted && (
           <div className="flex items-center gap-2.5 px-1 py-1.5">
             <Circle className="h-4 w-4 text-muted-foreground/30 flex-shrink-0" />
-            <input
-              type="text"
-              placeholder="Adicionar um item"
+            <input type="text" placeholder="Adicionar um item"
               className="flex-1 bg-transparent text-sm text-muted-foreground outline-none placeholder:text-muted-foreground/50"
               onKeyDown={(e) => {
                 if (e.key === "Enter" && (e.target as HTMLInputElement).value.trim()) {
                   onAdd((e.target as HTMLInputElement).value.trim());
                   (e.target as HTMLInputElement).value = "";
                 }
-              }}
-            />
+              }} />
           </div>
         )}
       </div>
     </div>
   );
 }
+
 const categories = [
-  "Acesso e permissões",
-  "Problemas com Computador/Notebook",
-  "Problemas com Celular/Tablet",
-  "Rede e Internet",
-  "E-mail e Comunicação",
-  "Serviços de Impressão",
-  "Sistemas Corporativos",
-  "Solicitação de novo Computador/Notebook",
-  "Solicitação de novo Celular",
-  "Solicitação de Tablet",
-  "Solicitação de nova Linha",
-  "Gerais/Outros",
+  "Acesso e permissões", "Problemas com Computador/Notebook", "Problemas com Celular/Tablet",
+  "Rede e Internet", "E-mail e Comunicação", "Serviços de Impressão", "Sistemas Corporativos",
+  "Solicitação de novo Computador/Notebook", "Solicitação de novo Celular", "Solicitação de Tablet",
+  "Solicitação de nova Linha", "Gerais/Outros",
 ];
 
-// Will be fetched dynamically from profiles
+/* ─── Property Row ─── */
+function PropRow({ icon: Icon, label, children }: {
+  icon: React.ElementType; label: string; children: React.ReactNode;
+}) {
+  return (
+    <div className="flex items-center py-2 min-h-[36px]">
+      <div className="flex items-center gap-2 w-[160px] shrink-0">
+        <Icon className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground font-medium">{label}</span>
+      </div>
+      <div className="flex-1 min-w-0">{children}</div>
+    </div>
+  );
+}
 
 interface TicketDetailSheetProps {
   ticket: Ticket | null;
@@ -205,19 +165,15 @@ interface TicketDetailSheetProps {
   onUpdateTicket: (id: string, updates: Partial<Pick<Ticket, "title" | "description" | "assignee" | "priority" | "category">>) => Promise<boolean>;
 }
 
+const progressConfig = [
+  { value: "not_started", label: "NÃO INICIADO", color: "bg-muted-foreground", icon: Circle },
+  { value: "in_progress", label: "EM PROGRESSO", color: "bg-primary", icon: Loader2 },
+  { value: "completed", label: "CONCLUÍDA", color: "bg-success", icon: CheckCircle2 },
+];
+
 export function TicketDetailSheet({
-  ticket,
-  subtasks = [],
-  open,
-  onOpenChange,
-  statuses,
-  isFinalStatus,
-  getSlaInfo,
-  getAvailableForCategory,
-  getAsset,
-  onLinkAsset,
-  onStatusChange,
-  onUpdateTicket,
+  ticket, subtasks = [], open, onOpenChange, statuses, isFinalStatus,
+  getSlaInfo, getAvailableForCategory, getAsset, onLinkAsset, onStatusChange, onUpdateTicket,
 }: TicketDetailSheetProps) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDesc, setEditingDesc] = useState(false);
@@ -225,8 +181,9 @@ export function TicketDetailSheet({
   const [description, setDescription] = useState("");
   const [newComment, setNewComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
-  const [activeTab, setActiveTab] = useState<"comments" | "history">("comments");
   const [showDevolutionChecklist, setShowDevolutionChecklist] = useState(false);
+  const [hideEmpty, setHideEmpty] = useState(false);
+  const [activityTab, setActivityTab] = useState<"activity" | "comments">("activity");
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const [technicians, setTechnicians] = useState<string[]>([]);
 
@@ -234,15 +191,10 @@ export function TicketDetailSheet({
   const { history, loading: historyLoading, logHistory } = useTicketHistory(ticket?.id ?? null);
   const { running: timerRunning, totalSeconds, start: startTimer, pause: pauseTimer, stop: stopTimer } = useTimesheet(ticket?.id ?? null);
 
-  // Fetch real users from profiles
   useEffect(() => {
-    const fetchUsers = async () => {
-      const { data } = await supabase.from("profiles").select("full_name");
-      if (data) {
-        setTechnicians(data.map((p) => p.full_name).filter(Boolean).sort());
-      }
-    };
-    fetchUsers();
+    supabase.from("profiles").select("full_name").then(({ data }) => {
+      if (data) setTechnicians(data.map((p) => p.full_name).filter(Boolean).sort());
+    });
   }, []);
 
   useEffect(() => {
@@ -256,12 +208,9 @@ export function TicketDetailSheet({
   }, [ticket]);
 
   useEffect(() => {
-    if (commentsEndRef.current) {
-      commentsEndRef.current.scrollIntoView({ behavior: "smooth" });
-    }
+    if (commentsEndRef.current) commentsEndRef.current.scrollIntoView({ behavior: "smooth" });
   }, [comments]);
 
-  // Parse asset IDs from desligamento description
   const parseDesligamentoAssetIds = useCallback((): string[] => {
     if (!ticket || ticket.category !== "Desligamento") return [];
     const match = ticket.description.match(/\[ASSET_IDS_DEVOLUCAO:([^\]]+)\]/);
@@ -276,24 +225,18 @@ export function TicketDetailSheet({
   const currentStatus = statuses.find((s) => s.id === ticket.status_id);
   const linkedAsset = ticket.asset_id ? getAsset(ticket.asset_id) : undefined;
   const availableAssets = getAvailableForCategory(ticket.category);
+  const currentProgress = progressConfig.find(p => p.value === ticket.progress) || progressConfig[0];
 
-  // Handle play/pause toggle
   const handleTimerToggle = async () => {
     if (isCompleted) return;
-
     if (timerRunning) {
       await pauseTimer();
       await logHistory("timesheet", "Cronômetro pausado", "Admin");
     } else {
       await startTimer();
-      // Auto-set progress to "in_progress"
       if (ticket.progress === "not_started") {
-        await supabase
-          .from("tickets")
-          .update({ progress: "in_progress", updated_at: new Date().toISOString() } as any)
-          .eq("id", ticket.id as any);
+        await supabase.from("tickets").update({ progress: "in_progress", updated_at: new Date().toISOString() } as any).eq("id", ticket.id as any);
       }
-      // Auto-move to "In Progress" on first play if still in a "todo" status
       const currentSt = statuses.find((s) => s.id === ticket.status_id);
       if (currentSt?.statusType === "todo") {
         const inProgressStatus = statuses.find((s) => s.statusType === "in_progress" && s.ativo);
@@ -307,112 +250,50 @@ export function TicketDetailSheet({
   };
 
   const handleComplete = async () => {
-    // If already completed, toggle it off
     if (isCompleted) {
       const todoStatus = statuses.find((s) => s.statusType === "todo" && s.ativo);
       const ok = await onUpdateTicket(ticket.id, { completed_at: null, status_id: todoStatus?.id || "pending", progress: "not_started" } as any);
-      if (ok) {
-        toast.info(`${ticket.ticket_number}: marcado como não concluído`);
-      }
+      if (ok) toast.info(`${ticket.ticket_number}: marcado como não concluído`);
       return;
     }
-
-    // Stop timer automatically
     await stopTimer();
-
-    // Handle Desligamento asset release
     const assetIds = parseDesligamentoAssetIds();
     if (ticket.category === "Desligamento") {
-      // Release specific marked assets
       if (assetIds.length > 0) {
         for (const assetId of assetIds) {
-          // Check if it's a licença
-          const { data: assetRow } = await supabase
-            .from("inventory")
-            .select("category")
-            .eq("id", assetId as any)
-            .single();
-
+          const { data: assetRow } = await supabase.from("inventory").select("category").eq("id", assetId as any).single();
           if (assetRow && assetRow.category === "licencas") {
-            // Licenças: just change status to Desligado, keep collaborator
-            await supabase.from("inventory").update({
-              status: "Desligado",
-              updated_at: new Date().toISOString(),
-            } as any).eq("id", assetId as any);
+            await supabase.from("inventory").update({ status: "Desligado", updated_at: new Date().toISOString() } as any).eq("id", assetId as any);
           } else {
-            // Others: clear collaborator and set to Disponível
-            await supabase.from("inventory").update({
-              status: "Disponível",
-              collaborator: "",
-              reserved_by_ticket_id: null,
-              updated_at: new Date().toISOString(),
-            } as any).eq("id", assetId as any);
+            await supabase.from("inventory").update({ status: "Disponível", collaborator: "", reserved_by_ticket_id: null, updated_at: new Date().toISOString() } as any).eq("id", assetId as any);
           }
         }
-        await logHistory(
-          "asset_release",
-          `${assetIds.length} ativo(s) processado(s) no desligamento`,
-          "Admin"
-        );
+        await logHistory("asset_release", `${assetIds.length} ativo(s) processado(s) no desligamento`, "Admin");
         toast.success(`${assetIds.length} ativo(s) processado(s)`);
       }
-
-      // Also process all assets of the requester not in the explicit list
-      const { data: allRequesterAssets } = await supabase
-        .from("inventory")
-        .select("id, category")
-        .eq("collaborator", ticket.requester);
-
+      const { data: allRequesterAssets } = await supabase.from("inventory").select("id, category").eq("collaborator", ticket.requester);
       if (allRequesterAssets) {
         const explicitIds = new Set(assetIds);
         const remaining = allRequesterAssets.filter((a: any) => !explicitIds.has(a.id));
         for (const asset of remaining) {
           if (asset.category === "licencas") {
-            await supabase.from("inventory").update({
-              status: "Desligado",
-              updated_at: new Date().toISOString(),
-            } as any).eq("id", asset.id);
+            await supabase.from("inventory").update({ status: "Desligado", updated_at: new Date().toISOString() } as any).eq("id", asset.id);
           } else {
-            await supabase.from("inventory").update({
-              status: "Disponível",
-              collaborator: "",
-              reserved_by_ticket_id: null,
-              updated_at: new Date().toISOString(),
-            } as any).eq("id", asset.id);
+            await supabase.from("inventory").update({ status: "Disponível", collaborator: "", reserved_by_ticket_id: null, updated_at: new Date().toISOString() } as any).eq("id", asset.id);
           }
         }
-        if (remaining.length > 0) {
-          await logHistory(
-            "asset_release",
-            `${remaining.length} ativo(s) adicional(is) do colaborador processado(s)`,
-            "Admin"
-          );
-        }
+        if (remaining.length > 0) await logHistory("asset_release", `${remaining.length} ativo(s) adicional(is) do colaborador processado(s)`, "Admin");
       }
     }
-
-    // Handle Contratação: deliver subtask-linked assets
     if (ticket.category === "Contratação" && subtasks.length > 0) {
       let deliveredCount = 0;
       for (const sub of subtasks) {
         if (sub.asset_id) {
-          await supabase
-            .from("inventory")
-            .update({
-              status: "Em uso",
-              collaborator: ticket.requester,
-              delivered_at: new Date().toISOString(),
-              updated_at: new Date().toISOString(),
-            } as any)
-            .eq("id", sub.asset_id as any);
+          await supabase.from("inventory").update({ status: "Em uso", collaborator: ticket.requester, delivered_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any).eq("id", sub.asset_id as any);
           deliveredCount++;
         }
-        // Also complete the subtask (set completed_at, keep status)
         if (!sub.completed_at) {
-          await supabase
-            .from("tickets")
-            .update({ completed_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any)
-            .eq("id", sub.id as any);
+          await supabase.from("tickets").update({ completed_at: new Date().toISOString(), updated_at: new Date().toISOString() } as any).eq("id", sub.id as any);
         }
       }
       if (deliveredCount > 0) {
@@ -420,12 +301,9 @@ export function TicketDetailSheet({
         toast.success(`${deliveredCount} ativo(s) entregue(s) para ${ticket.requester}`);
       }
     }
-
-    // Mark as completed: set status to done + completed_at
     const finalStatus = statuses.find((s) => s.isFinal && s.id !== "cancelled");
     const doneStatusId = finalStatus?.id || "done";
     const ok = await onUpdateTicket(ticket.id, { completed_at: new Date().toISOString(), status_id: doneStatusId, progress: "completed" } as any);
-
     if (ok) {
       await logHistory("completed", "Chamado marcado como concluído", "Admin");
       await logHistory("timesheet", `Cronômetro finalizado. Tempo total: ${formatDuration(totalSeconds)}`, "Admin");
@@ -456,17 +334,9 @@ export function TicketDetailSheet({
     const previousValue = (ticket as any)[field];
     await onUpdateTicket(ticket.id, { [field]: value } as any);
     await logHistory("field_change", `${label} alterado para "${value}"`, "Admin");
-
-    // Send notification when assignee changes
     if (field === "assignee" && value && value !== previousValue) {
       const { sendNotification } = await import("@/lib/notifications");
-      sendNotification({
-        recipientName: value,
-        title: "Nova Tarefa Atribuída",
-        message: `Você foi atribuído ao chamado "${ticket.title}" (${ticket.ticket_number})`,
-        type: "task_assigned",
-        link: "/ti/servicedesk",
-      });
+      sendNotification({ recipientName: value, title: "Nova Tarefa Atribuída", message: `Você foi atribuído ao chamado "${ticket.title}" (${ticket.ticket_number})`, type: "task_assigned", link: "/ti/servicedesk" });
     }
   };
 
@@ -482,203 +352,178 @@ export function TicketDetailSheet({
     const success = await addComment("Admin", newComment.trim());
     if (success) {
       setNewComment("");
-      await logHistory("comment", `Comentário adicionado`, "Admin");
+      await logHistory("comment", "Comentário adicionado", "Admin");
     }
     setSubmitting(false);
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSendComment();
-    }
-  };
+  // Merged activity feed
+  const activityFeed = [
+    ...comments.map(c => ({
+      type: "comment" as const, id: c.id, author: c.author, avatar: c.avatar_url,
+      content: c.content, date: new Date(c.created_at),
+    })),
+    ...history.map(h => ({
+      type: "history" as const, id: h.id, author: h.author, avatar: null as string | null,
+      content: `${h.action}: ${h.details}`, date: new Date(h.created_at),
+    })),
+  ].sort((a, b) => b.date.getTime() - a.date.getTime());
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-[560px] p-0 flex flex-col">
-        {/* Header */}
-        <div className="flex items-center gap-3 border-b px-5 py-4">
-          <button
-            onClick={handleComplete}
-            className={cn(
-              "flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full border-2 transition-all",
-              isCompleted
-                ? "border-success bg-success text-success-foreground"
-                : "border-muted-foreground/40 text-muted-foreground hover:border-success hover:text-success"
-            )}
-          >
-            <CheckCircle2 className="h-5 w-5" />
-          </button>
-          <div className="flex-1 min-w-0">
-            <p className="text-xs font-mono text-muted-foreground">{ticket.ticket_number}</p>
-            {editingTitle ? (
-              <Input
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                onBlur={handleSaveTitle}
-                onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
-                autoFocus
-                className="mt-1 h-8 text-base font-semibold"
-              />
-            ) : (
-              <h2
-                className="text-base font-semibold truncate cursor-pointer hover:text-primary transition-colors"
-                onClick={() => !isCompleted && setEditingTitle(true)}
-              >
-                {ticket.title}
-              </h2>
-            )}
-          </div>
-
-          {/* Timer button */}
-          {!isCompleted && (
-            <button
-              onClick={handleTimerToggle}
-              className={cn(
-                "flex items-center gap-2 rounded-full px-3 py-1.5 text-sm font-medium transition-all",
-                timerRunning
-                  ? "bg-warning/15 text-warning border border-warning/30 hover:bg-warning/25"
-                  : "bg-success/15 text-success border border-success/30 hover:bg-success/25"
-              )}
-            >
-              {timerRunning ? (
-                <>
-                  <Pause className="h-4 w-4" />
-                  <span className={cn("font-mono tabular-nums", timerRunning && "animate-pulse")}>
-                    {formatDuration(totalSeconds)}
-                  </span>
-                </>
-              ) : (
-                <>
-                  <Play className="h-4 w-4" />
-                  <span className="font-mono tabular-nums">
-                    {totalSeconds > 0 ? formatDuration(totalSeconds) : "Iniciar"}
-                  </span>
-                </>
-              )}
-            </button>
-          )}
-
-          {isCompleted && totalSeconds > 0 && (
-            <div className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1.5 text-xs text-muted-foreground">
-              <Timer className="h-3.5 w-3.5" />
-              <span className="font-mono">{formatDuration(totalSeconds)}</span>
-            </div>
-          )}
-        </div>
-
-        <ScrollArea className="flex-1">
-          <div className="p-5 space-y-5">
-            {/* Status badge */}
-            {currentStatus && (
-              <div className="flex items-center gap-2">
-                <span
-                  className="inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium"
-                  style={{
-                    backgroundColor: `hsl(${currentStatus.cor} / 0.15)`,
-                    color: `hsl(${currentStatus.cor})`,
-                  }}
-                >
-                  <span
-                    className="h-2 w-2 rounded-full"
-                    style={{ backgroundColor: `hsl(${currentStatus.cor})` }}
-                  />
-                  {currentStatus.nome}
-                </span>
-                {sla.slaVencido && !isCompleted && (
-                  <Badge variant="destructive" className="gap-1 text-xs">
-                    <AlertTriangle className="h-3 w-3" />
-                    SLA Vencido
-                  </Badge>
+      <SheetContent side="right" className="w-full sm:max-w-[900px] p-0 flex flex-row gap-0 overflow-hidden">
+        {/* ─── LEFT: Main Content ─── */}
+        <ScrollArea className="flex-1 min-w-0">
+          <div className="p-6 space-y-1">
+            {/* Top bar */}
+            <div className="flex items-center gap-3 mb-2">
+              <button
+                onClick={handleComplete}
+                className={cn(
+                  "flex h-7 w-7 flex-shrink-0 items-center justify-center rounded-full border-2 transition-all",
+                  isCompleted
+                    ? "border-success bg-success text-white"
+                    : "border-muted-foreground/40 text-muted-foreground hover:border-success hover:text-success"
                 )}
-              </div>
+              >
+                <CheckCircle2 className="h-4 w-4" />
+              </button>
+              <span className="text-xs font-mono text-muted-foreground bg-muted px-2 py-0.5 rounded">{ticket.ticket_number}</span>
+
+              <div className="flex-1" />
+
+              {/* Timer */}
+              {!isCompleted && (
+                <button
+                  onClick={handleTimerToggle}
+                  className={cn(
+                    "flex items-center gap-2 rounded-full px-3 py-1 text-xs font-medium transition-all",
+                    timerRunning
+                      ? "bg-warning/15 text-warning border border-warning/30"
+                      : "bg-success/15 text-success border border-success/30"
+                  )}
+                >
+                  {timerRunning ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                  <span className="font-mono tabular-nums">
+                    {timerRunning || totalSeconds > 0 ? formatDuration(totalSeconds) : "Iniciar"}
+                  </span>
+                </button>
+              )}
+              {isCompleted && totalSeconds > 0 && (
+                <span className="flex items-center gap-1.5 rounded-full bg-muted px-3 py-1 text-xs text-muted-foreground">
+                  <Timer className="h-3.5 w-3.5" />
+                  <span className="font-mono">{formatDuration(totalSeconds)}</span>
+                </span>
+              )}
+
+              <span className="text-xs text-muted-foreground">
+                Criado em {format(new Date(ticket.created_at), "d MMM", { locale: ptBR })}
+              </span>
+            </div>
+
+            {/* Title */}
+            {editingTitle ? (
+              <Input value={title} onChange={(e) => setTitle(e.target.value)}
+                onBlur={handleSaveTitle} onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
+                autoFocus className="text-2xl font-bold border-none shadow-none p-0 h-auto focus-visible:ring-0" />
+            ) : (
+              <h1 className={cn("text-2xl font-bold cursor-pointer hover:text-primary/80 transition-colors", isCompleted && "line-through text-muted-foreground")}
+                onClick={() => !isCompleted && setEditingTitle(true)}>
+                {ticket.title}
+              </h1>
             )}
 
-            {/* SLA - hide when completed */}
-            {!isCompleted && (
-              <div>
-                <SlaIndicator sla={sla} />
+            {/* SLA */}
+            {!isCompleted && sla.slaVencido && (
+              <div className="mt-2">
+                <Badge variant="destructive" className="gap-1 text-xs">
+                  <AlertTriangle className="h-3 w-3" /> SLA Vencido
+                </Badge>
               </div>
             )}
+            {!isCompleted && <div className="mt-2"><SlaIndicator sla={sla} /></div>}
 
-            {/* Fields grid */}
-            <div className="grid grid-cols-2 gap-4">
-              {/* Progresso */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                  <Tag className="h-3 w-3" /> Progresso
-                </label>
-                <Select
-                  value={ticket.progress || "not_started"}
-                  onValueChange={async (v) => {
-                    await supabase
-                      .from("tickets")
-                      .update({ progress: v, updated_at: new Date().toISOString() } as any)
-                      .eq("id", ticket.id as any);
-                  }}
-                  disabled={isCompleted}
-                >
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue />
+            {/* ─── Properties Grid ─── */}
+            <div className="mt-4 space-y-0 divide-y divide-border/50">
+              {/* Status */}
+              <PropRow icon={Target} label="Status">
+                <Select value={ticket.status_id} onValueChange={handleStatusChange} disabled={isCompleted}>
+                  <SelectTrigger className="w-auto h-7 border-none shadow-none gap-1 px-0">
+                    {currentStatus && (
+                      <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white"
+                        style={{ backgroundColor: `hsl(${currentStatus.cor})` }}>
+                        {currentStatus.nome}
+                      </span>
+                    )}
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="not_started">
-                      <span className="flex items-center gap-2">
-                        <Circle className="h-3.5 w-3.5 text-muted-foreground" />
-                        Não iniciado
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="in_progress">
-                      <span className="flex items-center gap-2">
-                        <Loader2 className="h-3.5 w-3.5 text-primary" />
-                        Em andamento
-                      </span>
-                    </SelectItem>
-                    <SelectItem value="completed">
-                      <span className="flex items-center gap-2">
-                        <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                        Concluída
-                      </span>
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Assignee */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                  <User className="h-3 w-3" /> Responsável
-                </label>
-                <Select
-                  value={ticket.assignee || "unassigned"}
-                  onValueChange={(v) => handleFieldChange("assignee", v === "unassigned" ? "" : v, "Responsável")}
-                  disabled={isCompleted}
-                >
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue placeholder="Selecionar..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="unassigned">Sem responsável</SelectItem>
-                    {technicians.map((t) => (
-                      <SelectItem key={t} value={t}>{t}</SelectItem>
+                    {statuses.map(s => (
+                      <SelectItem key={s.id} value={s.id}>
+                        <span className="flex items-center gap-2">
+                          <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: `hsl(${s.cor})` }} />
+                          {s.nome}
+                        </span>
+                      </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
-              </div>
+              </PropRow>
+
+              {/* Progress */}
+              <PropRow icon={Hash} label="Progresso">
+                <Select value={ticket.progress || "not_started"} onValueChange={async (v) => {
+                  await supabase.from("tickets").update({ progress: v, updated_at: new Date().toISOString() } as any).eq("id", ticket.id as any);
+                }} disabled={isCompleted}>
+                  <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
+                    <span className={cn("inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white", currentProgress.color)}>
+                      {currentProgress.label}
+                    </span>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {progressConfig.map(p => (
+                      <SelectItem key={p.value} value={p.value}>
+                        <span className="flex items-center gap-2">
+                          <span className={cn("h-2.5 w-2.5 rounded-full", p.color)} />
+                          {p.label}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </PropRow>
+
+              {/* Assignee */}
+              <PropRow icon={User} label="Responsável">
+                <Select value={ticket.assignee || "unassigned"}
+                  onValueChange={(v) => handleFieldChange("assignee", v === "unassigned" ? "" : v, "Responsável")}
+                  disabled={isCompleted}>
+                  <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
+                    {ticket.assignee ? (
+                      <span className="flex items-center gap-1.5">
+                        <UserAvatar name={ticket.assignee} className="h-5 w-5" fallbackClassName="text-[9px]" />
+                        {ticket.assignee}
+                      </span>
+                    ) : (
+                      <span className="text-muted-foreground">Vazio</span>
+                    )}
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="unassigned">Sem responsável</SelectItem>
+                    {technicians.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </PropRow>
 
               {/* Priority */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                  <AlertTriangle className="h-3 w-3" /> Prioridade
-                </label>
-                <Select
-                  value={ticket.priority}
-                  onValueChange={(v) => handleFieldChange("priority", v, "Prioridade")}
-                  disabled={isCompleted}
-                >
-                  <SelectTrigger className="h-9 text-sm">
-                    <SelectValue />
+              <PropRow icon={Flag} label="Prioridade">
+                <Select value={ticket.priority} onValueChange={(v) => handleFieldChange("priority", v, "Prioridade")} disabled={isCompleted}>
+                  <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
+                    <span className={cn("flex items-center gap-1.5",
+                      ticket.priority === "high" ? "text-destructive" : ticket.priority === "medium" ? "text-warning" : "text-muted-foreground"
+                    )}>
+                      <Flag className="h-3.5 w-3.5" />
+                      {ticket.priority === "high" ? "Alta" : ticket.priority === "medium" ? "Média" : "Baixa"}
+                    </span>
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="low">Baixa</SelectItem>
@@ -686,357 +531,197 @@ export function TicketDetailSheet({
                     <SelectItem value="high">Alta</SelectItem>
                   </SelectContent>
                 </Select>
-              </div>
+              </PropRow>
 
-              {/* Rótulos */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                  <Tag className="h-3 w-3" /> Rótulos
-                </label>
-                <Select
-                  value={ticket.category}
-                  onValueChange={(v) => handleFieldChange("category", v, "Categoria")}
-                  disabled={isCompleted}
-                >
-                  <SelectTrigger className="h-9 text-sm">
+              {/* Category */}
+              <PropRow icon={Tag} label="Categoria">
+                <Select value={ticket.category} onValueChange={(v) => handleFieldChange("category", v, "Categoria")} disabled={isCompleted}>
+                  <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c} value={c}>{c}</SelectItem>
-                    ))}
+                    {categories.map(c => <SelectItem key={c} value={c}>{c}</SelectItem>)}
                   </SelectContent>
                 </Select>
-              </div>
+              </PropRow>
 
-              {/* Aberto em */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                  <CalendarDays className="h-3 w-3" /> Aberto em
-                </label>
-                <p className="text-sm py-1.5">
-                  {format(new Date(ticket.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
-                </p>
-              </div>
+              {/* Dates */}
+              <PropRow icon={CalendarDays} label="Aberto em">
+                <span className="text-sm">{format(new Date(ticket.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
+              </PropRow>
 
-              {/* Deadline */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                  <CalendarDays className="h-3 w-3" /> Vencimento SLA
-                </label>
-                <p className="text-sm py-1.5">
-                  {format(new Date(ticket.sla_deadline), "dd/MM/yyyy HH:mm", { locale: ptBR })}
-                </p>
-              </div>
+              <PropRow icon={Clock} label="Vencimento SLA">
+                <span className="text-sm">{format(new Date(ticket.sla_deadline), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+              </PropRow>
 
               {/* Requester */}
-              <div className="space-y-1.5">
-                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                  <User className="h-3 w-3" /> Solicitante
-                </label>
-                <p className="text-sm py-1.5">{ticket.requester}</p>
-                <p className="text-xs text-muted-foreground">{ticket.email}</p>
-              </div>
+              <PropRow icon={User} label="Solicitante">
+                <div>
+                  <span className="text-sm">{ticket.requester}</span>
+                  <span className="text-xs text-muted-foreground ml-2">{ticket.email}</span>
+                </div>
+              </PropRow>
+
+              {/* Department */}
+              {(!hideEmpty || ticket.department) && (
+                <PropRow icon={Building} label="Departamento">
+                  <span className="text-sm">{ticket.department || <span className="text-muted-foreground">Vazio</span>}</span>
+                </PropRow>
+              )}
+
+              {/* Time tracked */}
+              <PropRow icon={Timer} label="Tempo rastreado">
+                <span className={cn("text-sm font-mono tabular-nums", timerRunning && "text-warning animate-pulse")}>
+                  {formatDuration(totalSeconds)}
+                </span>
+              </PropRow>
             </div>
 
-            {/* Description */}
-            <div className="space-y-1.5">
-              <label className="text-xs font-medium text-muted-foreground">Descrição</label>
+            {/* Hide empty */}
+            <button className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-2"
+              onClick={() => setHideEmpty(!hideEmpty)}>
+              {hideEmpty ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+              {hideEmpty ? "Mostrar propriedades vazias" : "Ocultar propriedades vazias"}
+            </button>
+
+            {/* ─── Description ─── */}
+            <div className="mt-6">
               {editingDesc ? (
                 <div className="space-y-2">
-                  <Textarea
-                    value={description}
-                    onChange={(e) => setDescription(e.target.value)}
-                    rows={4}
-                    autoFocus
-                    className="text-sm"
-                  />
+                  <Textarea value={description} onChange={(e) => setDescription(e.target.value)} autoFocus rows={4} className="text-sm" />
                   <div className="flex gap-2">
                     <Button size="sm" onClick={handleSaveDescription}>Salvar</Button>
-                    <Button size="sm" variant="ghost" onClick={() => { setDescription(ticket.description); setEditingDesc(false); }}>
-                      Cancelar
-                    </Button>
+                    <Button size="sm" variant="ghost" onClick={() => { setDescription(ticket.description); setEditingDesc(false); }}>Cancelar</Button>
                   </div>
                 </div>
               ) : (
-                <div
-                  className="rounded-md border bg-muted/30 p-3 text-sm whitespace-pre-wrap cursor-pointer hover:bg-muted/50 transition-colors min-h-[60px]"
-                  onClick={() => !isCompleted && setEditingDesc(true)}
-                >
-                  {ticket.description || "Clique para adicionar descrição..."}
+                <div className="text-sm text-muted-foreground hover:bg-muted/30 rounded-md p-2 cursor-pointer transition-colors min-h-[40px]"
+                  onClick={() => !isCompleted && setEditingDesc(true)}>
+                  {ticket.description ? <p className="text-foreground whitespace-pre-wrap">{ticket.description}</p> : <p>Adicionar descrição</p>}
                 </div>
               )}
             </div>
 
-            {/* Checklist */}
-            {(() => {
-              let items: ChecklistItem[] = [];
-              try {
-                if (ticket.checklist) {
-                  items = typeof ticket.checklist === "string"
-                    ? JSON.parse(ticket.checklist)
-                    : ticket.checklist;
-                }
-              } catch { items = []; }
-              if (!Array.isArray(items)) items = [];
-
-              const checkedCount = items.filter((i) => i.checked).length;
-              const progressPercent = items.length > 0 ? Math.round((checkedCount / items.length) * 100) : 0;
-
-              const updateChecklist = async (updated: ChecklistItem[]) => {
-                await onUpdateTicket(ticket.id, { checklist: updated } as any);
-              };
-
-              const toggleItem = async (idx: number) => {
-                updateChecklist(items.map((item, i) => i === idx ? { ...item, checked: !item.checked } : item));
-              };
-
-              const deleteItem = async (idx: number) => {
-                updateChecklist(items.filter((_, i) => i !== idx));
-              };
-
-              const editItem = async (idx: number, newText: string) => {
-                if (!newText.trim()) return deleteItem(idx);
-                updateChecklist(items.map((item, i) => i === idx ? { ...item, text: newText.trim() } : item));
-              };
-
-              const addItem = async (text: string) => {
-                updateChecklist([...items, { text, checked: false }]);
-              };
-
-              return (
-                <ChecklistSection
-                  items={items}
-                  checkedCount={checkedCount}
-                  progressPercent={progressPercent}
-                  isCompleted={isCompleted}
-                  onToggle={toggleItem}
-                  onDelete={deleteItem}
-                  onEdit={editItem}
-                  onAdd={addItem}
-                />
-              );
-            })()}
+            {/* ─── Checklist ─── */}
+            <div className="mt-6">
+              {(() => {
+                let items: ChecklistItem[] = [];
+                try {
+                  if (ticket.checklist) items = typeof ticket.checklist === "string" ? JSON.parse(ticket.checklist) : ticket.checklist;
+                } catch { items = []; }
+                if (!Array.isArray(items)) items = [];
+                const checkedCount = items.filter(i => i.checked).length;
+                const progressPercent = items.length > 0 ? Math.round((checkedCount / items.length) * 100) : 0;
+                const updateChecklist = async (updated: ChecklistItem[]) => { await onUpdateTicket(ticket.id, { checklist: updated } as any); };
+                return (
+                  <ChecklistSection items={items} checkedCount={checkedCount} progressPercent={progressPercent} isCompleted={isCompleted}
+                    onToggle={(idx) => updateChecklist(items.map((item, i) => i === idx ? { ...item, checked: !item.checked } : item))}
+                    onDelete={(idx) => updateChecklist(items.filter((_, i) => i !== idx))}
+                    onEdit={(idx, text) => { if (!text.trim()) return updateChecklist(items.filter((_, i) => i !== idx)); updateChecklist(items.map((item, i) => i === idx ? { ...item, text: text.trim() } : item)); }}
+                    onAdd={(text) => updateChecklist([...items, { text, checked: false }])} />
+                );
+              })()}
+            </div>
 
             {/* Bucket / External Notes */}
             {(ticket.bucket_name || ticket.external_notes) && (
-              <div className="space-y-2">
-                {ticket.bucket_name && (
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">Bucket Original</label>
-                    <p className="text-sm mt-0.5">{ticket.bucket_name}</p>
-                  </div>
-                )}
-                {ticket.external_notes && (
-                  <div>
-                    <label className="text-xs font-medium text-muted-foreground">Anotações do Planner</label>
-                    <div className="rounded-md border bg-muted/30 p-3 text-sm whitespace-pre-wrap mt-0.5">
-                      {ticket.external_notes}
-                    </div>
-                  </div>
-                )}
+              <div className="mt-6 space-y-2">
+                {ticket.bucket_name && <div><label className="text-xs font-medium text-muted-foreground">Bucket Original</label><p className="text-sm mt-0.5">{ticket.bucket_name}</p></div>}
+                {ticket.external_notes && <div><label className="text-xs font-medium text-muted-foreground">Anotações do Planner</label><div className="rounded-md border bg-muted/30 p-3 text-sm whitespace-pre-wrap mt-0.5">{ticket.external_notes}</div></div>}
               </div>
             )}
 
             {/* Asset Section */}
-            <div>
+            <div className="mt-6">
               <AssetLinker
-                ticketId={ticket.ticket_number}
-                ticketCategory={ticket.category}
-                linkedAssetId={ticket.asset_id ?? undefined}
-                linkedAsset={linkedAsset}
-                availableAssets={availableAssets}
-                onLink={(assetId) => onLinkAsset(ticket.ticket_number, assetId)}
-                requesterName={ticket.requester}
-              />
+                ticketId={ticket.ticket_number} ticketCategory={ticket.category}
+                linkedAssetId={ticket.asset_id ?? undefined} linkedAsset={linkedAsset}
+                availableAssets={availableAssets} onLink={(assetId) => onLinkAsset(ticket.ticket_number, assetId)}
+                requesterName={ticket.requester} />
             </div>
 
-            {/* Devolution Term button for Desligamento */}
+            {/* Devolution Term */}
             {ticket.category === "Desligamento" && (
-              <div>
-                <Button
-                  variant="outline"
-                  className="w-full gap-2"
-                  onClick={() => setShowDevolutionChecklist(true)}
-                >
-                  <FileText className="h-4 w-4" />
-                  Gerar Termo de Devolução
+              <div className="mt-4">
+                <Button variant="outline" className="w-full gap-2" onClick={() => setShowDevolutionChecklist(true)}>
+                  <FileText className="h-4 w-4" /> Gerar Termo de Devolução
                 </Button>
-                <DevolutionChecklistDialog
-                  open={showDevolutionChecklist}
-                  onOpenChange={setShowDevolutionChecklist}
-                  collaboratorName={ticket.requester}
-                />
+                <DevolutionChecklistDialog open={showDevolutionChecklist} onOpenChange={setShowDevolutionChecklist} collaboratorName={ticket.requester} />
               </div>
             )}
 
             {/* Subtask Assets (Contratação) */}
             {ticket.category === "Contratação" && subtasks.length > 0 && (
-              <div className="space-y-2">
-                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1">
-                  <Tag className="h-3 w-3" /> Subtarefas de Ativos
-                </label>
-                <div className="space-y-2">
-                  {subtasks.map((sub) => {
-                    const subAsset = sub.asset_id ? getAsset(sub.asset_id) : undefined;
-                    const subAvailable = getAvailableForCategory(sub.category);
-                    return (
-                      <div key={sub.id} className="rounded-lg border p-3 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="text-sm font-medium">{sub.title}</p>
-                            <p className="text-xs text-muted-foreground font-mono">{sub.ticket_number}</p>
-                          </div>
-                          {isFinalStatus(sub.status_id) && (
-                            <CheckCircle2 className="h-4 w-4 text-success" />
-                          )}
-                        </div>
-                        <AssetLinker
-                          ticketId={sub.ticket_number}
-                          ticketCategory={sub.category}
-                          linkedAssetId={sub.asset_id ?? undefined}
-                          linkedAsset={subAsset}
-                          availableAssets={subAvailable}
-                          onLink={(assetId) => onLinkAsset(sub.id, assetId)}
-                        />
+              <div className="mt-6 space-y-2">
+                <label className="text-xs font-medium text-muted-foreground flex items-center gap-1"><Tag className="h-3 w-3" /> Subtarefas de Ativos</label>
+                {subtasks.map((sub) => {
+                  const subAsset = sub.asset_id ? getAsset(sub.asset_id) : undefined;
+                  const subAvailable = getAvailableForCategory(sub.category);
+                  return (
+                    <div key={sub.id} className="rounded-lg border p-3 space-y-2">
+                      <div className="flex items-center justify-between">
+                        <div><p className="text-sm font-medium">{sub.title}</p><p className="text-xs text-muted-foreground font-mono">{sub.ticket_number}</p></div>
+                        {isFinalStatus(sub.status_id) && <CheckCircle2 className="h-4 w-4 text-success" />}
                       </div>
-                    );
-                  })}
-                </div>
-              </div>
-            )}
-
-            <Separator />
-
-            {/* Tabs: Comments / History */}
-            <div className="flex border-b">
-              <button
-                className={cn(
-                  "flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
-                  activeTab === "comments"
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                )}
-                onClick={() => setActiveTab("comments")}
-              >
-                <MessageSquare className="h-4 w-4" />
-                Comentários
-                {comments.length > 0 && (
-                  <span className="ml-1 rounded-full bg-primary/10 px-1.5 py-0.5 text-xs text-primary">
-                    {comments.length}
-                  </span>
-                )}
-              </button>
-              <button
-                className={cn(
-                  "flex items-center gap-1.5 px-4 py-2 text-sm font-medium border-b-2 transition-colors",
-                  activeTab === "history"
-                    ? "border-primary text-primary"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
-                )}
-                onClick={() => setActiveTab("history")}
-              >
-                <History className="h-4 w-4" />
-                Histórico
-                {history.length > 0 && (
-                  <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-xs">
-                    {history.length}
-                  </span>
-                )}
-              </button>
-            </div>
-
-            {/* Comments */}
-            {activeTab === "comments" && (
-              <div className="space-y-3">
-                {commentsLoading ? (
-                  <div className="flex justify-center py-4">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  </div>
-                ) : comments.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Nenhum comentário ainda. Seja o primeiro!
-                  </p>
-                ) : (
-                  comments.map((comment) => (
-                    <div key={comment.id} className="flex gap-3">
-                      <UserAvatar
-                        name={comment.author}
-                        avatarUrl={comment.avatar_url}
-                        className="h-8 w-8 flex-shrink-0"
-                      />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-sm font-medium">{comment.author}</span>
-                          <span className="text-xs text-muted-foreground">
-                            {format(new Date(comment.created_at), "dd/MM HH:mm", { locale: ptBR })}
-                          </span>
-                        </div>
-                        <p className="text-sm text-foreground/90 mt-0.5 whitespace-pre-wrap">
-                          {comment.content}
-                        </p>
-                      </div>
+                      <AssetLinker ticketId={sub.ticket_number} ticketCategory={sub.category}
+                        linkedAssetId={sub.asset_id ?? undefined} linkedAsset={subAsset}
+                        availableAssets={subAvailable} onLink={(assetId) => onLinkAsset(sub.id, assetId)} />
                     </div>
-                  ))
-                )}
-                <div ref={commentsEndRef} />
-              </div>
-            )}
-
-            {/* History */}
-            {activeTab === "history" && (
-              <div className="space-y-2">
-                {historyLoading ? (
-                  <div className="flex justify-center py-4">
-                    <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
-                  </div>
-                ) : history.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
-                    Nenhuma alteração registrada.
-                  </p>
-                ) : (
-                  history.map((entry) => (
-                    <div key={entry.id} className="flex items-start gap-2 text-sm border-l-2 border-muted pl-3 py-1.5">
-                      <Clock className="h-3.5 w-3.5 mt-0.5 flex-shrink-0 text-muted-foreground" />
-                      <div className="flex-1 min-w-0">
-                        <span className="text-foreground">{entry.details}</span>
-                        <div className="flex items-center gap-1.5 text-xs text-muted-foreground mt-0.5">
-                          <span>{entry.author}</span>
-                          <span>•</span>
-                          <span>{format(new Date(entry.created_at), "dd/MM HH:mm", { locale: ptBR })}</span>
-                        </div>
-                      </div>
-                    </div>
-                  ))
-                )}
+                  );
+                })}
               </div>
             )}
           </div>
         </ScrollArea>
 
-        {/* Comment input - always visible */}
-        <div className="border-t p-4">
-          <div className="flex gap-2">
-            <Textarea
-              placeholder="Escreva um comentário..."
-              value={newComment}
-              onChange={(e) => setNewComment(e.target.value)}
-              onKeyDown={handleKeyDown}
-              rows={2}
-              className="text-sm resize-none flex-1"
-            />
-            <Button
-              size="icon"
-              onClick={handleSendComment}
-              disabled={!newComment.trim() || submitting}
-              className="self-end h-9 w-9"
-            >
-              {submitting ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                <Send className="h-4 w-4" />
-              )}
-            </Button>
+        {/* ─── RIGHT: Activity Sidebar ─── */}
+        <div className="w-[320px] shrink-0 border-l flex flex-col bg-muted/20">
+          <div className="flex items-center justify-between px-4 py-3 border-b">
+            <h3 className="text-sm font-semibold">Atividade</h3>
+            <div className="flex items-center gap-1">
+              <button className={cn("text-xs px-2 py-1 rounded transition-colors", activityTab === "activity" ? "bg-muted font-medium" : "text-muted-foreground hover:text-foreground")}
+                onClick={() => setActivityTab("activity")}>Tudo</button>
+              <button className={cn("text-xs px-2 py-1 rounded transition-colors", activityTab === "comments" ? "bg-muted font-medium" : "text-muted-foreground hover:text-foreground")}
+                onClick={() => setActivityTab("comments")}>Comentários</button>
+            </div>
+          </div>
+
+          <ScrollArea className="flex-1">
+            <div className="p-4 space-y-4">
+              {activityFeed.length === 0 && <p className="text-xs text-muted-foreground text-center py-8">Nenhuma atividade ainda</p>}
+              {activityFeed
+                .filter(item => activityTab === "activity" || item.type === "comment")
+                .map((item) => (
+                  <div key={item.id} className="flex gap-2.5">
+                    <UserAvatar name={item.author} avatarUrl={item.avatar} className="h-6 w-6 shrink-0 mt-0.5" fallbackClassName="text-[9px]" />
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-baseline gap-1.5">
+                        <span className="text-xs font-medium truncate">{item.author}</span>
+                        <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                          {formatDistanceToNow(item.date, { addSuffix: true, locale: ptBR })}
+                        </span>
+                      </div>
+                      <p className={cn("text-xs mt-0.5 whitespace-pre-wrap", item.type === "comment" ? "text-foreground" : "text-muted-foreground")}>
+                        {item.content}
+                      </p>
+                    </div>
+                  </div>
+                ))}
+              <div ref={commentsEndRef} />
+            </div>
+          </ScrollArea>
+
+          {/* Comment input */}
+          <div className="border-t p-3">
+            <div className="flex gap-2">
+              <Textarea placeholder="Escreva um comentário..." value={newComment}
+                onChange={(e) => setNewComment(e.target.value)}
+                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendComment(); } }}
+                className="min-h-[50px] text-sm resize-none flex-1" rows={2} />
+              <Button size="icon" onClick={handleSendComment} disabled={!newComment.trim() || submitting} className="shrink-0 self-end h-8 w-8">
+                {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
+              </Button>
+            </div>
           </div>
         </div>
       </SheetContent>
