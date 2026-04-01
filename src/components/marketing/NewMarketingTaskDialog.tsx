@@ -81,7 +81,7 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
       is_recurring: isRecurring,
       recurrence_rule: isRecurring ? recurrenceRule : null,
       next_recurrence_date: nextRecurrenceDate,
-      sprint_id: sprintId || null,
+      sprint_id: sprintId && sprintId !== "none" ? sprintId : null,
       story_points: storyPoints ?? null,
     } as any, {
       onSuccess: () => {
