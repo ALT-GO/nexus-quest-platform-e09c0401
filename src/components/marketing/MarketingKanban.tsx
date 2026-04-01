@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { GripVertical, Trash2, CheckSquare, CalendarIcon, Timer, Diamond } from "lucide-react";
+import { GripVertical, Trash2, CheckSquare, CalendarIcon, Timer, Diamond, Lock } from "lucide-react";
 import { fetchMarketingTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
 import { format, isToday, isBefore, startOfDay } from "date-fns";
 import {
@@ -24,6 +24,9 @@ import { MarketingTimerButton } from "./MarketingTimerButton";
 import { notifyAdminsForApproval } from "@/lib/marketing-notifications";
 import { useAuth } from "@/hooks/use-auth";
 import { useAllTaskTags, MarketingTag } from "@/hooks/use-marketing-tags";
+import { useTaskDependencies, isTaskBlocked } from "@/hooks/use-dependencies";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { toast } from "sonner";
 
 interface Props {
   stages: MarketingStage[];
@@ -58,7 +61,14 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
   const { user } = useAuth();
   const { data: allTaskTags } = useAllTaskTags();
   const [timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
+  const { data: allDeps } = useTaskDependencies();
 
+  // Build progress map for blocked checks
+  const progressMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    tasks.forEach((t) => { map[t.id] = t.progress; });
+    return map;
+  }, [tasks]);
   // Fetch timesheet totals for all tasks - auto-refresh every 30s
   const refreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
@@ -111,6 +121,15 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
       const [movedTask] = sourceItems.splice(source.index, 1);
       if (!movedTask) return;
 
+      // Block moving to completed stage if task has unresolved dependencies
+      if (sourceStageId !== destStageId) {
+        const destStage = stages.find((s) => s.id === destStageId);
+        if (destStage?.meta_status === "completed" && allDeps && isTaskBlocked(movedTask.id, allDeps, progressMap)) {
+          toast.error("Esta tarefa possui dependências não concluídas. Resolva-as antes de mover para Concluído.");
+          return;
+        }
+      }
+
       if (sourceStageId === destStageId) {
         sourceItems.splice(destination.index, 0, movedTask);
       } else {
@@ -158,7 +177,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
         }
       }
     },
-    [tasksByStage, tasks, qc, stages, user]
+    [tasksByStage, tasks, qc, stages, user, allDeps, progressMap]
   );
 
   return (
@@ -179,11 +198,18 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                 >
                   {(tasksByStage[stage.id] ?? []).map((task, index) => (
                     <Draggable key={task.id} draggableId={task.id} index={index}>
-                      {(dragProvided, dragSnapshot) => (
+                      {(dragProvided, dragSnapshot) => {
+                        const blocked = allDeps ? isTaskBlocked(task.id, allDeps, progressMap) : false;
+                        const blockingTaskNames = blocked && allDeps
+                          ? allDeps
+                              .filter((d) => d.task_id === task.id && d.dependency_type === "waiting_on" && progressMap[d.depends_on_task_id] !== "Concluído")
+                              .map((d) => tasks.find((t) => t.id === d.depends_on_task_id)?.title || "?")
+                          : [];
+                        return (
                         <Card
                           ref={dragProvided.innerRef}
                           {...dragProvided.draggableProps}
-                          className={`transition-shadow ${dragSnapshot.isDragging ? "shadow-lg ring-2 ring-primary/30" : "hover:shadow-md"} ${task.is_milestone ? "border-l-4 border-l-amber-500 bg-amber-50/30 dark:bg-amber-950/10" : ""}`}
+                          className={`transition-shadow ${dragSnapshot.isDragging ? "shadow-lg ring-2 ring-primary/30" : "hover:shadow-md"} ${task.is_milestone ? "border-l-4 border-l-amber-500 bg-amber-50/30 dark:bg-amber-950/10" : ""} ${blocked ? "opacity-75 border-dashed" : ""}`}
                         >
                           <CardContent className="p-3 space-y-2">
                             <div className="flex items-start justify-between gap-2">
@@ -192,6 +218,21 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                               </div>
                               <p className={`text-sm flex-1 cursor-pointer hover:text-primary flex items-center gap-1.5 ${task.is_milestone ? "font-bold" : "font-medium"}`} onClick={() => onTaskClick?.(task)}>
                                 {task.is_milestone && <Diamond className="h-3.5 w-3.5 text-amber-500 shrink-0 fill-amber-500" />}
+                                {blocked && (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Lock className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="max-w-[200px]">
+                                        <p className="text-xs font-medium">Bloqueada por:</p>
+                                        {blockingTaskNames.map((n, i) => (
+                                          <p key={i} className="text-xs">• {n}</p>
+                                        ))}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
                                 {task.title}
                               </p>
                               <MarketingTimerButton taskId={task.id} size="card" />
@@ -273,7 +314,8 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                             })()}
                           </CardContent>
                         </Card>
-                      )}
+                        );
+                      }}
                     </Draggable>
                   ))}
                   {provided.placeholder}

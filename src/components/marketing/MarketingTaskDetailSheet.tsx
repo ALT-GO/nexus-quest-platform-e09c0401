@@ -54,6 +54,9 @@ import {
   useAddMarketingHistory,
 } from "@/hooks/use-marketing-comments";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { useTaskDependencies, isTaskBlocked } from "@/hooks/use-dependencies";
+import { useMarketingTasks } from "@/hooks/use-marketing";
+import { DependencySection } from "./DependencySection";
 
 interface Props {
   task: MarketingTask | null;
@@ -159,6 +162,8 @@ export function MarketingTaskDetailSheet({
   const addComment = useAddMarketingComment();
   const { data: history } = useMarketingHistory(task?.id);
   const addHistory = useAddMarketingHistory();
+  const { data: allDeps } = useTaskDependencies();
+  const { data: allTasks } = useMarketingTasks();
 
   if (!task) return null;
 
@@ -229,6 +234,15 @@ export function MarketingTaskDetailSheet({
   };
 
   const handleProgressChange = (val: string) => {
+    // Block completing task if it has unresolved dependencies
+    if (val === "Concluído" && allDeps && allTasks) {
+      const progressMap: Record<string, string> = {};
+      allTasks.forEach((t) => { progressMap[t.id] = t.progress; });
+      if (isTaskBlocked(task.id, allDeps, progressMap)) {
+        toast.error("Esta tarefa possui dependências não concluídas. Resolva-as antes de concluir.");
+        return;
+      }
+    }
     updateTask.mutate({ id: task.id, progress: val });
     logHistory("Mudança de progresso", `${task.progress} → ${val}`);
   };
@@ -555,6 +569,11 @@ export function MarketingTaskDetailSheet({
                 <MarketingTagSelector taskId={task.id} />
               </div>
             </div>
+
+            {/* Dependencies */}
+            {allDeps && allTasks && (
+              <DependencySection task={task} allTasks={allTasks} dependencies={allDeps} />
+            )}
 
             {/* Checklist / Subtarefas */}
             <div>

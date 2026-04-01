@@ -17,9 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, Diamond } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, Diamond, Lock } from "lucide-react";
 import { format, isBefore, isToday, startOfDay } from "date-fns";
 import { MarketingTask, MarketingStage, useUpdateMarketingTask } from "@/hooks/use-marketing";
+import { useTaskDependencies, isTaskBlocked } from "@/hooks/use-dependencies";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 type SortKey = "title" | "stage" | "priority" | "progress" | "assignee_name" | "due_date";
 type SortDir = "asc" | "desc";
@@ -62,6 +64,7 @@ export function MarketingListView({
   onFilterProgressChange,
 }: Props) {
   const updateTask = useUpdateMarketingTask();
+  const { data: allDeps } = useTaskDependencies();
   const [sortKey, setSortKey] = useState<SortKey>("due_date");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
@@ -236,13 +239,14 @@ export function MarketingListView({
               <TableHead className="cursor-pointer select-none w-28" onClick={() => toggleSort("due_date")}>
                 <span className="flex items-center">Prazo <SortIcon col="due_date" /></span>
               </TableHead>
+              <TableHead className="w-28">Deps</TableHead>
               <TableHead className="w-16">Ações</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {sorted.length === 0 && (
               <TableRow>
-                <TableCell colSpan={7} className="text-center text-sm text-muted-foreground py-8">
+              <TableCell colSpan={8} className="text-center text-sm text-muted-foreground py-8">
                   Nenhuma tarefa encontrada
                 </TableCell>
               </TableRow>
@@ -344,6 +348,33 @@ export function MarketingListView({
                   {/* Due Date */}
                   <TableCell className={`text-xs ${getDueDateStyle(task.due_date)}`}>
                     {task.due_date ? format(new Date(task.due_date), "dd/MM/yyyy") : "—"}
+                  </TableCell>
+
+                  {/* Dependencies */}
+                  <TableCell>
+                    {(() => {
+                      if (!allDeps) return "—";
+                      const progressMap: Record<string, string> = {};
+                      tasks.forEach((t) => { progressMap[t.id] = t.progress; });
+                      const blocked = isTaskBlocked(task.id, allDeps, progressMap);
+                      const waitingCount = allDeps.filter((d) => d.task_id === task.id && d.dependency_type === "waiting_on").length;
+                      if (waitingCount === 0) return <span className="text-xs text-muted-foreground">—</span>;
+                      return (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className={`flex items-center gap-1 text-xs ${blocked ? "text-amber-600 font-medium" : "text-muted-foreground"}`}>
+                                <Lock className="h-3 w-3" />
+                                {waitingCount}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">{blocked ? "Bloqueada — dependências pendentes" : "Todas dependências concluídas"}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      );
+                    })()}
                   </TableCell>
 
                   {/* Actions */}
