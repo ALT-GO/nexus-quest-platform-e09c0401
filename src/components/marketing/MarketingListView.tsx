@@ -17,9 +17,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, Diamond } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, Diamond, Lock } from "lucide-react";
 import { format, isBefore, isToday, startOfDay } from "date-fns";
 import { MarketingTask, MarketingStage, useUpdateMarketingTask } from "@/hooks/use-marketing";
+import { useTaskDependencies, isTaskBlocked } from "@/hooks/use-dependencies";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 
 type SortKey = "title" | "stage" | "priority" | "progress" | "assignee_name" | "due_date";
 type SortDir = "asc" | "desc";
