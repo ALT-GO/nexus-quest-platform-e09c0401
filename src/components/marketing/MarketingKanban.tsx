@@ -121,6 +121,15 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
       const [movedTask] = sourceItems.splice(source.index, 1);
       if (!movedTask) return;
 
+      // Block moving to completed stage if task has unresolved dependencies
+      if (sourceStageId !== destStageId) {
+        const destStage = stages.find((s) => s.id === destStageId);
+        if (destStage?.meta_status === "completed" && allDeps && isTaskBlocked(movedTask.id, allDeps, progressMap)) {
+          toast.error("Esta tarefa possui dependências não concluídas. Resolva-as antes de mover para Concluído.");
+          return;
+        }
+      }
+
       if (sourceStageId === destStageId) {
         sourceItems.splice(destination.index, 0, movedTask);
       } else {
