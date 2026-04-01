@@ -4,15 +4,18 @@ import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
 import { Plus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useMarketingStages, useMarketingTasks } from "@/hooks/use-marketing";
+import { useMarketingStages, useMarketingTasks, MarketingTask } from "@/hooks/use-marketing";
 import { MarketingKanban } from "@/components/marketing/MarketingKanban";
 import { NewMarketingTaskDialog } from "@/components/marketing/NewMarketingTaskDialog";
+import { MarketingTaskDetailSheet } from "@/components/marketing/MarketingTaskDetailSheet";
 import { supabase } from "@/integrations/supabase/client";
 
 export default function Solicitacoes() {
   const { data: stages, isLoading: stagesLoading } = useMarketingStages();
   const { data: tasks, isLoading: tasksLoading } = useMarketingTasks();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [selectedTask, setSelectedTask] = useState<MarketingTask | null>(null);
+  const [detailOpen, setDetailOpen] = useState(false);
   const [teamMembers, setTeamMembers] = useState<{ id: string; name: string }[]>([]);
 
   useEffect(() => {
@@ -20,6 +23,13 @@ export default function Solicitacoes() {
       if (data) setTeamMembers(data.map(p => ({ id: p.id, name: p.full_name })));
     });
   }, []);
+
+  const handleTaskClick = (task: MarketingTask) => {
+    // Get fresh version from tasks list
+    const fresh = tasks?.find(t => t.id === task.id) || task;
+    setSelectedTask(fresh);
+    setDetailOpen(true);
+  };
 
   const loading = stagesLoading || tasksLoading;
 
@@ -43,6 +53,7 @@ export default function Solicitacoes() {
         <MarketingKanban
           stages={stages ?? []}
           tasks={tasks ?? []}
+          onTaskClick={handleTaskClick}
         />
       )}
 
@@ -51,6 +62,14 @@ export default function Solicitacoes() {
         onOpenChange={setDialogOpen}
         stages={stages ?? []}
         teamMembers={teamMembers}
+      />
+
+      <MarketingTaskDetailSheet
+        task={selectedTask}
+        stages={stages ?? []}
+        teamMembers={teamMembers}
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
       />
     </AppLayout>
   );
