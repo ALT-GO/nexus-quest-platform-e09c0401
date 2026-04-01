@@ -330,6 +330,52 @@ export function MarketingTaskDetailSheet({
               </Select>
             </div>
 
+            {/* Dates */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs text-muted-foreground">Data de Início</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full mt-1 justify-start text-left font-normal text-sm", !task.start_date && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                      {task.start_date ? format(new Date(task.start_date), "dd/MM/yyyy") : "Selecione"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={task.start_date ? new Date(task.start_date) : undefined}
+                      onSelect={(d) => updateTask.mutate({ id: task.id, start_date: d?.toISOString() ?? null } as any)}
+                      locale={ptBR}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Prazo Final</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full mt-1 justify-start text-left font-normal text-sm", !task.due_date && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                      {task.due_date ? format(new Date(task.due_date), "dd/MM/yyyy") : "Selecione"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={task.due_date ? new Date(task.due_date) : undefined}
+                      onSelect={(d) => updateTask.mutate({ id: task.id, due_date: d?.toISOString() ?? null } as any)}
+                      locale={ptBR}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+            </div>
+
             {/* Checklist / Subtarefas */}
             <div>
               <Label className="text-xs text-muted-foreground">
