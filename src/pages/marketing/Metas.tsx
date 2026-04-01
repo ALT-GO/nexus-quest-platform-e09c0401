@@ -296,13 +296,23 @@ export default function Metas() {
         progress={detailGoal ? goalProgress[detailGoal.id] || 0 : 0}
       />
 
-      <ConfirmDeleteDialog
-        open={!!deleteId}
-        onOpenChange={(open) => !open && setDeleteId(null)}
-        onConfirm={() => { if (deleteId) deleteGoal.mutate(deleteId); setDeleteId(null); }}
-        title="Excluir meta"
-        description="Tem certeza que deseja excluir esta meta? Esta ação não pode ser desfeita."
-      />
+      <AlertDialog open={!!deleteId} onOpenChange={(open) => !open && setDeleteId(null)}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir meta</AlertDialogTitle>
+            <AlertDialogDescription>Tem certeza que deseja excluir esta meta? Esta ação não pode ser desfeita.</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              onClick={() => { if (deleteId) deleteGoal.mutate(deleteId); setDeleteId(null); }}
+            >
+              Excluir
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </AppLayout>
   );
 }
