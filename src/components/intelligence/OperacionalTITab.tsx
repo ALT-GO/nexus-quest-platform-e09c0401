@@ -254,7 +254,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
       total: filteredInv.filter((i) => i.category === cat).length,
     }));
   }, [filteredInv]);
-  const categories = useMemo(() => [...new Set(allTickets.map((t) => t.category))], [allTickets]);
+  const categories = useMemo(() => [...new Set(mainTickets.map((t) => t.category))], [mainTickets]);
 
   if (loading) {
     return (
