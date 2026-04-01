@@ -74,7 +74,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
   const { tickets: allTickets, loading } = useTickets();
   const [techFilter, setTechFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
+  const [_timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [allTimesheetData, setAllTimesheetData] = useState<{ ticket_id: string; start_time: string; end_time: string | null; duration_seconds: number }[]>([]);
 
