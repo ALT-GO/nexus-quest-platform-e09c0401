@@ -39,24 +39,39 @@ export function getConditionLabel(value: string) {
 
 /* ── Condition Select Cell ─────────────────────────────────── */
 function ConditionSelectCell({ value, onSave }: { value: string; onSave: (v: string) => Promise<void> }) {
+  const [saving, setSaving] = useState(false);
   const current = getConditionLabel(value);
+
+  const handleChange = async (v: string) => {
+    if (v === value) return;
+    setSaving(true);
+    try {
+      await onSave(v);
+    } finally {
+      setSaving(false);
+    }
+  };
+
   return (
-    <Select value={value || "ready"} onValueChange={(v) => onSave(v)}>
-      <SelectTrigger className="h-7 text-xs border-0 shadow-none px-1.5 w-[140px]">
-        <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", current.color)}>
-          {current.label}
-        </span>
-      </SelectTrigger>
-      <SelectContent>
-        {conditionOptions.map((opt) => (
-          <SelectItem key={opt.value} value={opt.value}>
-            <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", opt.color)}>
-              {opt.label}
-            </span>
-          </SelectItem>
-        ))}
-      </SelectContent>
-    </Select>
+    <div className="flex items-center gap-1">
+      <Select value={value || "ready"} onValueChange={handleChange} disabled={saving}>
+        <SelectTrigger className="h-7 text-xs border-0 shadow-none px-1.5 w-[140px]">
+          <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", current.color)}>
+            {current.label}
+          </span>
+        </SelectTrigger>
+        <SelectContent>
+          {conditionOptions.map((opt) => (
+            <SelectItem key={opt.value} value={opt.value}>
+              <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", opt.color)}>
+                {opt.label}
+              </span>
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+      {saving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
+    </div>
   );
 }
 
