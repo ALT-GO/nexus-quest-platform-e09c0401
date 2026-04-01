@@ -177,20 +177,33 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
       .slice(0, 5);
   }, [filtered, timesheetTotals]);
 
-  // ---- NEW: Horas Trabalhadas por Colaborador ----
+  // ---- Horas Trabalhadas por Colaborador (date-range filtered) ----
   const hoursByAssignee = useMemo(() => {
+    // Build a map of ticket_id -> assignee from tickets
+    const ticketAssigneeMap = new Map<string, string>();
+    allTickets.forEach((t) => {
+      ticketAssigneeMap.set(t.id, t.assignee || "Sem atribuição");
+    });
+
     const map: Record<string, number> = {};
-    filtered.forEach((t) => {
-      const assignee = t.assignee || "Sem atribuição";
-      const secs = timesheetTotals[t.id] || 0;
+    allTimesheetData.forEach((log) => {
+      const assignee = ticketAssigneeMap.get(log.ticket_id) || "Sem atribuição";
+      let secs = 0;
+      if (log.end_time) {
+        secs = log.duration_seconds;
+      } else {
+        // Running timer — calculate elapsed live
+        secs = Math.floor((Date.now() - new Date(log.start_time).getTime()) / 1000);
+      }
       if (secs > 0) {
         map[assignee] = (map[assignee] || 0) + secs;
       }
     });
+
     return Object.entries(map)
       .map(([name, seconds]) => ({ name, hours: Math.round((seconds / 3600) * 10) / 10 }))
       .sort((a, b) => b.hours - a.hours);
-  }, [filtered, timesheetTotals]);
+  }, [allTimesheetData, allTickets]);
 
   // ---- NEW: Volume de Chamados por Dia da Semana ----
   const ticketsByDayOfWeek = useMemo(() => {
