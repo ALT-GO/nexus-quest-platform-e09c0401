@@ -286,6 +286,10 @@ export function MarketingListView({
                         className={`cursor-pointer hover:underline text-sm flex items-center gap-1.5 ${task.is_milestone ? "font-bold" : "font-medium"}`}
                         onClick={() => startEdit(task.id, "title", task.title)}
                       >
+                        {(() => {
+                          const tt = task.task_type_id && taskTypes ? taskTypes.find(t => t.id === task.task_type_id) : null;
+                          return tt ? <DynamicLucideIcon name={tt.icon} className="h-3.5 w-3.5 shrink-0" style={{ color: `hsl(${tt.color})` }} /> : null;
+                        })()}
                         {task.is_milestone && <Diamond className="h-3.5 w-3.5 text-amber-500 shrink-0 fill-amber-500" />}
                         {task.title}
                       </span>
