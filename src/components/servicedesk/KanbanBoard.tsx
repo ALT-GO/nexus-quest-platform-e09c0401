@@ -12,8 +12,16 @@ import { AssetLinkerCompact } from "@/components/servicedesk/AssetLinker";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { SlaInfo } from "@/hooks/use-sla";
-import { GripVertical, CheckCircle2, Circle } from "lucide-react";
+import {
+  GripVertical,
+  CheckCircle2,
+  Circle,
+  Flag,
+  CalendarIcon,
+  Plus,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
+import { format } from "date-fns";
 
 interface KanbanTicket {
   id: string;
@@ -46,10 +54,16 @@ interface KanbanBoardProps {
   onReorder?: (ticketId: string, statusId: string, newIndex: number) => void;
 }
 
-const priorityConfig: Record<string, { label: string; dot: string }> = {
-  high: { label: "Alta", dot: "bg-destructive" },
-  medium: { label: "Média", dot: "bg-warning" },
-  low: { label: "Baixa", dot: "bg-success" },
+const priorityConfig: Record<string, { label: string; color: string; dot: string }> = {
+  high: { label: "Alta", color: "text-destructive", dot: "bg-destructive" },
+  medium: { label: "Média", color: "text-warning", dot: "bg-warning" },
+  low: { label: "Baixa", color: "text-muted-foreground", dot: "bg-success" },
+};
+
+const statusTypeColors: Record<string, string> = {
+  todo: "bg-muted-foreground/50",
+  in_progress: "bg-primary",
+  done: "bg-success",
 };
 
 export function KanbanBoard({
@@ -83,19 +97,10 @@ export function KanbanBoard({
     (result: DropResult) => {
       const { source, destination, draggableId } = result;
       if (!destination) return;
-
       const sourceColumnId = source.droppableId;
       const destColumnId = destination.droppableId;
-
-      // If moved to a different column, update status
-      if (sourceColumnId !== destColumnId) {
-        onStatusChange(draggableId, destColumnId);
-      }
-
-      // Always call reorder to persist position
-      if (onReorder) {
-        onReorder(draggableId, destColumnId, destination.index);
-      }
+      if (sourceColumnId !== destColumnId) onStatusChange(draggableId, destColumnId);
+      if (onReorder) onReorder(draggableId, destColumnId, destination.index);
     },
     [onStatusChange, onReorder]
   );
@@ -106,52 +111,20 @@ export function KanbanBoard({
         className="overflow-x-auto pb-4 -mx-2 px-2 h-[calc(100vh-220px)]"
         style={{ scrollbarGutter: "stable" }}
       >
-        <div className="flex gap-4 min-w-max h-full">
+        <div className="flex gap-3 min-w-max h-full">
           {statuses.map((status) => {
             const columnTickets = getColumnTickets(status.id);
 
             return (
-              <div key={status.id} className="w-[300px] shrink-0 flex flex-col h-full">
-                {/* Sticky Column Header */}
-                <div
-                  className="mb-3 flex items-center justify-between rounded-lg px-3 py-2.5 sticky top-0 z-10 bg-background"
-                  style={{
-                    backgroundColor: `hsl(${status.cor} / 0.15)`,
-                    borderLeft: `3px solid hsl(${status.cor})`,
-                  }}
-                >
-                  <div className="flex items-center gap-2">
-                    <div
-                      className="h-2.5 w-2.5 rounded-full"
-                      style={{ backgroundColor: `hsl(${status.cor})` }}
-                    />
-                    <h3 className="text-sm font-semibold">{status.nome}</h3>
-                    {status.statusType && (
-                      <span
-                        className={cn(
-                          "text-[10px] rounded px-1.5 py-0.5 font-medium",
-                          status.statusType === "todo"
-                            ? "bg-muted text-muted-foreground"
-                            : status.statusType === "in_progress"
-                            ? "bg-primary/15 text-primary"
-                            : "bg-success/15 text-success"
-                        )}
-                      >
-                        {status.statusType === "todo"
-                          ? "To Do"
-                          : status.statusType === "in_progress"
-                          ? "In Progress"
-                          : "Done"}
-                      </span>
-                    )}
-                  </div>
-                  <span
-                    className="flex h-6 min-w-6 items-center justify-center rounded-full px-1.5 text-xs font-medium"
-                    style={{
-                      backgroundColor: `hsl(${status.cor} / 0.2)`,
-                      color: `hsl(${status.cor})`,
-                    }}
-                  >
+              <div key={status.id} className="w-[280px] shrink-0 flex flex-col h-full">
+                {/* Column Header — ClickUp style */}
+                <div className="flex items-center gap-2 px-2 py-2.5 mb-1">
+                  <div
+                    className="h-2.5 w-2.5 rounded-full shrink-0"
+                    style={{ backgroundColor: `hsl(${status.cor})` }}
+                  />
+                  <h3 className="text-sm font-semibold truncate">{status.nome}</h3>
+                  <span className="text-xs text-muted-foreground font-medium tabular-nums">
                     {columnTickets.length}
                   </span>
                 </div>
@@ -163,182 +136,146 @@ export function KanbanBoard({
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={cn(
-                        "space-y-2.5 flex-1 overflow-y-auto pr-1 rounded-lg transition-colors min-h-[80px]",
-                        snapshot.isDraggingOver ? "bg-accent/30" : ""
+                        "flex-1 overflow-y-auto space-y-2 rounded-lg p-1.5 transition-colors min-h-[80px]",
+                        snapshot.isDraggingOver ? "bg-accent/40" : ""
                       )}
                     >
-                      {columnTickets.map((ticket, index) => (
-                        <Draggable
-                          key={ticket.id}
-                          draggableId={ticket.id}
-                          index={index}
-                        >
-                          {(dragProvided, dragSnapshot) => {
-                            const isCompleted = !!ticket.completedAt;
-                            const sla = getSlaInfo(
-                              ticket.createdAt,
-                              ticket.category,
-                              isCompleted
-                            );
-                            const priority = priorityConfig[ticket.priority];
-                            const linkedAsset = ticket.ativoId
-                              ? getAsset(ticket.ativoId)
-                              : undefined;
-                            const availableAssets = getAvailableForCategory(
-                              ticket.category
-                            );
-                            const subtaskAssets = (ticket.subtaskAssetIds || [])
-                              .map(getAsset)
-                              .filter(Boolean) as HardwareAsset[];
+                      {columnTickets.map((ticket, index) => {
+                        const isCompleted = !!ticket.completedAt;
+                        const sla = getSlaInfo(ticket.createdAt, ticket.category, isCompleted);
+                        const priority = priorityConfig[ticket.priority] || priorityConfig.medium;
+                        const linkedAsset = ticket.ativoId ? getAsset(ticket.ativoId) : undefined;
+                        const subtaskAssets = (ticket.subtaskAssetIds || []).map(getAsset).filter(Boolean) as HardwareAsset[];
 
-                            return (
+                        return (
+                          <Draggable key={ticket.id} draggableId={ticket.id} index={index}>
+                            {(dragProvided, dragSnapshot) => (
                               <div
                                 ref={dragProvided.innerRef}
                                 {...dragProvided.draggableProps}
                                 className={cn(
-                                  "group rounded-lg border bg-card p-3.5 shadow-sm transition-shadow hover:shadow-md overflow-hidden",
-                                  dragSnapshot.isDragging
-                                    ? "shadow-lg ring-2 ring-primary/30 rotate-1"
-                                    : "",
-                                  isCompleted ? "opacity-60" : ""
+                                  "group relative rounded-lg border bg-card shadow-sm transition-all hover:shadow-md overflow-hidden cursor-pointer",
+                                  dragSnapshot.isDragging && "shadow-lg ring-2 ring-primary/20 rotate-[1deg]",
+                                  isCompleted && "opacity-60"
                                 )}
+                                onClick={() => onTicketClick?.(ticket.id)}
                               >
-                                {/* Header with check button */}
-                                <div className="mb-2 flex items-start gap-2">
-                                  <button
-                                    onClick={(e) => {
-                                      e.stopPropagation();
-                                      if (!isCompleted)
-                                        onQuickComplete(ticket.id);
-                                    }}
-                                    className={cn(
-                                      "mt-0.5 flex-shrink-0 transition-colors",
-                                      isCompleted
-                                        ? "text-emerald-500"
-                                        : "text-muted-foreground/40 hover:text-emerald-500"
-                                    )}
-                                    title={
-                                      isCompleted
-                                        ? "Concluído"
-                                        : "Marcar como concluído"
-                                    }
-                                  >
-                                    {isCompleted ? (
-                                      <CheckCircle2 className="h-5 w-5" />
-                                    ) : (
-                                      <Circle className="h-5 w-5 group-hover:hidden" />
-                                    )}
-                                    {!isCompleted && (
-                                      <CheckCircle2 className="h-5 w-5 hidden group-hover:block" />
-                                    )}
-                                  </button>
-                                  <div
-                                    className="flex-1 min-w-0 cursor-pointer"
-                                    onClick={() => onTicketClick?.(ticket.id)}
-                                  >
-                                    <p className="text-xs font-mono text-muted-foreground mb-1 truncate">
-                                      {ticket.id}
-                                    </p>
-                                    <p
+                                <div className="p-3 space-y-2">
+                                  {/* Title row */}
+                                  <div className="flex items-start gap-1.5">
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        if (!isCompleted) onQuickComplete(ticket.id);
+                                      }}
                                       className={cn(
-                                        "font-medium text-sm leading-tight break-words whitespace-normal line-clamp-3",
-                                        isCompleted && "line-through"
+                                        "mt-0.5 shrink-0 transition-colors",
+                                        isCompleted
+                                          ? "text-success"
+                                          : "text-muted-foreground/30 hover:text-success"
                                       )}
                                     >
-                                      {ticket.title}
-                                    </p>
-                                  </div>
-                                  <div className="flex items-center gap-1 flex-shrink-0">
-                                    {onDelete && (
-                                      <ConfirmDeleteDialog
-                                        onConfirm={() => onDelete(ticket.id)}
-                                      />
-                                    )}
+                                      {isCompleted ? (
+                                        <CheckCircle2 className="h-4 w-4" />
+                                      ) : (
+                                        <Circle className="h-4 w-4" />
+                                      )}
+                                    </button>
+                                    <div className="flex-1 min-w-0">
+                                      <p className={cn(
+                                        "text-sm font-medium leading-snug break-words line-clamp-2",
+                                        isCompleted && "line-through text-muted-foreground"
+                                      )}>
+                                        {ticket.title}
+                                      </p>
+                                    </div>
                                     <div
                                       {...dragProvided.dragHandleProps}
-                                      className="cursor-grab active:cursor-grabbing"
+                                      className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing shrink-0"
+                                      onClick={(e) => e.stopPropagation()}
                                     >
-                                      <GripVertical className="h-4 w-4 text-muted-foreground/40 hover:text-muted-foreground" />
+                                      <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40" />
                                     </div>
                                   </div>
-                                </div>
 
-                                {/* Category + details */}
-                                <div
-                                  onClick={() => onTicketClick?.(ticket.id)}
-                                  className="cursor-pointer"
-                                >
-                                  <span className="inline-block rounded-full bg-secondary px-2 py-0.5 text-xs text-secondary-foreground mb-2.5">
+                                  {/* Category tag */}
+                                  <span className="inline-block rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground">
                                     {ticket.category}
                                   </span>
 
-                                  <div className="mb-2">
+                                  {/* Asset linker */}
+                                  <div onClick={(e) => e.stopPropagation()}>
                                     <AssetLinkerCompact
                                       ticketCategory={ticket.category}
                                       linkedAssetId={ticket.ativoId}
                                       linkedAsset={linkedAsset}
-                                      availableCount={availableAssets.length}
+                                      availableCount={getAvailableForCategory(ticket.category).length}
                                     />
                                   </div>
 
+                                  {/* Subtask assets */}
                                   {subtaskAssets.length > 0 && (
-                                    <div className="mb-2 space-y-1">
+                                    <div className="space-y-1">
                                       {subtaskAssets.map((asset) => (
-                                        <div
-                                          key={asset.id}
-                                          className="flex items-center gap-1.5 rounded bg-success/10 px-2 py-1 text-xs min-w-0 flex-wrap"
-                                        >
-                                          <CheckCircle2 className="h-3 w-3 text-success flex-shrink-0" />
-                                          <span className="font-medium text-success truncate max-w-[120px]">
-                                            {asset.model}
-                                          </span>
-                                          <span className="text-muted-foreground truncate">
-                                            ({asset.type})
-                                          </span>
+                                        <div key={asset.id} className="flex items-center gap-1.5 rounded bg-success/10 px-2 py-1 text-xs min-w-0">
+                                          <CheckCircle2 className="h-3 w-3 text-success shrink-0" />
+                                          <span className="font-medium text-success truncate max-w-[120px]">{asset.model}</span>
+                                          <span className="text-muted-foreground truncate">({asset.type})</span>
                                         </div>
                                       ))}
                                     </div>
                                   )}
 
+                                  {/* SLA */}
                                   {!isCompleted && (
-                                    <div className="mb-2.5">
+                                    <div className="py-0.5">
                                       <SlaIndicator sla={sla} />
                                     </div>
                                   )}
 
-                                  <div className="flex items-center justify-between text-xs text-muted-foreground">
-                                    <div className="flex items-center gap-1">
-                                      <div
-                                        className={cn(
-                                          "h-2 w-2 rounded-full",
-                                          priority.dot
-                                        )}
-                                      />
-                                      <span>{priority.label}</span>
-                                    </div>
+                                  {/* Bottom icon bar — ClickUp style */}
+                                  <div className="flex items-center gap-2 flex-wrap text-muted-foreground pt-0.5">
+                                    {/* Priority flag */}
+                                    <Flag className={cn("h-3 w-3", priority.color)} />
+
+                                    {/* Opened date */}
+                                    <span className="flex items-center gap-0.5 text-[11px]">
+                                      <CalendarIcon className="h-3 w-3" />
+                                      {format(new Date(ticket.createdAt), "dd/MM")}
+                                    </span>
+
+                                    <div className="flex-1" />
+
+                                    {/* Assignee */}
                                     {ticket.assignee ? (
-                                      <div className="flex items-center gap-1.5">
-                                        <UserAvatar
-                                          name={ticket.assignee}
-                                          avatarUrl={ticket.assigneeAvatarUrl}
-                                          className="h-5 w-5 text-[10px]"
-                                        />
-                                        <span className="truncate max-w-[100px]">
-                                          {ticket.assignee}
-                                        </span>
-                                      </div>
+                                      <UserAvatar
+                                        name={ticket.assignee}
+                                        avatarUrl={ticket.assigneeAvatarUrl}
+                                        className="h-5 w-5"
+                                        fallbackClassName="text-[9px]"
+                                      />
                                     ) : (
-                                      <span className="italic text-muted-foreground/60">
-                                        Sem responsável
+                                      <span className="text-[10px] italic text-muted-foreground/50">
+                                        Sem resp.
                                       </span>
                                     )}
                                   </div>
                                 </div>
+
+                                {/* Delete — hover */}
+                                {onDelete && (
+                                  <div
+                                    className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100"
+                                    onClick={(e) => e.stopPropagation()}
+                                  >
+                                    <ConfirmDeleteDialog onConfirm={() => onDelete(ticket.id)} />
+                                  </div>
+                                )}
                               </div>
-                            );
-                          }}
-                        </Draggable>
-                      ))}
+                            )}
+                          </Draggable>
+                        );
+                      })}
                       {provided.placeholder}
 
                       {columnTickets.length === 0 && !snapshot.isDraggingOver && (
