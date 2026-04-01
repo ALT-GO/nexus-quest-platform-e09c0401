@@ -29,7 +29,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, Check, X, Plus, Trash2, CalendarIcon, MessageSquare, History, Send } from "lucide-react";
+import { AlertTriangle, Check, X, Plus, Trash2, CalendarIcon, MessageSquare, History, Send, Repeat } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { ptBR } from "date-fns/locale";
 import {
@@ -504,6 +505,73 @@ export function MarketingTaskDetailSheet({
                 </Button>
               </div>
             </div>
+
+            {/* Recurrence */}
+            <div className="flex items-center justify-between rounded-lg border p-3">
+              <div className="flex items-center gap-2">
+                <Repeat className="h-4 w-4 text-muted-foreground" />
+                <div>
+                  <Label className="text-sm font-medium">Tarefa Recorrente</Label>
+                  <p className="text-xs text-muted-foreground">
+                    {task.is_recurring && task.recurrence_rule
+                      ? `${task.recurrence_rule === 'daily' ? 'Diária' : task.recurrence_rule === 'weekly' ? 'Semanal' : 'Mensal'}`
+                      : 'Desativada'}
+                  </p>
+                </div>
+              </div>
+              <Switch
+                checked={task.is_recurring}
+                onCheckedChange={(checked) => {
+                  const rule = task.recurrence_rule || 'weekly';
+                  let nextDate: string | null = null;
+                  if (checked) {
+                    const base = task.due_date ? new Date(task.due_date) : new Date();
+                    const next = new Date(base);
+                    if (rule === 'daily') next.setDate(next.getDate() + 1);
+                    else if (rule === 'weekly') next.setDate(next.getDate() + 7);
+                    else next.setMonth(next.getMonth() + 1);
+                    nextDate = next.toISOString();
+                  }
+                  updateTask.mutate({
+                    id: task.id,
+                    is_recurring: checked,
+                    recurrence_rule: checked ? rule : null,
+                    next_recurrence_date: nextDate,
+                  } as any);
+                  logHistory("Recorrência", checked ? "Ativada" : "Desativada");
+                }}
+              />
+            </div>
+            {task.is_recurring && (
+              <div>
+                <Label className="text-xs text-muted-foreground">Frequência</Label>
+                <Select
+                  value={task.recurrence_rule || "weekly"}
+                  onValueChange={(val) => {
+                    const base = task.due_date ? new Date(task.due_date) : new Date();
+                    const next = new Date(base);
+                    if (val === 'daily') next.setDate(next.getDate() + 1);
+                    else if (val === 'weekly') next.setDate(next.getDate() + 7);
+                    else next.setMonth(next.getMonth() + 1);
+                    updateTask.mutate({
+                      id: task.id,
+                      recurrence_rule: val,
+                      next_recurrence_date: next.toISOString(),
+                    } as any);
+                    logHistory("Frequência de recorrência", `Alterada para ${val === 'daily' ? 'Diária' : val === 'weekly' ? 'Semanal' : 'Mensal'}`);
+                  }}
+                >
+                  <SelectTrigger className="mt-1 w-48">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="daily">Diária</SelectItem>
+                    <SelectItem value="weekly">Semanal</SelectItem>
+                    <SelectItem value="monthly">Mensal</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Requester */}
             <div>

@@ -444,9 +444,12 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          is_recurring: boolean
+          next_recurrence_date: string | null
           order_index: number
           priority: string
           progress: string
+          recurrence_rule: string | null
           requester_id: string | null
           requester_name: string
           stage_id: string | null
@@ -462,9 +465,12 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          is_recurring?: boolean
+          next_recurrence_date?: string | null
           order_index?: number
           priority?: string
           progress?: string
+          recurrence_rule?: string | null
           requester_id?: string | null
           requester_name?: string
           stage_id?: string | null
@@ -480,9 +486,12 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          is_recurring?: boolean
+          next_recurrence_date?: string | null
           order_index?: number
           priority?: string
           progress?: string
+          recurrence_rule?: string | null
           requester_id?: string | null
           requester_name?: string
           stage_id?: string | null
