@@ -126,11 +126,23 @@ export function useCollaboratorDetail(name: string) {
   }, [fetchDetail]);
 
   const updateAsset = useCallback(async (id: string, updates: Partial<CollaboratorAsset>) => {
-    await supabase.from("inventory").update({
+    const finalUpdates: Record<string, any> = {
       ...updates,
       updated_at: new Date().toISOString(),
-    } as any).eq("id", id);
-    setAssets((prev) => prev.map((a) => (a.id === id ? { ...a, ...updates } : a)));
+    };
+
+    // Auto-fill data_bloqueio when marking license as Inativo
+    if ((updates as any).status === "Inativo") {
+      finalUpdates.data_bloqueio = new Date().toISOString().split("T")[0];
+    }
+    if ((updates as any).status === "Ativo") {
+      finalUpdates.data_bloqueio = null;
+    }
+
+    const { error } = await supabase.from("inventory").update(finalUpdates as any).eq("id", id);
+    if (!error) {
+      setAssets((prev) => prev.map((a) => (a.id === id ? { ...a, ...finalUpdates } : a)));
+    }
   }, []);
 
   const deleteAsset = useCallback(async (id: string) => {
