@@ -790,10 +790,7 @@ export function TicketDetailSheet({
               const progressPercent = items.length > 0 ? Math.round((checkedCount / items.length) * 100) : 0;
 
               const updateChecklist = async (updated: ChecklistItem[]) => {
-                await supabase
-                  .from("tickets")
-                  .update({ checklist: JSON.stringify(updated), updated_at: new Date().toISOString() } as any)
-                  .eq("id", ticket.id as any);
+                await onUpdateTicket(ticket.id, { checklist: updated } as any);
               };
 
               const toggleItem = async (idx: number) => {

@@ -96,9 +96,13 @@ export function useTickets() {
 
   const updateTicket = useCallback(
     async (id: string, updates: Partial<Omit<Ticket, "id" | "created_at">>) => {
+      const dbUpdates: any = { ...updates, updated_at: new Date().toISOString() };
+      if (dbUpdates.checklist && Array.isArray(dbUpdates.checklist)) {
+        dbUpdates.checklist = JSON.stringify(dbUpdates.checklist);
+      }
       const { error } = await supabase
         .from("tickets")
-        .update({ ...updates, updated_at: new Date().toISOString() } as any)
+        .update(dbUpdates)
         .eq("id", id as any);
 
       if (error) {
