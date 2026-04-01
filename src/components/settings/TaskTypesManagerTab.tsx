@@ -38,7 +38,6 @@ export function TaskTypesManagerTab() {
   const [icon, setIcon] = useState("clipboard-list");
   const [color, setColor] = useState("262 83% 58%");
   const [checklistTemplate, setChecklistTemplate] = useState("");
-  const [deleteId, setDeleteId] = useState<string | null>(null);
 
   const openNew = () => {
     setEditing(null);
