@@ -33,7 +33,8 @@ export async function sendNotification(params: {
 }
 
 /**
- * Send a notification to all users with TI or Admin roles.
+ * Send a notification to all users with TI or Admin roles
+ * using a SECURITY DEFINER function to bypass RLS on user_roles.
  */
 export async function notifyTITeam(params: {
   title: string;
@@ -43,22 +44,17 @@ export async function notifyTITeam(params: {
   excludeUserId?: string;
 }) {
   try {
-    // Get all user IDs with 'ti' or 'admin' role
-    const { data: roles } = await supabase
-      .from("user_roles")
-      .select("user_id, role")
-      .in("role", ["ti", "admin"] as any[]);
+    const { data: userIds } = await supabase.rpc("get_ti_admin_user_ids" as any);
 
-    if (!roles || roles.length === 0) return;
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) return;
 
-    // Deduplicate user IDs
-    const userIds = [...new Set(roles.map((r) => r.user_id))].filter(
-      (id) => id !== params.excludeUserId
-    );
+    const filtered = params.excludeUserId
+      ? userIds.filter((id: string) => id !== params.excludeUserId)
+      : userIds;
 
-    if (userIds.length === 0) return;
+    if (filtered.length === 0) return;
 
-    const notifications = userIds.map((uid) => ({
+    const notifications = filtered.map((uid: string) => ({
       user_id: uid,
       title: params.title,
       message: params.message,
