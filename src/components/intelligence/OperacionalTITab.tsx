@@ -241,11 +241,16 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     return dayLabels.map((label, i) => ({ name: label, chamados: counts[i] }));
   }, [filtered]);
 
+  // Filter inventory by cost center AND date range
   const filteredInv = useMemo(() => {
-    if (costCenter === "all") return inventoryItems;
-    if (costCenter === "eng") return inventoryItems.filter((i) => i.cost_center_eng && i.cost_center_eng.trim() !== "");
-    return inventoryItems.filter((i) => i.cost_center_man && i.cost_center_man.trim() !== "");
-  }, [inventoryItems, costCenter]);
+    let items = inventoryItems.filter((i) => {
+      const created = new Date(i.created_at);
+      return created >= dateRange.start && created <= dateRange.end;
+    });
+    if (costCenter === "eng") items = items.filter((i) => i.cost_center_eng && i.cost_center_eng.trim() !== "");
+    else if (costCenter === "man") items = items.filter((i) => i.cost_center_man && i.cost_center_man.trim() !== "");
+    return items;
+  }, [inventoryItems, costCenter, dateRange]);
 
   const assetsDisponivel = filteredInv.filter((a) => a.status === "Disponível").length;
   const assetsManutencao = filteredInv.filter((a) => a.status === "Manutenção").length;
