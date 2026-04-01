@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { slaByCategory } from "@/hooks/use-sla";
 import { logAuditEvent } from "@/lib/audit";
 import { toast } from "sonner";
+import { sendNotification } from "@/lib/notifications";
 
 export interface ChecklistItem {
   text: string;
