@@ -1,11 +1,24 @@
 import { useMemo, useCallback, useState, useEffect, useRef } from "react";
-import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { StatusBadge } from "@/components/ui/status-badge";
-import { GripVertical, Trash2, CheckSquare, CalendarIcon, Timer, Diamond, Lock } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  GripVertical,
+  Trash2,
+  CheckSquare,
+  CalendarIcon,
+  Timer,
+  Diamond,
+  Lock,
+  Plus,
+  Flag,
+  ChevronDown,
+  ChevronRight,
+  MessageSquare,
+} from "lucide-react";
 import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
 import { useMarketingTaskTypes } from "@/hooks/use-task-types";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { fetchMarketingTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
 import { format, isToday, isBefore, startOfDay } from "date-fns";
 import {
@@ -13,6 +26,7 @@ import {
   MarketingTask,
   useUpdateMarketingTask,
   useDeleteMarketingTask,
+  useCreateMarketingTask,
 } from "@/hooks/use-marketing";
 import {
   DragDropContext,
@@ -25,10 +39,16 @@ import { useQueryClient } from "@tanstack/react-query";
 import { MarketingTimerButton } from "./MarketingTimerButton";
 import { notifyAdminsForApproval } from "@/lib/marketing-notifications";
 import { useAuth } from "@/hooks/use-auth";
-import { useAllTaskTags, MarketingTag } from "@/hooks/use-marketing-tags";
+import { useAllTaskTags } from "@/hooks/use-marketing-tags";
 import { useTaskDependencies, isTaskBlocked } from "@/hooks/use-dependencies";
-import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+  TooltipProvider,
+} from "@/components/ui/tooltip";
 import { toast } from "sonner";
+import { cn } from "@/lib/utils";
 
 interface Props {
   stages: MarketingStage[];
@@ -37,28 +57,24 @@ interface Props {
   filterTagIds?: string[];
 }
 
-const metaStatusColors: Record<string, string> = {
-  unstarted: "bg-muted text-muted-foreground",
-  in_progress: "bg-blue-500/10 text-blue-700 dark:text-blue-400",
-  pending_approval: "bg-amber-500/10 text-amber-700 dark:text-amber-400",
-  completed: "bg-green-500/10 text-green-700 dark:text-green-400",
+// ClickUp-style meta status colors
+const metaStatusDot: Record<string, string> = {
+  unstarted: "bg-muted-foreground/50",
+  in_progress: "bg-primary",
+  pending_approval: "bg-warning",
+  completed: "bg-success",
 };
 
-const priorityLabels: Record<string, string> = {
-  low: "Baixa",
-  medium: "Média",
-  high: "Alta",
-};
-
-const progressDot: Record<string, string> = {
-  "Não iniciado": "bg-muted-foreground",
-  "Em andamento": "bg-blue-500",
-  "Concluído": "bg-green-500",
+const priorityConfig: Record<string, { label: string; color: string }> = {
+  high: { label: "Urgente", color: "text-destructive" },
+  medium: { label: "Média", color: "text-warning" },
+  low: { label: "Baixa", color: "text-muted-foreground" },
 };
 
 export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Props) {
   const updateTask = useUpdateMarketingTask();
   const deleteTask = useDeleteMarketingTask();
+  const createTask = useCreateMarketingTask();
   const qc = useQueryClient();
   const { user } = useAuth();
   const { data: allTaskTags } = useAllTaskTags();
@@ -66,30 +82,30 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
   const { data: allDeps } = useTaskDependencies();
   const { data: taskTypes } = useMarketingTaskTypes();
 
-  // Build progress map for blocked checks
+  // Quick-add state per column
+  const [quickAddStageId, setQuickAddStageId] = useState<string | null>(null);
+  const [quickAddTitle, setQuickAddTitle] = useState("");
+
+  // Expanded subtask cards
+  const [expandedSubtasks, setExpandedSubtasks] = useState<Set<string>>(new Set());
+
   const progressMap = useMemo(() => {
     const map: Record<string, string> = {};
     tasks.forEach((t) => { map[t.id] = t.progress; });
     return map;
   }, [tasks]);
-  // Fetch timesheet totals for all tasks - auto-refresh every 30s
+
   const refreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
     const ids = tasks.map((t) => t.id);
-    if (ids.length > 0) {
-      fetchMarketingTimesheetTotals(ids).then(setTimesheetTotals);
-    }
-    // Refresh periodically to keep in sync with running timers
+    if (ids.length > 0) fetchMarketingTimesheetTotals(ids).then(setTimesheetTotals);
     refreshRef.current = setInterval(() => {
       const taskIds = tasks.map((t) => t.id);
-      if (taskIds.length > 0) {
-        fetchMarketingTimesheetTotals(taskIds).then(setTimesheetTotals);
-      }
+      if (taskIds.length > 0) fetchMarketingTimesheetTotals(taskIds).then(setTimesheetTotals);
     }, 30000);
     return () => { if (refreshRef.current) clearInterval(refreshRef.current); };
   }, [tasks]);
 
-  // Filter tasks by tags if filter is active
   const filteredTasks = useMemo(() => {
     if (!filterTagIds || filterTagIds.length === 0) return tasks;
     return tasks.filter((t) => {
@@ -104,9 +120,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
     filteredTasks.forEach((t) => {
       if (t.stage_id && map[t.stage_id]) map[t.stage_id].push(t);
     });
-    Object.values(map).forEach((arr) =>
-      arr.sort((a, b) => a.order_index - b.order_index)
-    );
+    Object.values(map).forEach((arr) => arr.sort((a, b) => a.order_index - b.order_index));
     return map;
   }, [stages, filteredTasks]);
 
@@ -124,11 +138,10 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
       const [movedTask] = sourceItems.splice(source.index, 1);
       if (!movedTask) return;
 
-      // Block moving to completed stage if task has unresolved dependencies
       if (sourceStageId !== destStageId) {
         const destStage = stages.find((s) => s.id === destStageId);
         if (destStage?.meta_status === "completed" && allDeps && isTaskBlocked(movedTask.id, allDeps, progressMap)) {
-          toast.error("Esta tarefa possui dependências não concluídas. Resolva-as antes de mover para Concluído.");
+          toast.error("Esta tarefa possui dependências não concluídas.");
           return;
         }
       }
@@ -139,7 +152,6 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
         destItems.splice(destination.index, 0, movedTask);
       }
 
-      // Optimistic update
       const updatedTasks = tasks.map((t) => ({ ...t }));
       const updateOrderForList = (list: MarketingTask[], stageId: string) => {
         list.forEach((item, idx) => {
@@ -168,182 +180,327 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
       );
       qc.invalidateQueries({ queryKey: ["marketing_tasks"] });
 
-      // Check if moved to a pending_approval stage and notify admins
       if (sourceStageId !== destStageId) {
         const destStage = stages.find((s) => s.id === destStageId);
         if (destStage?.meta_status === "pending_approval") {
-          notifyAdminsForApproval({
-            taskTitle: movedTask.title,
-            taskId: movedTask.id,
-            excludeUserId: user?.id,
-          });
+          notifyAdminsForApproval({ taskTitle: movedTask.title, taskId: movedTask.id, excludeUserId: user?.id });
         }
       }
     },
     [tasksByStage, tasks, qc, stages, user, allDeps, progressMap]
   );
 
+  const handleQuickAdd = async (stageId: string) => {
+    if (!quickAddTitle.trim()) return;
+    createTask.mutate({
+      title: quickAddTitle.trim(),
+      stage_id: stageId,
+      priority: "medium",
+      progress: "Não iniciado",
+      requester_name: "",
+      order_index: (tasksByStage[stageId]?.length || 0),
+    } as any);
+    setQuickAddTitle("");
+    setQuickAddStageId(null);
+  };
+
+  // Count checklist items (supports grouped and flat)
+  const getChecklistCount = (raw: any): { total: number; done: number } => {
+    const arr = Array.isArray(raw) ? raw : [];
+    if (arr.length === 0) return { total: 0, done: 0 };
+    let total = 0, done = 0;
+    const countFlat = (items: any[]) => {
+      for (const i of items) {
+        total++; if (i.completed) done++;
+        if (Array.isArray(i.children)) countFlat(i.children);
+      }
+    };
+    if (arr[0]?.items) {
+      for (const g of arr) countFlat(Array.isArray(g.items) ? g.items : []);
+    } else {
+      countFlat(arr);
+    }
+    return { total, done };
+  };
+
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
-      <div className="flex gap-4 overflow-x-auto pb-4">
-        {stages.map((stage) => (
-          <div key={stage.id} className="min-w-[280px] max-w-[320px] flex-shrink-0">
-            <div className={`rounded-t-lg px-3 py-2 flex items-center justify-between ${metaStatusColors[stage.meta_status] || "bg-muted"}`}>
-              <span className="font-semibold text-sm">{stage.name}</span>
-              <Badge variant="secondary" className="text-xs">{tasksByStage[stage.id]?.length ?? 0}</Badge>
-            </div>
-            <Droppable droppableId={stage.id}>
-              {(provided, snapshot) => (
-                <div
-                  ref={provided.innerRef}
-                  {...provided.droppableProps}
-                  className={`space-y-2 rounded-b-lg border border-t-0 p-2 min-h-[200px] transition-colors ${snapshot.isDraggingOver ? "bg-accent/40" : "bg-muted/30"}`}
-                >
-                  {(tasksByStage[stage.id] ?? []).map((task, index) => (
-                    <Draggable key={task.id} draggableId={task.id} index={index}>
-                      {(dragProvided, dragSnapshot) => {
-                        const blocked = allDeps ? isTaskBlocked(task.id, allDeps, progressMap) : false;
-                        const blockingTaskNames = blocked && allDeps
-                          ? allDeps
-                              .filter((d) => d.task_id === task.id && d.dependency_type === "waiting_on" && progressMap[d.depends_on_task_id] !== "Concluído")
-                              .map((d) => tasks.find((t) => t.id === d.depends_on_task_id)?.title || "?")
-                          : [];
-                        return (
-                        <Card
-                          ref={dragProvided.innerRef}
-                          {...dragProvided.draggableProps}
-                          className={`transition-shadow ${dragSnapshot.isDragging ? "shadow-lg ring-2 ring-primary/30" : "hover:shadow-md"} ${task.is_milestone ? "border-l-4 border-l-amber-500 bg-amber-50/30 dark:bg-amber-950/10" : ""} ${blocked ? "opacity-75 border-dashed" : ""}`}
-                        >
-                          <CardContent className="p-3 space-y-2">
-                            <div className="flex items-start justify-between gap-2">
-                              <div {...dragProvided.dragHandleProps} className="mt-0.5 cursor-grab active:cursor-grabbing">
-                                <GripVertical className="h-4 w-4 text-muted-foreground" />
-                              </div>
-                              <p className={`text-sm flex-1 cursor-pointer hover:text-primary flex items-center gap-1.5 ${task.is_milestone ? "font-bold" : "font-medium"}`} onClick={() => onTaskClick?.(task)}>
-                                {(() => {
-                                  const tt = task.task_type_id && taskTypes ? taskTypes.find(t => t.id === task.task_type_id) : null;
-                                  return tt ? <DynamicLucideIcon name={tt.icon} className="h-3.5 w-3.5 shrink-0" style={{ color: `hsl(${tt.color})` }} /> : null;
-                                })()}
-                                {task.is_milestone && <Diamond className="h-3.5 w-3.5 text-amber-500 shrink-0 fill-amber-500" />}
-                                {blocked && (
-                                  <TooltipProvider>
-                                    <Tooltip>
-                                      <TooltipTrigger asChild>
-                                        <Lock className="h-3.5 w-3.5 text-amber-500 shrink-0" />
-                                      </TooltipTrigger>
-                                      <TooltipContent side="top" className="max-w-[200px]">
-                                        <p className="text-xs font-medium">Bloqueada por:</p>
-                                        {blockingTaskNames.map((n, i) => (
-                                          <p key={i} className="text-xs">• {n}</p>
-                                        ))}
-                                      </TooltipContent>
-                                    </Tooltip>
-                                  </TooltipProvider>
-                                )}
-                                {task.title}
-                              </p>
-                              <MarketingTimerButton taskId={task.id} size="card" />
-                              <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => deleteTask.mutate(task.id)}>
-                                <Trash2 className="h-3 w-3" />
-                              </Button>
-                            </div>
-                            <div className="flex items-center gap-2 flex-wrap">
-                              <StatusBadge variant={task.priority as any}>
-                                {priorityLabels[task.priority] || task.priority}
-                              </StatusBadge>
-                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                <span className={`inline-block h-2.5 w-2.5 rounded-full ${progressDot[task.progress] || "bg-muted-foreground"}`} />
-                                {task.progress}
-                              </div>
-                            </div>
-                            {/* Tag badges */}
-                            {allTaskTags?.[task.id] && allTaskTags[task.id].length > 0 && (
-                              <div className="flex items-center gap-1 flex-wrap">
-                                {allTaskTags[task.id].map((tag) => (
-                                  <span
-                                    key={tag.id}
-                                    className="inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white"
-                                    style={{ backgroundColor: `hsl(${tag.color})` }}
-                                  >
-                                    {tag.name}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                            {(task as any).story_points > 0 && (
-                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
-                                {(task as any).story_points} pts
-                              </Badge>
-                            )}
-                            {task.assignee_name && (
-                              <p className="text-xs text-muted-foreground">👤 {task.assignee_name}</p>
-                            )}
-                            {(() => {
-                              const raw: any[] = Array.isArray(task.checklist) ? task.checklist : [];
-                              if (raw.length === 0) return null;
-                              // Support grouped and flat formats
-                              let total = 0, done = 0;
-                              const countFlat = (items: any[]) => {
-                                for (const i of items) {
-                                  total++; if (i.completed) done++;
-                                  if (Array.isArray(i.children)) countFlat(i.children);
-                                }
-                              };
-                              if (raw[0]?.items) {
-                                for (const g of raw) countFlat(Array.isArray(g.items) ? g.items : []);
-                              } else {
-                                countFlat(raw);
-                              }
-                              if (total === 0) return null;
-                              return (
-                                <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                                  <CheckSquare className="h-3 w-3" />
-                                  <span className={done === total ? "text-green-600 dark:text-green-400 font-medium" : ""}>
-                                    {done}/{total}
-                                  </span>
-                                </div>
-                              );
-                            })()}
-                            {/* Time estimate vs actual */}
-                            {task.time_estimate_minutes && task.time_estimate_minutes > 0 && (() => {
-                              const estimateSec = task.time_estimate_minutes * 60;
-                              const actualSec = timesheetTotals[task.id] || 0;
-                              const overBudget = actualSec > estimateSec;
-                              const fmtMinutes = (sec: number) => {
-                                const h = Math.floor(sec / 3600);
-                                const m = Math.floor((sec % 3600) / 60);
-                                return h > 0 ? `${h}h${m > 0 ? m + 'm' : ''}` : `${m}m`;
-                              };
-                              return (
-                                <div className={`flex items-center gap-1 text-xs ${overBudget ? "text-destructive font-medium" : "text-muted-foreground"}`}>
-                                  <Timer className="h-3 w-3" />
-                                  {fmtMinutes(actualSec)} / {fmtMinutes(estimateSec)}
-                                </div>
-                              );
-                            })()}
-                            {task.due_date && (() => {
-                              const due = new Date(task.due_date);
-                              const overdue = task.progress !== "Concluído" && isBefore(due, startOfDay(new Date()));
-                              const dueToday = task.progress !== "Concluído" && isToday(due);
-                              return (
-                                <div className={`flex items-center gap-1 text-xs ${overdue ? "text-destructive font-medium" : dueToday ? "text-warning font-medium" : "text-muted-foreground"}`}>
-                                  <CalendarIcon className="h-3 w-3" />
-                                  {format(due, "dd/MM")}
-                                </div>
-                              );
-                            })()}
-                          </CardContent>
-                        </Card>
-                        );
-                      }}
-                    </Draggable>
-                  ))}
-                  {provided.placeholder}
+      <div className="overflow-x-auto pb-4 -mx-2 px-2 h-[calc(100vh-280px)]">
+        <div className="flex gap-3 min-w-max h-full">
+          {stages.map((stage) => {
+            const columnTasks = tasksByStage[stage.id] ?? [];
+            const isAdding = quickAddStageId === stage.id;
+
+            return (
+              <div key={stage.id} className="w-[280px] shrink-0 flex flex-col h-full">
+                {/* Column Header — ClickUp style */}
+                <div className="flex items-center gap-2 px-2 py-2.5 mb-1">
+                  <div
+                    className={cn("h-2.5 w-2.5 rounded-full shrink-0", metaStatusDot[stage.meta_status] || "bg-muted-foreground")}
+                  />
+                  <h3 className="text-sm font-semibold truncate">{stage.name}</h3>
+                  <span className="text-xs text-muted-foreground font-medium tabular-nums">
+                    {columnTasks.length}
+                  </span>
+                  <div className="flex-1" />
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-6 w-6 text-muted-foreground hover:text-foreground"
+                    onClick={() => { setQuickAddStageId(stage.id); setQuickAddTitle(""); }}
+                  >
+                    <Plus className="h-3.5 w-3.5" />
+                  </Button>
                 </div>
-              )}
-            </Droppable>
-          </div>
-        ))}
+
+                {/* Column Body */}
+                <Droppable droppableId={stage.id}>
+                  {(provided, snapshot) => (
+                    <div
+                      ref={provided.innerRef}
+                      {...provided.droppableProps}
+                      className={cn(
+                        "flex-1 overflow-y-auto space-y-2 rounded-lg p-1.5 transition-colors min-h-[80px]",
+                        snapshot.isDraggingOver ? "bg-accent/40" : ""
+                      )}
+                    >
+                      {columnTasks.map((task, index) => (
+                        <Draggable key={task.id} draggableId={task.id} index={index}>
+                          {(dragProvided, dragSnapshot) => {
+                            const blocked = allDeps ? isTaskBlocked(task.id, allDeps, progressMap) : false;
+                            const blockingNames = blocked && allDeps
+                              ? allDeps
+                                  .filter((d) => d.task_id === task.id && d.dependency_type === "waiting_on" && progressMap[d.depends_on_task_id] !== "Concluído")
+                                  .map((d) => tasks.find((t) => t.id === d.depends_on_task_id)?.title || "?")
+                              : [];
+                            const taskType = task.task_type_id && taskTypes ? taskTypes.find(t => t.id === task.task_type_id) : null;
+                            const tags = allTaskTags?.[task.id] || [];
+                            const { total: clTotal, done: clDone } = getChecklistCount(task.checklist);
+                            const priority = priorityConfig[task.priority] || priorityConfig.medium;
+
+                            return (
+                              <div
+                                ref={dragProvided.innerRef}
+                                {...dragProvided.draggableProps}
+                                className={cn(
+                                  "group relative rounded-lg border bg-card shadow-sm transition-all hover:shadow-md cursor-pointer overflow-hidden",
+                                  dragSnapshot.isDragging && "shadow-lg ring-2 ring-primary/20 rotate-[1deg]",
+                                  task.is_milestone && "border-l-[3px] border-l-warning",
+                                  blocked && "opacity-70 border-dashed"
+                                )}
+                                onClick={() => onTaskClick?.(task)}
+                              >
+                                {/* Card Content */}
+                                <div className="p-3 space-y-2.5">
+                                  {/* Title row */}
+                                  <div className="flex items-start gap-1.5">
+                                    <div
+                                      {...dragProvided.dragHandleProps}
+                                      className="mt-0.5 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing shrink-0"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50" />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <p className={cn(
+                                        "text-sm leading-snug break-words line-clamp-2",
+                                        task.is_milestone ? "font-bold" : "font-medium"
+                                      )}>
+                                        {task.is_milestone && <Diamond className="inline h-3 w-3 text-warning fill-warning mr-1 -mt-0.5" />}
+                                        {blocked && (
+                                          <TooltipProvider>
+                                            <Tooltip>
+                                              <TooltipTrigger asChild>
+                                                <Lock className="inline h-3 w-3 text-warning mr-1 -mt-0.5" />
+                                              </TooltipTrigger>
+                                              <TooltipContent side="top" className="max-w-[200px]">
+                                                <p className="text-xs font-medium">Bloqueada por:</p>
+                                                {blockingNames.map((n, i) => <p key={i} className="text-xs">• {n}</p>)}
+                                              </TooltipContent>
+                                            </Tooltip>
+                                          </TooltipProvider>
+                                        )}
+                                        {task.title}
+                                      </p>
+                                    </div>
+                                  </div>
+
+                                  {/* Tags */}
+                                  {tags.length > 0 && (
+                                    <div className="flex items-center gap-1 flex-wrap">
+                                      {tags.map((tag) => (
+                                        <span
+                                          key={tag.id}
+                                          className="inline-block rounded px-1.5 py-0.5 text-[10px] font-medium text-white leading-none"
+                                          style={{ backgroundColor: `hsl(${tag.color})` }}
+                                        >
+                                          {tag.name}
+                                        </span>
+                                      ))}
+                                    </div>
+                                  )}
+
+                                  {/* Bottom row — ClickUp style icon bar */}
+                                  <div className="flex items-center gap-2 flex-wrap text-muted-foreground">
+                                    {/* Task type icon */}
+                                    {taskType && (
+                                      <DynamicLucideIcon
+                                        name={taskType.icon}
+                                        className="h-3.5 w-3.5 shrink-0"
+                                        style={{ color: `hsl(${taskType.color})` }}
+                                      />
+                                    )}
+
+                                    {/* Status badge */}
+                                    <span className={cn(
+                                      "text-[10px] font-medium rounded px-1.5 py-0.5 leading-none",
+                                      task.progress === "Concluído"
+                                        ? "bg-success/15 text-success"
+                                        : task.progress === "Em andamento"
+                                        ? "bg-primary/15 text-primary"
+                                        : "bg-muted text-muted-foreground"
+                                    )}>
+                                      {task.progress}
+                                    </span>
+
+                                    {/* Assignee avatars */}
+                                    {task.assignee_name && (
+                                      <UserAvatar
+                                        name={task.assignee_name}
+                                        className="h-5 w-5"
+                                        fallbackClassName="text-[9px]"
+                                      />
+                                    )}
+
+                                    {/* Due date */}
+                                    {task.due_date && (() => {
+                                      const due = new Date(task.due_date);
+                                      const overdue = task.progress !== "Concluído" && isBefore(due, startOfDay(new Date()));
+                                      const dueToday = task.progress !== "Concluído" && isToday(due);
+                                      return (
+                                        <span className={cn(
+                                          "flex items-center gap-0.5 text-[11px]",
+                                          overdue ? "text-destructive font-medium" : dueToday ? "text-warning font-medium" : ""
+                                        )}>
+                                          <CalendarIcon className="h-3 w-3" />
+                                          {format(due, "dd/MM")}
+                                        </span>
+                                      );
+                                    })()}
+
+                                    {/* Priority flag */}
+                                    <Flag className={cn("h-3 w-3", priority.color)} />
+
+                                    {/* Story points */}
+                                    {(task as any).story_points > 0 && (
+                                      <span className="text-[10px] font-medium bg-secondary rounded px-1 py-0.5">
+                                        {(task as any).story_points}pt
+                                      </span>
+                                    )}
+
+                                    {/* Timer */}
+                                    {task.time_estimate_minutes && task.time_estimate_minutes > 0 && (() => {
+                                      const estimateSec = task.time_estimate_minutes * 60;
+                                      const actualSec = timesheetTotals[task.id] || 0;
+                                      const overBudget = actualSec > estimateSec;
+                                      const fmtMin = (sec: number) => {
+                                        const h = Math.floor(sec / 3600);
+                                        const m = Math.floor((sec % 3600) / 60);
+                                        return h > 0 ? `${h}h${m > 0 ? m + "m" : ""}` : `${m}m`;
+                                      };
+                                      return (
+                                        <span className={cn("flex items-center gap-0.5 text-[11px]", overBudget && "text-destructive font-medium")}>
+                                          <Timer className="h-3 w-3" />
+                                          {fmtMin(actualSec)}/{fmtMin(estimateSec)}
+                                        </span>
+                                      );
+                                    })()}
+                                  </div>
+
+                                  {/* Subtasks count — ClickUp expandable style */}
+                                  {clTotal > 0 && (
+                                    <button
+                                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setExpandedSubtasks((prev) => {
+                                          const next = new Set(prev);
+                                          next.has(task.id) ? next.delete(task.id) : next.add(task.id);
+                                          return next;
+                                        });
+                                      }}
+                                    >
+                                      <CheckSquare className="h-3 w-3" />
+                                      <span className={cn(clDone === clTotal && "text-success font-medium")}>
+                                        {clDone}/{clTotal} subtarefas
+                                      </span>
+                                      {expandedSubtasks.has(task.id) ? (
+                                        <ChevronDown className="h-3 w-3" />
+                                      ) : (
+                                        <ChevronRight className="h-3 w-3" />
+                                      )}
+                                    </button>
+                                  )}
+                                </div>
+
+                                {/* Card actions — visible on hover */}
+                                <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 flex gap-0.5">
+                                  <MarketingTimerButton taskId={task.id} size="card" />
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-6 w-6 text-muted-foreground hover:text-destructive bg-card/80 backdrop-blur-sm"
+                                    onClick={(e) => { e.stopPropagation(); deleteTask.mutate(task.id); }}
+                                  >
+                                    <Trash2 className="h-3 w-3" />
+                                  </Button>
+                                </div>
+                              </div>
+                            );
+                          }}
+                        </Draggable>
+                      ))}
+                      {provided.placeholder}
+
+                      {/* Quick Add Task — ClickUp style */}
+                      {isAdding ? (
+                        <div className="rounded-lg border bg-card p-2.5 space-y-2" onClick={(e) => e.stopPropagation()}>
+                          <Input
+                            autoFocus
+                            placeholder="Nome da tarefa..."
+                            value={quickAddTitle}
+                            onChange={(e) => setQuickAddTitle(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === "Enter") handleQuickAdd(stage.id);
+                              if (e.key === "Escape") setQuickAddStageId(null);
+                            }}
+                            className="h-8 text-sm"
+                          />
+                          <div className="flex gap-1.5">
+                            <Button size="sm" className="h-7 text-xs" onClick={() => handleQuickAdd(stage.id)} disabled={!quickAddTitle.trim()}>
+                              Criar
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-7 text-xs" onClick={() => setQuickAddStageId(null)}>
+                              Cancelar
+                            </Button>
+                          </div>
+                        </div>
+                      ) : (
+                        <button
+                          className="w-full text-left px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors flex items-center gap-1.5"
+                          onClick={() => { setQuickAddStageId(stage.id); setQuickAddTitle(""); }}
+                        >
+                          <Plus className="h-3.5 w-3.5" />
+                          Adicionar tarefa
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </Droppable>
+              </div>
+            );
+          })}
+        </div>
       </div>
     </DragDropContext>
   );
