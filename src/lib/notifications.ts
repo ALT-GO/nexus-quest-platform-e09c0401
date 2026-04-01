@@ -12,14 +12,13 @@ export async function sendNotification(params: {
   link?: string;
 }) {
   try {
-    // Look up user_id from profiles by full_name
     const { data: profile } = await supabase
       .from("profiles")
       .select("id")
       .eq("full_name", params.recipientName)
       .single();
 
-    if (!profile) return; // User not found, skip silently
+    if (!profile) return;
 
     await supabase.from("notifications" as any).insert({
       user_id: profile.id,
@@ -30,5 +29,41 @@ export async function sendNotification(params: {
     });
   } catch {
     // Silent fail — notifications should never break the app
+  }
+}
+
+/**
+ * Send a notification to all users with TI or Admin roles
+ * using a SECURITY DEFINER function to bypass RLS on user_roles.
+ */
+export async function notifyTITeam(params: {
+  title: string;
+  message: string;
+  type?: "info" | "warning" | "success" | "task_assigned";
+  link?: string;
+  excludeUserId?: string;
+}) {
+  try {
+    const { data: userIds } = await supabase.rpc("get_ti_admin_user_ids" as any);
+
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) return;
+
+    const filtered = params.excludeUserId
+      ? userIds.filter((id: string) => id !== params.excludeUserId)
+      : userIds;
+
+    if (filtered.length === 0) return;
+
+    const notifications = filtered.map((uid: string) => ({
+      user_id: uid,
+      title: params.title,
+      message: params.message,
+      type: params.type || "info",
+      link: params.link || null,
+    }));
+
+    await supabase.from("notifications" as any).insert(notifications);
+  } catch {
+    // Silent fail
   }
 }

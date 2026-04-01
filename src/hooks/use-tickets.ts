@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { slaByCategory } from "@/hooks/use-sla";
 import { logAuditEvent } from "@/lib/audit";
 import { toast } from "sonner";
+import { sendNotification } from "@/lib/notifications";
 
 export interface ChecklistItem {
   text: string;
@@ -246,9 +247,21 @@ export async function createTicket(data: {
     return { success: false };
   }
 
+  const ticketNumber = (result as any)?.ticket_number;
+  const ticketTitle = data.title || data.category;
+
+  // Notify all TI team members about the new ticket
+  const { notifyTITeam } = await import("@/lib/notifications");
+  notifyTITeam({
+    title: "Novo Chamado Aberto",
+    message: `${ticketNumber} — ${ticketTitle} (${data.category}) aberto por ${data.requester}.`,
+    type: "info",
+    link: "/ti/service-desk",
+  });
+
   return {
     success: true,
-    ticketNumber: (result as any)?.ticket_number,
+    ticketNumber,
     ticketId: (result as any)?.id,
   };
 }
@@ -291,6 +304,14 @@ export async function runTicketCreatedAutomations(
             .update({ assignee: actionConfig.assignee, updated_at: new Date().toISOString() } as any)
             .eq("id", ticketId as any);
           console.log(`[AUTOMAÇÃO] "${rule.name}": chamado atribuído a ${actionConfig.assignee}`);
+          // Notify the assignee
+          sendNotification({
+            recipientName: actionConfig.assignee,
+            title: "Nova Tarefa Atribuída",
+            message: `Você foi atribuído automaticamente a um chamado na categoria "${category}".`,
+            type: "task_assigned",
+            link: "/ti/service-desk",
+          });
         }
         break;
       case "change_priority":
