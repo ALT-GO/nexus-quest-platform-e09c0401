@@ -93,6 +93,7 @@ export default function Solicitacoes() {
     setFilterStage("all");
     setFilterTagIds([]);
     setFilterMilestoneOnly(false);
+    setFilterTaskType("all");
   };
 
   // Filter by sprint first, then by other filters
