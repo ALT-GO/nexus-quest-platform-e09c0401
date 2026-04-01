@@ -86,13 +86,14 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
 
   // Fetch inventory from Supabase
   useEffect(() => {
-    supabase.from("inventory").select("id, category, status, cost_center_eng, cost_center_man").then(({ data }) => {
+    const fields = "id, category, status, cost_center_eng, cost_center_man, operadora, valor_mensal, valor_pago, data_aquisicao";
+    supabase.from("inventory").select(fields).then(({ data }) => {
       if (data) setInventoryItems(data as InventoryItem[]);
     });
     const channel = supabase
       .channel("operacional-inventory-rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "inventory" }, () => {
-        supabase.from("inventory").select("id, category, status, cost_center_eng, cost_center_man").then(({ data }) => {
+        supabase.from("inventory").select(fields).then(({ data }) => {
           if (data) setInventoryItems(data as InventoryItem[]);
         });
       })
