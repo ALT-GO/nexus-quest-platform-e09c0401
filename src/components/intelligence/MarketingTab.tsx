@@ -314,7 +314,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {events.map((event) => (
+              {filteredEvents.map((event) => (
                 <TableRow key={event.id}>
                   <TableCell className="font-medium">{event.name}</TableCell>
                   <TableCell><span className="rounded-full bg-secondary px-2 py-1 text-xs">{event.category}</span></TableCell>
