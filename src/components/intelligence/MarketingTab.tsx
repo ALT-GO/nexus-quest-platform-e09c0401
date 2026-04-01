@@ -361,7 +361,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {proposals.map((p) => (
+              {filteredProposals.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.clientName}</TableCell>
                   <TableCell className="text-right">R$ {p.value.toLocaleString("pt-BR")}</TableCell>
