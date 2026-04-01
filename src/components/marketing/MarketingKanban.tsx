@@ -19,6 +19,8 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { MarketingTimerButton } from "./MarketingTimerButton";
+import { notifyAdminsForApproval } from "@/lib/marketing-notifications";
+import { useAuth } from "@/hooks/use-auth";
 
 interface Props {
   stages: MarketingStage[];
