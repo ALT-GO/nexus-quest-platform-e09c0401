@@ -82,12 +82,19 @@ export function MarketingTaskDetailSheet({
   onOpenChange,
 }: Props) {
   const updateTask = useUpdateMarketingTask();
-  const { user, profile, isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const qc = useQueryClient();
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [newChecklistItem, setNewChecklistItem] = useState("");
   const [commentText, setCommentText] = useState("");
+  const [profile, setProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).single()
+      .then(({ data }) => { if (data) setProfile(data); });
+  }, [user]);
 
   const { data: comments } = useMarketingComments(task?.id);
   const addComment = useAddMarketingComment();
