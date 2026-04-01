@@ -256,6 +256,54 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
       total: filteredInv.filter((i) => i.category === cat).length,
     }));
   }, [filteredInv]);
+
+  // ---- Financial: Custo por Operadora ----
+  const costByOperadora = useMemo(() => {
+    const linhas = filteredInv.filter((a) => a.category === "linhas" && a.operadora && a.operadora.trim() !== "");
+    const map: Record<string, number> = {};
+    linhas.forEach((a) => {
+      const op = a.operadora!.trim();
+      let normalized = op;
+      const lower = op.toLowerCase();
+      if (lower.includes("vivo")) normalized = "Vivo";
+      else if (lower.includes("claro")) normalized = "Claro";
+      else if (lower.includes("salvy") || lower.includes("salvi")) normalized = "Salvy";
+      else if (lower.includes("tim")) normalized = "TIM";
+      else if (lower.includes("oi")) normalized = "Oi";
+      const value = a.valor_mensal || 0;
+      if (value > 0) {
+        map[normalized] = (map[normalized] || 0) + value;
+      }
+    });
+    return Object.entries(map)
+      .map(([name, value], i) => ({ name, value: Math.round(value * 100) / 100, color: chartColors[i % chartColors.length] }))
+      .sort((a, b) => b.value - a.value);
+  }, [filteredInv]);
+
+  // ---- Financial: Depreciação Acumulada ----
+  const depreciationTotal = useMemo(() => {
+    const hardwareAssets = filteredInv.filter(
+      (a) => (a.category === "notebooks" || a.category === "celulares") && a.valor_pago && a.valor_pago > 0 && a.data_aquisicao
+    );
+    let totalDepreciation = 0;
+    let totalOriginal = 0;
+    hardwareAssets.forEach((a) => {
+      const result = calcDepreciation(a.valor_pago, a.data_aquisicao);
+      if (result) {
+        totalDepreciation += result.depreciacaoAcumulada;
+        totalOriginal += result.valorAquisicao;
+      }
+    });
+    return { totalDepreciation, totalOriginal, assetCount: hardwareAssets.length };
+  }, [filteredInv]);
+
+  // ---- Financial: Total valor mensal linhas ----
+  const totalValorMensal = useMemo(() => {
+    return filteredInv
+      .filter((a) => a.category === "linhas" && a.valor_mensal && a.valor_mensal > 0)
+      .reduce((sum, a) => sum + (a.valor_mensal || 0), 0);
+  }, [filteredInv]);
+
   const categories = useMemo(() => [...new Set(mainTickets.map((t) => t.category))], [mainTickets]);
 
   if (loading) {
