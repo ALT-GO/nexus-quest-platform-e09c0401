@@ -5,6 +5,12 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { useCreateMarketingTask, MarketingStage } from "@/hooks/use-marketing";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
@@ -35,6 +41,8 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
   const [priority, setPriority] = useState("medium");
   const [progress, setProgress] = useState("Não iniciado");
   const [assigneeId, setAssigneeId] = useState("");
+  const [startDate, setStartDate] = useState<Date | undefined>();
+  const [dueDate, setDueDate] = useState<Date | undefined>();
 
   const handleSubmit = () => {
     if (!title.trim()) return;
@@ -50,9 +58,12 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
       assignee_id: assigneeId || null,
       assignee_name: assignee?.name ?? "",
       order_index: 0,
-    }, {
+      start_date: startDate?.toISOString() ?? null,
+      due_date: dueDate?.toISOString() ?? null,
+    } as any, {
       onSuccess: () => {
         setTitle(""); setDescription(""); setStageId(""); setPriority("medium"); setProgress("Não iniciado"); setAssigneeId("");
+        setStartDate(undefined); setDueDate(undefined);
         onOpenChange(false);
       }
     });
@@ -119,6 +130,36 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <Label>Data de Início</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !startDate && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? format(startDate, "dd/MM/yyyy") : "Selecione"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={startDate} onSelect={setStartDate} locale={ptBR} initialFocus className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div>
+              <Label>Prazo Final</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-full justify-start text-left font-normal", !dueDate && "text-muted-foreground")}>
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {dueDate ? format(dueDate, "dd/MM/yyyy") : "Selecione"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={dueDate} onSelect={setDueDate} locale={ptBR} initialFocus className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
         </div>

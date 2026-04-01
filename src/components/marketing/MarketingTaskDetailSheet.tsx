@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +28,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, Check, X, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Check, X, Plus, Trash2, CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ptBR } from "date-fns/locale";
 import {
   MarketingStage,
   MarketingTask,
@@ -324,6 +328,52 @@ export function MarketingTaskDetailSheet({
                   ))}
                 </SelectContent>
               </Select>
+            </div>
+
+            {/* Dates */}
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <Label className="text-xs text-muted-foreground">Data de Início</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full mt-1 justify-start text-left font-normal text-sm", !task.start_date && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                      {task.start_date ? format(new Date(task.start_date), "dd/MM/yyyy") : "Selecione"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={task.start_date ? new Date(task.start_date) : undefined}
+                      onSelect={(d) => updateTask.mutate({ id: task.id, start_date: d?.toISOString() ?? null } as any)}
+                      locale={ptBR}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div>
+                <Label className="text-xs text-muted-foreground">Prazo Final</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button variant="outline" className={cn("w-full mt-1 justify-start text-left font-normal text-sm", !task.due_date && "text-muted-foreground")}>
+                      <CalendarIcon className="mr-2 h-3.5 w-3.5" />
+                      {task.due_date ? format(new Date(task.due_date), "dd/MM/yyyy") : "Selecione"}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="start">
+                    <Calendar
+                      mode="single"
+                      selected={task.due_date ? new Date(task.due_date) : undefined}
+                      onSelect={(d) => updateTask.mutate({ id: task.id, due_date: d?.toISOString() ?? null } as any)}
+                      locale={ptBR}
+                      initialFocus
+                      className="p-3 pointer-events-auto"
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
             </div>
 
             {/* Checklist / Subtarefas */}

@@ -3,7 +3,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { GripVertical, Trash2, CheckSquare } from "lucide-react";
+import { GripVertical, Trash2, CheckSquare, CalendarIcon } from "lucide-react";
+import { format, isToday, isBefore, startOfDay } from "date-fns";
 import {
   MarketingStage,
   MarketingTask,
@@ -188,6 +189,17 @@ export function MarketingKanban({ stages, tasks, onTaskClick }: Props) {
                                   <span className={done === cl.length ? "text-green-600 dark:text-green-400 font-medium" : ""}>
                                     {done}/{cl.length}
                                   </span>
+                                </div>
+                              );
+                            })()}
+                            {task.due_date && (() => {
+                              const due = new Date(task.due_date);
+                              const overdue = task.progress !== "Concluído" && isBefore(due, startOfDay(new Date()));
+                              const dueToday = task.progress !== "Concluído" && isToday(due);
+                              return (
+                                <div className={`flex items-center gap-1 text-xs ${overdue ? "text-destructive font-medium" : dueToday ? "text-warning font-medium" : "text-muted-foreground"}`}>
+                                  <CalendarIcon className="h-3 w-3" />
+                                  {format(due, "dd/MM")}
                                 </div>
                               );
                             })()}

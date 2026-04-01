@@ -315,6 +315,7 @@ export type Database = {
           checklist: Json | null
           created_at: string
           description: string | null
+          due_date: string | null
           id: string
           order_index: number
           priority: string
@@ -322,6 +323,7 @@ export type Database = {
           requester_id: string | null
           requester_name: string
           stage_id: string | null
+          start_date: string | null
           title: string
           updated_at: string
         }
@@ -331,6 +333,7 @@ export type Database = {
           checklist?: Json | null
           created_at?: string
           description?: string | null
+          due_date?: string | null
           id?: string
           order_index?: number
           priority?: string
@@ -338,6 +341,7 @@ export type Database = {
           requester_id?: string | null
           requester_name?: string
           stage_id?: string | null
+          start_date?: string | null
           title: string
           updated_at?: string
         }
@@ -347,6 +351,7 @@ export type Database = {
           checklist?: Json | null
           created_at?: string
           description?: string | null
+          due_date?: string | null
           id?: string
           order_index?: number
           priority?: string
@@ -354,6 +359,7 @@ export type Database = {
           requester_id?: string | null
           requester_name?: string
           stage_id?: string | null
+          start_date?: string | null
           title?: string
           updated_at?: string
         }
