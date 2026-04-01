@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { ActiveTimersCard } from "@/components/dashboard/ActiveTimersCard";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchTimesheetTotals, fetchTimesheetByDateRange, formatDuration } from "@/hooks/use-timesheet";
+import { fetchTimesheetByDateRange, formatDuration } from "@/hooks/use-timesheet";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -74,7 +74,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
   const { tickets: allTickets, loading } = useTickets();
   const [techFilter, setTechFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
-  const [timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
+  
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [allTimesheetData, setAllTimesheetData] = useState<{ ticket_id: string; start_time: string; end_time: string | null; duration_seconds: number }[]>([]);
 
@@ -96,35 +96,46 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
 
   // Fetch timesheet data filtered by date range
   useEffect(() => {
-    const ids = allTickets.map((t) => t.id);
-    if (ids.length > 0) {
-      fetchTimesheetTotals(ids).then(setTimesheetTotals);
-    }
-    // Fetch date-range-filtered timesheet logs for per-assignee aggregation
     fetchTimesheetByDateRange(dateRange).then(setAllTimesheetData);
-  }, [allTickets, dateRange]);
+  }, [dateRange]);
+
+  // Exclude subtasks from all dashboard calculations
+  const mainTickets = useMemo(() => allTickets.filter((t) => !t.parent_ticket_id), [allTickets]);
 
   const filtered = useMemo(() => {
-    return allTickets.filter((t) => {
+    return mainTickets.filter((t) => {
       const created = new Date(t.created_at);
       if (created < dateRange.start || created > dateRange.end) return false;
       if (techFilter !== "all" && t.assignee !== techFilter) return false;
       if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
       return true;
     });
-  }, [allTickets, dateRange, techFilter, categoryFilter]);
+  }, [mainTickets, dateRange, techFilter, categoryFilter]);
 
   const completedTickets = filtered.filter((t) => t.completed_at);
+
+  // All currently open tickets (regardless of date range) for "Chamados Abertos"
+  const allOpenTickets = useMemo(() => {
+    return mainTickets.filter((t) => {
+      if (t.completed_at) return false;
+      if (techFilter !== "all" && t.assignee !== techFilter) return false;
+      if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
+      return true;
+    });
+  }, [mainTickets, techFilter, categoryFilter]);
 
   const avgResolutionHours = useMemo(() => {
     if (completedTickets.length === 0) return 0;
     const totalSeconds = completedTickets.reduce((sum, t) => {
-      const ts = timesheetTotals[t.id];
-      if (ts && ts > 0) return sum + ts;
+      // Check date-range-filtered timesheet data first
+      const ticketLogs = allTimesheetData.filter((l) => l.ticket_id === t.id && l.end_time);
+      const timesheetSecs = ticketLogs.reduce((s, l) => s + l.duration_seconds, 0);
+      if (timesheetSecs > 0) return sum + timesheetSecs;
+      // Fallback to wall-clock time
       return sum + (new Date(t.completed_at!).getTime() - new Date(t.created_at).getTime()) / 1000;
     }, 0);
     return Math.round((totalSeconds / completedTickets.length / 3600) * 10) / 10;
-  }, [completedTickets, timesheetTotals]);
+  }, [completedTickets, allTimesheetData]);
 
   const slaCumprido = useMemo(() => {
     if (completedTickets.length === 0) return 100;
@@ -134,9 +145,9 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
 
   const technicians = useMemo(() => {
     const set = new Set<string>();
-    allTickets.forEach((t) => { if (t.assignee) set.add(t.assignee); });
+    mainTickets.forEach((t) => { if (t.assignee) set.add(t.assignee); });
     return [...set];
-  }, [allTickets]);
+  }, [mainTickets]);
 
   const ticketsByTech = useMemo(() => {
     const map: Record<string, { total: number; completed: number }> = {};
@@ -162,26 +173,33 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
       .sort((a, b) => b.value - a.value);
   }, [filtered]);
 
-  // ---- NEW: Top 5 Tarefas Demoradas ----
+  // ---- Top 5 Tarefas Demoradas (using date-range-filtered timesheet) ----
   const top5SlowTasks = useMemo(() => {
+    // Aggregate timesheet seconds per ticket from date-range data
+    const timesheetByTicket: Record<string, number> = {};
+    allTimesheetData.forEach((log) => {
+      const secs = log.end_time ? log.duration_seconds : Math.floor((Date.now() - new Date(log.start_time).getTime()) / 1000);
+      if (secs > 0) timesheetByTicket[log.ticket_id] = (timesheetByTicket[log.ticket_id] || 0) + secs;
+    });
+
     return filtered
-      .filter((t) => timesheetTotals[t.id] && timesheetTotals[t.id] > 0)
+      .filter((t) => timesheetByTicket[t.id] && timesheetByTicket[t.id] > 0)
       .map((t) => ({
         id: t.id,
         ticketNumber: t.ticket_number,
         title: t.title,
         assignee: t.assignee || "—",
-        totalSeconds: timesheetTotals[t.id],
+        totalSeconds: timesheetByTicket[t.id],
       }))
       .sort((a, b) => b.totalSeconds - a.totalSeconds)
       .slice(0, 5);
-  }, [filtered, timesheetTotals]);
+  }, [filtered, allTimesheetData]);
 
   // ---- Horas Trabalhadas por Colaborador (date-range filtered) ----
   const hoursByAssignee = useMemo(() => {
     // Build a map of ticket_id -> assignee from tickets
     const ticketAssigneeMap = new Map<string, string>();
-    allTickets.forEach((t) => {
+    mainTickets.forEach((t) => {
       ticketAssigneeMap.set(t.id, t.assignee || "Sem atribuição");
     });
 
@@ -231,7 +249,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
       total: filteredInv.filter((i) => i.category === cat).length,
     }));
   }, [filteredInv]);
-  const categories = useMemo(() => [...new Set(allTickets.map((t) => t.category))], [allTickets]);
+  const categories = useMemo(() => [...new Set(mainTickets.map((t) => t.category))], [mainTickets]);
 
   if (loading) {
     return (
@@ -276,7 +294,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           title="SLA Cumprido" value={`${slaCumprido}%`} icon={CheckCircle2} description="No período"
           trend={slaCumprido >= 90 ? { value: slaCumprido - 90, isPositive: true } : { value: 90 - slaCumprido, isPositive: false }}
         />
-        <StatCard title="Chamados Abertos" value={filtered.filter((t) => !t.completed_at).length} icon={AlertTriangle} description="Sem conclusão" />
+        <StatCard title="Chamados Abertos" value={allOpenTickets.length} icon={AlertTriangle} description="Atualmente sem conclusão" />
       </div>
 
       {/* Charts Row 1 */}
