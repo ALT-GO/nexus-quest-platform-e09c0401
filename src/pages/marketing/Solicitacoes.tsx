@@ -223,6 +223,24 @@ export default function Solicitacoes() {
             <SelectItem value="Concluído">Concluído</SelectItem>
           </SelectContent>
         </Select>
+        {taskTypes && taskTypes.length > 0 && (
+          <Select value={filterTaskType} onValueChange={setFilterTaskType}>
+            <SelectTrigger className="w-36 h-8 text-xs">
+              <SelectValue placeholder="Tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Tipos</SelectItem>
+              {taskTypes.map((t) => (
+                <SelectItem key={t.id} value={t.id}>
+                  <div className="flex items-center gap-1.5">
+                    <DynamicLucideIcon name={t.icon} className="h-3 w-3" style={{ color: `hsl(${t.color})` }} />
+                    {t.name}
+                  </div>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        )}
         <Button
           variant={filterMilestoneOnly ? "default" : "outline"}
           size="sm"
