@@ -177,7 +177,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
         }
       }
     },
-    [tasksByStage, tasks, qc, stages, user]
+    [tasksByStage, tasks, qc, stages, user, allDeps, progressMap]
   );
 
   return (
