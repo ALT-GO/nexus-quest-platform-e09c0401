@@ -162,6 +162,8 @@ export function MarketingTaskDetailSheet({
   const addComment = useAddMarketingComment();
   const { data: history } = useMarketingHistory(task?.id);
   const addHistory = useAddMarketingHistory();
+  const { data: allDeps } = useTaskDependencies();
+  const { data: allTasks } = useMarketingTasks();
 
   if (!task) return null;
 
