@@ -33,6 +33,9 @@ export interface MarketingTask {
   checklist: ChecklistItem[] | null;
   start_date: string | null;
   due_date: string | null;
+  is_recurring: boolean;
+  recurrence_rule: string | null;
+  next_recurrence_date: string | null;
 }
 
 export function useMarketingStages() {
