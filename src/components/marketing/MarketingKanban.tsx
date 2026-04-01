@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { GripVertical, Trash2 } from "lucide-react";
+import { GripVertical, Trash2, Play, Pause } from "lucide-react";
 import {
   MarketingStage,
   MarketingTask,
@@ -18,6 +18,7 @@ import {
 } from "@hello-pangea/dnd";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
+import { MarketingTimerButton } from "./MarketingTimerButton";
 
 interface Props {
   stages: MarketingStage[];
@@ -51,13 +52,10 @@ export function MarketingKanban({ stages, tasks, onTaskClick }: Props) {
 
   const tasksByStage = useMemo(() => {
     const map: Record<string, MarketingTask[]> = {};
-    stages.forEach((s) => {
-      map[s.id] = [];
-    });
+    stages.forEach((s) => { map[s.id] = []; });
     tasks.forEach((t) => {
       if (t.stage_id && map[t.stage_id]) map[t.stage_id].push(t);
     });
-    // Sort each column by order_index
     Object.values(map).forEach((arr) =>
       arr.sort((a, b) => a.order_index - b.order_index)
     );
@@ -66,29 +64,18 @@ export function MarketingKanban({ stages, tasks, onTaskClick }: Props) {
 
   const handleDragEnd = useCallback(
     async (result: DropResult) => {
-      const { source, destination, draggableId } = result;
+      const { source, destination } = result;
       if (!destination) return;
-      if (
-        source.droppableId === destination.droppableId &&
-        source.index === destination.index
-      )
-        return;
+      if (source.droppableId === destination.droppableId && source.index === destination.index) return;
 
       const sourceStageId = source.droppableId;
       const destStageId = destination.droppableId;
-
-      // Build new arrays
       const sourceItems = [...(tasksByStage[sourceStageId] ?? [])];
-      const destItems =
-        sourceStageId === destStageId
-          ? sourceItems
-          : [...(tasksByStage[destStageId] ?? [])];
+      const destItems = sourceStageId === destStageId ? sourceItems : [...(tasksByStage[destStageId] ?? [])];
 
-      // Remove from source
       const [movedTask] = sourceItems.splice(source.index, 1);
       if (!movedTask) return;
 
-      // Insert at destination
       if (sourceStageId === destStageId) {
         sourceItems.splice(destination.index, 0, movedTask);
       } else {
@@ -100,49 +87,28 @@ export function MarketingKanban({ stages, tasks, onTaskClick }: Props) {
       const updateOrderForList = (list: MarketingTask[], stageId: string) => {
         list.forEach((item, idx) => {
           const found = updatedTasks.find((t) => t.id === item.id);
-          if (found) {
-            found.order_index = idx;
-            found.stage_id = stageId;
-          }
+          if (found) { found.order_index = idx; found.stage_id = stageId; }
         });
       };
-
       updateOrderForList(sourceItems, sourceStageId);
-      if (sourceStageId !== destStageId) {
-        updateOrderForList(destItems, destStageId);
-      }
-
+      if (sourceStageId !== destStageId) updateOrderForList(destItems, destStageId);
       qc.setQueryData(["marketing_tasks"], updatedTasks);
 
-      // Persist changes
-      const updates: { id: string; stage_id: string; order_index: number }[] =
-        [];
-
+      const updates: { id: string; stage_id: string; order_index: number }[] = [];
       const addUpdates = (list: MarketingTask[], stageId: string) => {
-        list.forEach((item, idx) => {
-          updates.push({ id: item.id, stage_id: stageId, order_index: idx });
-        });
+        list.forEach((item, idx) => { updates.push({ id: item.id, stage_id: stageId, order_index: idx }); });
       };
-
       addUpdates(sourceItems, sourceStageId);
-      if (sourceStageId !== destStageId) {
-        addUpdates(destItems, destStageId);
-      }
+      if (sourceStageId !== destStageId) addUpdates(destItems, destStageId);
 
-      // Batch update
       await Promise.all(
         updates.map((u) =>
           supabase
             .from("marketing_tasks")
-            .update({
-              stage_id: u.stage_id,
-              order_index: u.order_index,
-              updated_at: new Date().toISOString(),
-            } as any)
+            .update({ stage_id: u.stage_id, order_index: u.order_index, updated_at: new Date().toISOString() } as any)
             .eq("id", u.id)
         )
       );
-
       qc.invalidateQueries({ queryKey: ["marketing_tasks"] });
     },
     [tasksByStage, tasks, qc]
@@ -153,63 +119,35 @@ export function MarketingKanban({ stages, tasks, onTaskClick }: Props) {
       <div className="flex gap-4 overflow-x-auto pb-4">
         {stages.map((stage) => (
           <div key={stage.id} className="min-w-[280px] max-w-[320px] flex-shrink-0">
-            <div
-              className={`rounded-t-lg px-3 py-2 flex items-center justify-between ${
-                metaStatusColors[stage.meta_status] || "bg-muted"
-              }`}
-            >
+            <div className={`rounded-t-lg px-3 py-2 flex items-center justify-between ${metaStatusColors[stage.meta_status] || "bg-muted"}`}>
               <span className="font-semibold text-sm">{stage.name}</span>
-              <Badge variant="secondary" className="text-xs">
-                {tasksByStage[stage.id]?.length ?? 0}
-              </Badge>
+              <Badge variant="secondary" className="text-xs">{tasksByStage[stage.id]?.length ?? 0}</Badge>
             </div>
             <Droppable droppableId={stage.id}>
               {(provided, snapshot) => (
                 <div
                   ref={provided.innerRef}
                   {...provided.droppableProps}
-                  className={`space-y-2 rounded-b-lg border border-t-0 p-2 min-h-[200px] transition-colors ${
-                    snapshot.isDraggingOver
-                      ? "bg-accent/40"
-                      : "bg-muted/30"
-                  }`}
+                  className={`space-y-2 rounded-b-lg border border-t-0 p-2 min-h-[200px] transition-colors ${snapshot.isDraggingOver ? "bg-accent/40" : "bg-muted/30"}`}
                 >
                   {(tasksByStage[stage.id] ?? []).map((task, index) => (
-                    <Draggable
-                      key={task.id}
-                      draggableId={task.id}
-                      index={index}
-                    >
+                    <Draggable key={task.id} draggableId={task.id} index={index}>
                       {(dragProvided, dragSnapshot) => (
                         <Card
                           ref={dragProvided.innerRef}
                           {...dragProvided.draggableProps}
-                          className={`transition-shadow ${
-                            dragSnapshot.isDragging
-                              ? "shadow-lg ring-2 ring-primary/30"
-                              : "hover:shadow-md"
-                          }`}
+                          className={`transition-shadow ${dragSnapshot.isDragging ? "shadow-lg ring-2 ring-primary/30" : "hover:shadow-md"}`}
                         >
                           <CardContent className="p-3 space-y-2">
                             <div className="flex items-start justify-between gap-2">
-                              <div
-                                {...dragProvided.dragHandleProps}
-                                className="mt-0.5 cursor-grab active:cursor-grabbing"
-                              >
+                              <div {...dragProvided.dragHandleProps} className="mt-0.5 cursor-grab active:cursor-grabbing">
                                 <GripVertical className="h-4 w-4 text-muted-foreground" />
                               </div>
-                              <p
-                                className="text-sm font-medium flex-1 cursor-pointer hover:text-primary"
-                                onClick={() => onTaskClick?.(task)}
-                              >
+                              <p className="text-sm font-medium flex-1 cursor-pointer hover:text-primary" onClick={() => onTaskClick?.(task)}>
                                 {task.title}
                               </p>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                                onClick={() => deleteTask.mutate(task.id)}
-                              >
+                              <MarketingTimerButton taskId={task.id} size="card" />
+                              <Button variant="ghost" size="icon" className="h-6 w-6 text-muted-foreground hover:text-destructive" onClick={() => deleteTask.mutate(task.id)}>
                                 <Trash2 className="h-3 w-3" />
                               </Button>
                             </div>
@@ -217,20 +155,13 @@ export function MarketingKanban({ stages, tasks, onTaskClick }: Props) {
                               <StatusBadge variant={task.priority as any}>
                                 {priorityLabels[task.priority] || task.priority}
                               </StatusBadge>
-                              {/* Progress indicator dot + label */}
                               <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                                <span
-                                  className={`inline-block h-2.5 w-2.5 rounded-full ${
-                                    progressDot[task.progress] || "bg-muted-foreground"
-                                  }`}
-                                />
+                                <span className={`inline-block h-2.5 w-2.5 rounded-full ${progressDot[task.progress] || "bg-muted-foreground"}`} />
                                 {task.progress}
                               </div>
                             </div>
                             {task.assignee_name && (
-                              <p className="text-xs text-muted-foreground">
-                                👤 {task.assignee_name}
-                              </p>
+                              <p className="text-xs text-muted-foreground">👤 {task.assignee_name}</p>
                             )}
                           </CardContent>
                         </Card>

@@ -4,7 +4,8 @@ import { useAuth } from "@/hooks/use-auth";
 
 export interface TimesheetLog {
   id: string;
-  ticket_id: string;
+  ticket_id: string | null;
+  marketing_task_id: string | null;
   start_time: string;
   end_time: string | null;
   duration_seconds: number;
@@ -15,6 +16,7 @@ export interface ActiveTimer extends TimesheetLog {
   ticket_title?: string;
   ticket_number?: string;
   ticket_assignee?: string;
+  source?: "ti" | "marketing";
   elapsed_seconds: number;
 }
 
@@ -119,9 +121,126 @@ export function useTimesheet(ticketId: string | null) {
 }
 
 /**
+ * Hook for marketing task timers - same pattern as useTimesheet but for marketing_task_id
+ */
+export function useMarketingTimesheet(marketingTaskId: string | null) {
+  const [logs, setLogs] = useState<TimesheetLog[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [running, setRunning] = useState(false);
+  const [activeLogId, setActiveLogId] = useState<string | null>(null);
+  const [elapsed, setElapsed] = useState(0);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchLogs = useCallback(async () => {
+    if (!marketingTaskId) { setLogs([]); return; }
+    setLoading(true);
+    const { data } = await supabase
+      .from("timesheet_logs")
+      .select("*")
+      .eq("marketing_task_id", marketingTaskId as any)
+      .order("start_time", { ascending: true });
+
+    const fetched = (data as unknown as TimesheetLog[]) || [];
+    setLogs(fetched);
+
+    const active = fetched.find((l) => !l.end_time);
+    if (active) {
+      setActiveLogId(active.id);
+      setRunning(true);
+    } else {
+      setActiveLogId(null);
+      setRunning(false);
+    }
+    setLoading(false);
+  }, [marketingTaskId]);
+
+  useEffect(() => { fetchLogs(); }, [fetchLogs]);
+
+  useEffect(() => {
+    const calc = () => {
+      let total = 0;
+      logs.forEach((l) => {
+        if (l.end_time) {
+          total += l.duration_seconds;
+        } else {
+          total += l.duration_seconds + Math.floor(
+            (Date.now() - new Date(l.start_time).getTime()) / 1000
+          );
+        }
+      });
+      setElapsed(total);
+    };
+    calc();
+    if (running) {
+      intervalRef.current = setInterval(calc, 1000);
+    }
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [logs, running]);
+
+  const start = useCallback(async () => {
+    if (!marketingTaskId || running) return;
+
+    // Auto-update progress to "Em andamento" if currently "Não iniciado"
+    const { data: task } = await supabase
+      .from("marketing_tasks")
+      .select("progress")
+      .eq("id", marketingTaskId as any)
+      .single();
+
+    if (task && (task as any).progress === "Não iniciado") {
+      await supabase
+        .from("marketing_tasks")
+        .update({ progress: "Em andamento", updated_at: new Date().toISOString() } as any)
+        .eq("id", marketingTaskId as any);
+    }
+
+    const { data, error } = await supabase
+      .from("timesheet_logs")
+      .insert({ marketing_task_id: marketingTaskId, start_time: new Date().toISOString(), duration_seconds: 0 } as any)
+      .select("*")
+      .single();
+    if (!error && data) {
+      const newLog = data as unknown as TimesheetLog;
+      setLogs((prev) => [...prev, newLog]);
+      setActiveLogId(newLog.id);
+      setRunning(true);
+    }
+  }, [marketingTaskId, running]);
+
+  const pause = useCallback(async () => {
+    if (!activeLogId || !running) return;
+    const activeLog = logs.find((l) => l.id === activeLogId);
+    if (!activeLog) return;
+    const now = new Date();
+    const durationSeconds = Math.floor(
+      (now.getTime() - new Date(activeLog.start_time).getTime()) / 1000
+    );
+    await supabase
+      .from("timesheet_logs")
+      .update({ end_time: now.toISOString(), duration_seconds: durationSeconds } as any)
+      .eq("id", activeLogId as any);
+    setLogs((prev) =>
+      prev.map((l) =>
+        l.id === activeLogId
+          ? { ...l, end_time: now.toISOString(), duration_seconds: durationSeconds }
+          : l
+      )
+    );
+    setActiveLogId(null);
+    setRunning(false);
+  }, [activeLogId, running, logs]);
+
+  const stop = useCallback(async () => {
+    if (running) await pause();
+  }, [running, pause]);
+
+  const totalSeconds = elapsed;
+  return { logs, loading, running, totalSeconds, start, pause, stop, fetchLogs };
+}
+
+/**
  * Hook that fetches all currently running timers (end_time IS NULL)
- * for tickets assigned to the logged-in user.
- * Returns the list ordered by most recently started, with live elapsed seconds.
+ * for both tickets AND marketing tasks.
  */
 export function useActiveTimers(userTicketIds?: string[]) {
   const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
@@ -132,14 +251,11 @@ export function useActiveTimers(userTicketIds?: string[]) {
   const fetchActive = useCallback(async () => {
     setLoading(true);
 
-    // Fetch ALL active timers (end_time IS NULL)
-    let query = supabase
+    const { data: logs } = await supabase
       .from("timesheet_logs")
       .select("*")
       .is("end_time", null)
       .order("start_time", { ascending: false });
-
-    const { data: logs } = await query;
 
     const fetched = (logs as unknown as TimesheetLog[]) || [];
 
@@ -149,18 +265,33 @@ export function useActiveTimers(userTicketIds?: string[]) {
       return;
     }
 
-    // Fetch ticket info for each running timer
-    const ticketIds = [...new Set(fetched.map((l) => l.ticket_id))];
-    const { data: tickets } = await supabase
-      .from("tickets")
-      .select("id, title, ticket_number, assignee")
-      .in("id", ticketIds as any);
+    // Separate TI ticket logs and marketing logs
+    const tiLogs = fetched.filter((l) => l.ticket_id);
+    const mktLogs = fetched.filter((l) => l.marketing_task_id);
 
-    const ticketMap = new Map(
-      ((tickets as any[]) || []).map((t: any) => [t.id, t])
-    );
+    // Fetch TI ticket info
+    const ticketIds = [...new Set(tiLogs.map((l) => l.ticket_id!))];
+    let ticketMap = new Map<string, any>();
+    if (ticketIds.length > 0) {
+      const { data: tickets } = await supabase
+        .from("tickets")
+        .select("id, title, ticket_number, assignee")
+        .in("id", ticketIds as any);
+      ticketMap = new Map(((tickets as any[]) || []).map((t: any) => [t.id, t]));
+    }
 
-    // Get current user's profile name for filtering
+    // Fetch marketing task info
+    const mktIds = [...new Set(mktLogs.map((l) => l.marketing_task_id!))];
+    let mktMap = new Map<string, any>();
+    if (mktIds.length > 0) {
+      const { data: mktTasks } = await supabase
+        .from("marketing_tasks")
+        .select("id, title, assignee_name")
+        .in("id", mktIds as any);
+      mktMap = new Map(((mktTasks as any[]) || []).map((t: any) => [t.id, t]));
+    }
+
+    // Get current user name for filtering
     let currentUserName = "";
     if (user && !isAdmin) {
       const { data: profile } = await supabase
@@ -173,17 +304,30 @@ export function useActiveTimers(userTicketIds?: string[]) {
 
     const now = Date.now();
     let timers: ActiveTimer[] = fetched.map((l) => {
-      const ticket = ticketMap.get(l.ticket_id);
-      return {
-        ...l,
-        ticket_title: ticket?.title || "",
-        ticket_number: ticket?.ticket_number || "",
-        ticket_assignee: ticket?.assignee || "",
-        elapsed_seconds: Math.floor((now - new Date(l.start_time).getTime()) / 1000),
-      };
+      if (l.ticket_id) {
+        const ticket = ticketMap.get(l.ticket_id);
+        return {
+          ...l,
+          ticket_title: ticket?.title || "",
+          ticket_number: ticket?.ticket_number || "",
+          ticket_assignee: ticket?.assignee || "",
+          source: "ti" as const,
+          elapsed_seconds: Math.floor((now - new Date(l.start_time).getTime()) / 1000),
+        };
+      } else {
+        const mkt = mktMap.get(l.marketing_task_id!);
+        return {
+          ...l,
+          ticket_title: mkt?.title || "",
+          ticket_number: "MKT",
+          ticket_assignee: mkt?.assignee_name || "",
+          source: "marketing" as const,
+          elapsed_seconds: Math.floor((now - new Date(l.start_time).getTime()) / 1000),
+        };
+      }
     });
 
-    // Admin sees all timers; non-admin (TI) sees only their own assigned tickets
+    // Admin sees all; non-admin sees only their own
     if (!isAdmin && currentUserName) {
       timers = timers.filter((t) => t.ticket_assignee === currentUserName);
     }
@@ -192,13 +336,10 @@ export function useActiveTimers(userTicketIds?: string[]) {
     setLoading(false);
   }, [isAdmin, user]);
 
-  // Initial fetch
   useEffect(() => { fetchActive(); }, [fetchActive]);
 
-  // Live tick every second to update elapsed
   useEffect(() => {
     if (activeTimers.length === 0) return;
-
     intervalRef.current = setInterval(() => {
       const now = Date.now();
       setActiveTimers((prev) =>
@@ -208,7 +349,6 @@ export function useActiveTimers(userTicketIds?: string[]) {
         }))
       );
     }, 1000);
-
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
   }, [activeTimers.length]);
 

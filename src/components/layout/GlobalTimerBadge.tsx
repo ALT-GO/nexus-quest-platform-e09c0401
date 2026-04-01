@@ -5,6 +5,7 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Timer, Pause } from "lucide-react";
 import { useActiveTimers, formatDuration } from "@/hooks/use-timesheet";
 import { supabase } from "@/integrations/supabase/client";
@@ -68,9 +69,21 @@ export function GlobalTimerBadge() {
               className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors"
             >
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium truncate">
-                  {timer.ticket_title || "Sem título"}
-                </p>
+                <div className="flex items-center gap-1.5">
+                  <Badge
+                    variant="outline"
+                    className={`text-[10px] px-1.5 py-0 ${
+                      timer.source === "marketing"
+                        ? "border-purple-400 text-purple-600 dark:text-purple-400"
+                        : "border-blue-400 text-blue-600 dark:text-blue-400"
+                    }`}
+                  >
+                    {timer.source === "marketing" ? "MKT" : "TI"}
+                  </Badge>
+                  <p className="text-sm font-medium truncate">
+                    {timer.ticket_title || "Sem título"}
+                  </p>
+                </div>
                 <p className="text-xs text-muted-foreground">
                   {timer.ticket_number} {timer.ticket_assignee ? `· ${timer.ticket_assignee}` : ""}
                 </p>
