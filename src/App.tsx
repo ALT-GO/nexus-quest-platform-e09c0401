@@ -63,16 +63,21 @@ function PermissionRoute({
 function AppRoutes() {
   const { user, loading } = useAuth();
 
-  if (loading) return <LoadingScreen />;
-
   return (
     <Routes>
-      {/* Public routes */}
-      <Route path="/login" element={user ? <Navigate to="/" replace /> : <Login />} />
-      <Route path="/signup" element={user ? <Navigate to="/" replace /> : <Signup />} />
+      {/* Public routes — never blocked by loading */}
+      <Route path="/chamado-publico" element={<ChamadoPublico />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
-      <Route path="/chamado-publico" element={<ChamadoPublico />} />
+      <Route path="/login" element={loading ? <LoadingScreen /> : user ? <Navigate to="/" replace /> : <Login />} />
+      <Route path="/signup" element={loading ? <LoadingScreen /> : user ? <Navigate to="/" replace /> : <Signup />} />
+
+      {/* Protected routes — wait for auth */}
+      {loading ? (
+        <Route path="*" element={<LoadingScreen />} />
+      ) : (
+        <>
+
 
       {/* Protected routes */}
       <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
