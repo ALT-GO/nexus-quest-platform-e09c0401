@@ -198,11 +198,18 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                 >
                   {(tasksByStage[stage.id] ?? []).map((task, index) => (
                     <Draggable key={task.id} draggableId={task.id} index={index}>
-                      {(dragProvided, dragSnapshot) => (
+                      {(dragProvided, dragSnapshot) => {
+                        const blocked = allDeps ? isTaskBlocked(task.id, allDeps, progressMap) : false;
+                        const blockingTaskNames = blocked && allDeps
+                          ? allDeps
+                              .filter((d) => d.task_id === task.id && d.dependency_type === "waiting_on" && progressMap[d.depends_on_task_id] !== "Concluído")
+                              .map((d) => tasks.find((t) => t.id === d.depends_on_task_id)?.title || "?")
+                          : [];
+                        return (
                         <Card
                           ref={dragProvided.innerRef}
                           {...dragProvided.draggableProps}
-                          className={`transition-shadow ${dragSnapshot.isDragging ? "shadow-lg ring-2 ring-primary/30" : "hover:shadow-md"} ${task.is_milestone ? "border-l-4 border-l-amber-500 bg-amber-50/30 dark:bg-amber-950/10" : ""}`}
+                          className={`transition-shadow ${dragSnapshot.isDragging ? "shadow-lg ring-2 ring-primary/30" : "hover:shadow-md"} ${task.is_milestone ? "border-l-4 border-l-amber-500 bg-amber-50/30 dark:bg-amber-950/10" : ""} ${blocked ? "opacity-75 border-dashed" : ""}`}
                         >
                           <CardContent className="p-3 space-y-2">
                             <div className="flex items-start justify-between gap-2">
@@ -211,6 +218,21 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                               </div>
                               <p className={`text-sm flex-1 cursor-pointer hover:text-primary flex items-center gap-1.5 ${task.is_milestone ? "font-bold" : "font-medium"}`} onClick={() => onTaskClick?.(task)}>
                                 {task.is_milestone && <Diamond className="h-3.5 w-3.5 text-amber-500 shrink-0 fill-amber-500" />}
+                                {blocked && (
+                                  <TooltipProvider>
+                                    <Tooltip>
+                                      <TooltipTrigger asChild>
+                                        <Lock className="h-3.5 w-3.5 text-amber-500 shrink-0" />
+                                      </TooltipTrigger>
+                                      <TooltipContent side="top" className="max-w-[200px]">
+                                        <p className="text-xs font-medium">Bloqueada por:</p>
+                                        {blockingTaskNames.map((n, i) => (
+                                          <p key={i} className="text-xs">• {n}</p>
+                                        ))}
+                                      </TooltipContent>
+                                    </Tooltip>
+                                  </TooltipProvider>
+                                )}
                                 {task.title}
                               </p>
                               <MarketingTimerButton taskId={task.id} size="card" />
