@@ -15,6 +15,12 @@ import {
   Menu,
   X,
   Brain,
+  Target,
+  FileText,
+  Users,
+  Receipt,
+  KeyRound,
+  Headphones,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
@@ -22,7 +28,8 @@ interface NavItem {
   title: string;
   href?: string;
   icon: React.ElementType;
-  children?: { title: string; href: string }[];
+  color?: string;
+  children?: { title: string; href: string; icon?: React.ElementType }[];
 }
 
 export function AppSidebar() {
@@ -34,36 +41,34 @@ export function AppSidebar() {
   const isPrivileged = isAdmin || hasAnyRole("ti", "marketing");
 
   // Build TI children based on permissions
-  const tiChildren: { title: string; href: string }[] = [];
+  const tiChildren: { title: string; href: string; icon?: React.ElementType }[] = [];
   if (hasPermission("criar_chamados") || hasPermission("atender_chamados")) {
-    tiChildren.push({ title: "Service Desk", href: "/ti/service-desk" });
+    tiChildren.push({ title: "Service Desk", href: "/ti/service-desk", icon: Headphones });
   }
   if (hasPermission("gerenciar_estoque") || hasAnyRole("admin", "ti")) {
-    tiChildren.push({ title: "Colaboradores", href: "/ti/colaboradores" });
+    tiChildren.push({ title: "Colaboradores", href: "/ti/colaboradores", icon: Users });
   }
   if (hasPermission("ver_custos_faturas")) {
-    tiChildren.push({ title: "Gestão de Custos", href: "/ti/faturas" });
+    tiChildren.push({ title: "Gestão de Custos", href: "/ti/faturas", icon: Receipt });
   }
   if (hasPermission("acessar_cofre_senhas")) {
-    tiChildren.push({ title: "Cofre de Senhas", href: "/ti/cofre-senhas" });
+    tiChildren.push({ title: "Cofre de Senhas", href: "/ti/cofre-senhas", icon: KeyRound });
   }
 
   // Build marketing children
-  const marketingChildren: { title: string; href: string }[] = [];
+  const marketingChildren: { title: string; href: string; icon?: React.ElementType }[] = [];
   if (hasPermission("acessar_kanban_marketing") || hasAnyRole("admin", "marketing")) {
-    marketingChildren.push({ title: "Projetos", href: "/marketing/projetos" });
-    marketingChildren.push({ title: "Solicitações", href: "/marketing/solicitacoes" });
-    marketingChildren.push({ title: "Metas", href: "/marketing/metas" });
+    marketingChildren.push({ title: "Projetos", href: "/marketing/projetos", icon: FileText });
+    marketingChildren.push({ title: "Solicitações", href: "/marketing/solicitacoes", icon: FileText });
+    marketingChildren.push({ title: "Metas", href: "/marketing/metas", icon: Target });
   }
 
   const navigation: NavItem[] = [
-    // Collaborators see Dashboard; privileged users land on Torre de Controle
     ...(!isPrivileged ? [{
       title: "Dashboard",
       href: "/",
       icon: LayoutDashboard,
     } as NavItem] : []),
-    // Torre de Controle visible for admin/ti or users with dashboard permission
     ...(hasAnyRole("admin", "ti") || hasPermission("ver_dashboard_financeiro") ? [{
       title: "Dashboard",
       href: "/central-inteligencia",
@@ -72,11 +77,13 @@ export function AppSidebar() {
     ...(marketingChildren.length > 0 ? [{
       title: "Marketing",
       icon: Megaphone,
+      color: "bg-pink-500",
       children: marketingChildren,
     } as NavItem] : []),
     ...(tiChildren.length > 0 ? [{
       title: "TI",
       icon: Monitor,
+      color: "bg-blue-500",
       children: tiChildren,
     } as NavItem] : []),
   ];
@@ -116,20 +123,17 @@ export function AppSidebar() {
   const roleLabel = isAdmin ? "Admin" : roles.includes("ti") ? "TI" : roles.includes("marketing") ? "Marketing" : "Colaborador";
 
   const SidebarContent = () => (
-    <div className="flex h-full flex-col bg-sidebar">
+    <div className="flex h-full flex-col bg-sidebar border-r border-sidebar-border">
       {/* Logo */}
-      <div className="flex h-16 items-center gap-3 border-b border-sidebar-border px-6">
-        <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-sidebar-primary">
-          <Monitor className="h-5 w-5 text-sidebar-primary-foreground" />
+      <div className="flex h-14 items-center gap-2.5 px-5">
+        <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary">
+          <Monitor className="h-4 w-4 text-primary-foreground" />
         </div>
-        <div className="flex flex-col">
-          <span className="text-sm font-semibold text-sidebar-foreground">ERP System</span>
-          <span className="text-xs text-sidebar-muted">Marketing & TI</span>
-        </div>
+        <span className="text-sm font-bold text-foreground tracking-tight">Nexus ERP</span>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 space-y-1 overflow-y-auto p-4 scrollbar-thin">
+      <nav className="flex-1 space-y-0.5 overflow-y-auto px-3 pt-2 scrollbar-thin">
         {navigation.map((item) => (
           <div key={item.title}>
             {item.href ? (
@@ -137,13 +141,13 @@ export function AppSidebar() {
                 to={item.href}
                 onClick={() => setIsMobileOpen(false)}
                 className={cn(
-                  "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                  "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
                   isActive(item.href)
-                    ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                    : "text-sidebar-foreground hover:bg-sidebar-accent"
+                    ? "bg-accent text-accent-foreground"
+                    : "text-sidebar-foreground hover:bg-muted"
                 )}
               >
-                <item.icon className="h-5 w-5" />
+                <item.icon className="h-4 w-4" />
                 {item.title}
               </Link>
             ) : (
@@ -151,34 +155,40 @@ export function AppSidebar() {
                 <button
                   onClick={() => toggleExpanded(item.title)}
                   className={cn(
-                    "flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors",
+                    "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
                     isParentActive(item.children)
-                      ? "bg-sidebar-accent text-sidebar-foreground"
-                      : "text-sidebar-foreground hover:bg-sidebar-accent"
+                      ? "text-foreground"
+                      : "text-sidebar-foreground hover:bg-muted"
                   )}
                 >
-                  <item.icon className="h-5 w-5" />
+                  {item.color ? (
+                    <div className={cn("flex h-5 w-5 items-center justify-center rounded text-[10px] font-bold text-white", item.color)}>
+                      {item.title.charAt(0)}
+                    </div>
+                  ) : (
+                    <item.icon className="h-4 w-4" />
+                  )}
                   {item.title}
                   <span className="ml-auto">
                     {expandedItems.includes(item.title) ? (
-                      <ChevronDown className="h-4 w-4" />
+                      <ChevronDown className="h-3.5 w-3.5 text-sidebar-muted" />
                     ) : (
-                      <ChevronRight className="h-4 w-4" />
+                      <ChevronRight className="h-3.5 w-3.5 text-sidebar-muted" />
                     )}
                   </span>
                 </button>
                 {expandedItems.includes(item.title) && item.children && (
-                  <div className="ml-4 mt-1 space-y-1 border-l border-sidebar-border pl-4">
+                  <div className="ml-3 mt-0.5 space-y-0.5 border-l border-border pl-3">
                     {item.children.map((child) => (
                       <Link
                         key={child.href}
                         to={child.href}
                         onClick={() => setIsMobileOpen(false)}
                         className={cn(
-                          "flex items-center rounded-lg px-3 py-2 text-sm transition-colors",
+                          "flex items-center gap-2 rounded-md px-2.5 py-1.5 text-[13px] transition-colors",
                           isActive(child.href)
-                            ? "bg-sidebar-primary text-sidebar-primary-foreground"
-                            : "text-sidebar-muted hover:bg-sidebar-accent hover:text-sidebar-foreground"
+                            ? "bg-accent text-accent-foreground font-medium"
+                            : "text-sidebar-muted hover:bg-muted hover:text-foreground"
                         )}
                       >
                         {child.title}
@@ -193,32 +203,32 @@ export function AppSidebar() {
       </nav>
 
       {/* Footer */}
-      <div className="border-t border-sidebar-border p-4">
-        <div className="flex items-center gap-3 rounded-lg px-3 py-2">
+      <div className="border-t border-sidebar-border p-3">
+        <div className="flex items-center gap-2.5 rounded-md px-2.5 py-2">
           <UserAvatar
             name={userName}
             avatarUrl={avatarUrl}
-            className="h-8 w-8"
-            fallbackClassName="bg-sidebar-accent text-sidebar-foreground text-sm"
+            className="h-7 w-7"
+            fallbackClassName="bg-primary/10 text-primary text-xs"
           />
           <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-sidebar-foreground truncate">{userName}</p>
-            <p className="text-xs text-sidebar-muted">{roleLabel}</p>
+            <p className="text-[13px] font-medium text-foreground truncate">{userName}</p>
+            <p className="text-[11px] text-sidebar-muted">{roleLabel}</p>
           </div>
         </div>
-        <div className="mt-2 flex gap-2">
+        <div className="mt-1 flex gap-1">
           <Link
             to="/configuracoes"
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-sidebar-muted transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] text-sidebar-muted transition-colors hover:bg-muted hover:text-foreground"
           >
-            <Settings className="h-4 w-4" />
+            <Settings className="h-3.5 w-3.5" />
             Config
           </Link>
           <button
             onClick={handleSignOut}
-            className="flex flex-1 items-center justify-center gap-2 rounded-lg px-3 py-2 text-sm text-sidebar-muted transition-colors hover:bg-sidebar-accent hover:text-sidebar-foreground"
+            className="flex flex-1 items-center justify-center gap-1.5 rounded-md px-2 py-1.5 text-[12px] text-sidebar-muted transition-colors hover:bg-muted hover:text-foreground"
           >
-            <LogOut className="h-4 w-4" />
+            <LogOut className="h-3.5 w-3.5" />
             Sair
           </button>
         </div>
@@ -232,7 +242,7 @@ export function AppSidebar() {
       <Button
         variant="ghost"
         size="icon"
-        className="fixed left-4 top-4 z-50 lg:hidden"
+        className="fixed left-4 top-3 z-50 lg:hidden"
         onClick={() => setIsMobileOpen(!isMobileOpen)}
       >
         {isMobileOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -241,7 +251,7 @@ export function AppSidebar() {
       {/* Mobile Overlay */}
       {isMobileOpen && (
         <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
+          className="fixed inset-0 z-40 bg-black/30 lg:hidden"
           onClick={() => setIsMobileOpen(false)}
         />
       )}
@@ -249,7 +259,7 @@ export function AppSidebar() {
       {/* Sidebar */}
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-screen w-64 transition-transform lg:translate-x-0",
+          "fixed left-0 top-0 z-40 h-screen w-60 transition-transform lg:translate-x-0",
           isMobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >

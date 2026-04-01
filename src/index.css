@@ -4,123 +4,123 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
 
-/* Design System — Orange/Copper Primary, Green Secondary, Dark Navy Text */
+/* Design System — ClickUp-inspired: Purple Primary, Clean White, Light Sidebar */
 
 @layer base {
   :root {
     /* Backgrounds */
-    --background: 220 16% 96%;
-    --foreground: 233 25% 18%;
+    --background: 0 0% 98%;
+    --foreground: 220 14% 10%;
 
     --card: 0 0% 100%;
-    --card-foreground: 233 25% 18%;
+    --card-foreground: 220 14% 10%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 233 25% 18%;
+    --popover-foreground: 220 14% 10%;
 
-    /* Action Primary — deep copper/orange */
-    --primary: 25 75% 44%;
+    /* Action Primary — ClickUp purple/violet */
+    --primary: 262 83% 58%;
     --primary-foreground: 0 0% 100%;
 
-    /* Secondary — muted warm gray */
-    --secondary: 220 14% 92%;
-    --secondary-foreground: 233 25% 18%;
+    /* Secondary — cool gray */
+    --secondary: 220 14% 96%;
+    --secondary-foreground: 220 14% 10%;
 
-    --muted: 220 14% 94%;
-    --muted-foreground: 220 10% 46%;
+    --muted: 220 14% 96%;
+    --muted-foreground: 220 9% 46%;
 
-    --accent: 220 14% 92%;
-    --accent-foreground: 233 25% 18%;
+    --accent: 262 83% 96%;
+    --accent-foreground: 262 83% 40%;
 
     /* Destructive */
     --destructive: 0 72% 51%;
     --destructive-foreground: 0 0% 100%;
 
     /* States */
-    --success: 152 60% 38%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 30 80% 52%;
-    --warning-foreground: 233 25% 18%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 220 14% 10%;
 
-    --info: 210 72% 50%;
+    --info: 217 91% 60%;
     --info-foreground: 0 0% 100%;
 
     /* Borders */
-    --border: 220 16% 88%;
-    --input: 220 16% 88%;
-    --ring: 25 75% 44%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 262 83% 58%;
 
     --radius: 0.5rem;
 
-    /* Sidebar — Dark navy */
-    --sidebar-background: 233 25% 14%;
-    --sidebar-foreground: 220 16% 94%;
-    --sidebar-primary: 25 75% 50%;
+    /* Sidebar — Light/white like ClickUp */
+    --sidebar-background: 0 0% 100%;
+    --sidebar-foreground: 220 14% 30%;
+    --sidebar-primary: 262 83% 58%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 233 20% 20%;
-    --sidebar-accent-foreground: 220 16% 94%;
-    --sidebar-border: 233 20% 22%;
-    --sidebar-ring: 25 75% 50%;
-    --sidebar-muted: 220 10% 52%;
+    --sidebar-accent: 262 83% 96%;
+    --sidebar-accent-foreground: 262 83% 40%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 262 83% 58%;
+    --sidebar-muted: 220 9% 56%;
 
     /* Charts */
-    --chart-1: 25 75% 44%;
-    --chart-2: 152 60% 38%;
-    --chart-3: 42 72% 55%;
-    --chart-4: 280 56% 52%;
-    --chart-5: 210 72% 50%;
+    --chart-1: 262 83% 58%;
+    --chart-2: 142 71% 45%;
+    --chart-3: 38 92% 50%;
+    --chart-4: 339 90% 51%;
+    --chart-5: 217 91% 60%;
 
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   }
 
   .dark {
-    --background: 233 25% 10%;
-    --foreground: 220 16% 94%;
+    --background: 224 14% 8%;
+    --foreground: 220 14% 94%;
 
-    --card: 233 22% 15%;
-    --card-foreground: 220 16% 94%;
+    --card: 224 14% 12%;
+    --card-foreground: 220 14% 94%;
 
-    --popover: 233 22% 15%;
-    --popover-foreground: 220 16% 94%;
+    --popover: 224 14% 12%;
+    --popover-foreground: 220 14% 94%;
 
-    --primary: 25 75% 50%;
+    --primary: 262 83% 62%;
     --primary-foreground: 0 0% 100%;
 
-    --secondary: 233 20% 20%;
-    --secondary-foreground: 220 16% 94%;
+    --secondary: 224 14% 16%;
+    --secondary-foreground: 220 14% 94%;
 
-    --muted: 233 20% 20%;
+    --muted: 224 14% 16%;
     --muted-foreground: 220 12% 60%;
 
-    --accent: 233 20% 20%;
-    --accent-foreground: 220 16% 94%;
+    --accent: 262 50% 18%;
+    --accent-foreground: 262 83% 72%;
 
     --destructive: 0 60% 42%;
     --destructive-foreground: 0 0% 100%;
 
-    --success: 152 60% 38%;
+    --success: 142 71% 45%;
     --success-foreground: 0 0% 100%;
 
-    --warning: 30 80% 52%;
-    --warning-foreground: 233 25% 10%;
+    --warning: 38 92% 50%;
+    --warning-foreground: 224 14% 8%;
 
-    --info: 210 72% 50%;
+    --info: 217 91% 60%;
     --info-foreground: 0 0% 100%;
 
-    --border: 233 20% 22%;
-    --input: 233 20% 22%;
-    --ring: 25 75% 50%;
+    --border: 224 14% 18%;
+    --input: 224 14% 18%;
+    --ring: 262 83% 62%;
 
-    --sidebar-background: 233 25% 8%;
-    --sidebar-foreground: 220 16% 94%;
-    --sidebar-primary: 25 75% 50%;
+    --sidebar-background: 224 14% 10%;
+    --sidebar-foreground: 220 14% 80%;
+    --sidebar-primary: 262 83% 62%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 233 20% 18%;
-    --sidebar-accent-foreground: 220 16% 94%;
-    --sidebar-border: 233 20% 18%;
-    --sidebar-ring: 25 75% 50%;
-    --sidebar-muted: 220 12% 60%;
+    --sidebar-accent: 262 50% 18%;
+    --sidebar-accent-foreground: 262 83% 72%;
+    --sidebar-border: 224 14% 16%;
+    --sidebar-ring: 262 83% 62%;
+    --sidebar-muted: 220 12% 50%;
 
     --font-sans: 'Inter', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
   }
