@@ -221,8 +221,12 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                 ))}
                               </div>
                             )}
+                            {(task as any).story_points > 0 && (
+                              <Badge variant="outline" className="text-[10px] px-1.5 py-0 h-4">
+                                {(task as any).story_points} pts
+                              </Badge>
+                            )}
                             {task.assignee_name && (
-                              <p className="text-xs text-muted-foreground">👤 {task.assignee_name}</p>
                             )}
                             {(() => {
                               const cl = Array.isArray(task.checklist) ? task.checklist : [];
