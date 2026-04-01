@@ -4,8 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
@@ -15,6 +13,7 @@ import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useCreateMarketingTask, MarketingStage } from "@/hooks/use-marketing";
+import { MarketingSprint } from "@/hooks/use-sprints";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
@@ -24,9 +23,10 @@ interface Props {
   onOpenChange: (open: boolean) => void;
   stages: MarketingStage[];
   teamMembers: { id: string; name: string }[];
+  sprints?: MarketingSprint[];
 }
 
-export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers }: Props) {
+export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers, sprints }: Props) {
   const { user } = useAuth();
   const { data: profileData } = useQuery({
     queryKey: ["my-profile", user?.id],
