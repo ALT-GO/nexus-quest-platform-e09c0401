@@ -308,6 +308,60 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_tags: {
+        Row: {
+          color: string
+          created_at: string
+          id: string
+          name: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          id?: string
+          name: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
+      marketing_task_tags: {
+        Row: {
+          id: string
+          tag_id: string
+          task_id: string
+        }
+        Insert: {
+          id?: string
+          tag_id: string
+          task_id: string
+        }
+        Update: {
+          id?: string
+          tag_id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_task_tags_tag_id_fkey"
+            columns: ["tag_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_tags"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_task_tags_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_tasks: {
         Row: {
           assignee_id: string | null
