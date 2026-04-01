@@ -122,10 +122,25 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
       .sort((a, b) => b.hours - a.hours);
   }, [marketingTickets, timesheetTotals]);
 
-  const totalInvestment = events.reduce((sum, e) => sum + e.investedValue, 0);
-  const totalLeads = events.reduce((sum, e) => sum + e.leadsGenerated, 0);
+  // Filter static events/proposals by dateRange
+  const filteredEvents = useMemo(() => {
+    return events.filter((e) => {
+      const d = new Date(e.date);
+      return d >= dateRange.start && d <= dateRange.end;
+    });
+  }, [events, dateRange]);
+
+  const filteredProposals = useMemo(() => {
+    return proposals.filter((p) => {
+      const d = new Date(p.date);
+      return d >= dateRange.start && d <= dateRange.end;
+    });
+  }, [proposals, dateRange]);
+
+  const totalInvestment = filteredEvents.reduce((sum, e) => sum + e.investedValue, 0);
+  const totalLeads = filteredEvents.reduce((sum, e) => sum + e.leadsGenerated, 0);
   const averageCPL = totalInvestment / totalLeads || 0;
-  const totalProposalValue = proposals.reduce((sum, p) => sum + p.value, 0);
+  const totalProposalValue = filteredProposals.reduce((sum, p) => sum + p.value, 0);
 
   const handleAddEvent = () => {
     if (!newEvent.name || !newEvent.investedValue || !newEvent.leadsGenerated) return;
