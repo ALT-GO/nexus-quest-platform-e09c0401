@@ -51,6 +51,7 @@ interface InventoryItem {
   valor_mensal: number | null;
   valor_pago: number | null;
   data_aquisicao: string | null;
+  created_at: string;
 }
 
 const categoryLabels: Record<string, string> = {
