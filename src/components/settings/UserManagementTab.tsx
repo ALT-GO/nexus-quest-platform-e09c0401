@@ -232,11 +232,11 @@ export function UserManagementTab() {
 
   const pendingInvites = invites.filter((i) => !i.accepted_at);
 
-  if (!isAdmin) {
+  if (!canView) {
     return (
       <Card>
         <CardContent className="py-12 text-center text-muted-foreground">
-          Apenas administradores podem gerenciar usuários.
+          Apenas administradores e técnicos de TI podem visualizar a equipe.
         </CardContent>
       </Card>
     );
