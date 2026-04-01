@@ -212,16 +212,18 @@ export default function ServiceDesk() {
     [tickets, updateTicket, getDoneStatusId, statuses]
   );
 
-  // Handle reorder within same column
+  // Handle reorder (same or cross-column)
   const handleReorder = useCallback(
     async (ticketIdOrNumber: string, statusId: string, newIndex: number) => {
-      // Get all non-subtask tickets in this column, sorted by order_index
-      const columnTickets = tickets
-        .filter((t) => !t.parent_ticket_id && t.status_id === statusId)
-        .sort((a, b) => ((a as any).order_index ?? 0) - ((b as any).order_index ?? 0));
-
       const ticket = tickets.find((t) => t.ticket_number === ticketIdOrNumber || t.id === ticketIdOrNumber);
       if (!ticket) return;
+
+      // Get all non-subtask tickets in the DESTINATION column, sorted by order_index
+      // Include the dragged ticket as if it already belongs to this column
+      const columnTickets = tickets
+        .filter((t) => !t.parent_ticket_id && (t.status_id === statusId || t.id === ticket.id))
+        .filter((t, i, arr) => arr.findIndex((x) => x.id === t.id) === i) // dedupe
+        .sort((a, b) => ((a as any).order_index ?? 0) - ((b as any).order_index ?? 0));
 
       // Remove dragged ticket and insert at new position
       const ordered = columnTickets.filter((t) => t.id !== ticket.id);
