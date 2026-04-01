@@ -283,7 +283,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                 ref={dragProvided.innerRef}
                                 {...dragProvided.draggableProps}
                                 className={cn(
-                                  "group rounded-lg border bg-card shadow-sm transition-all hover:shadow-md cursor-pointer overflow-hidden",
+                                  "group relative rounded-lg border bg-card shadow-sm transition-all hover:shadow-md cursor-pointer overflow-hidden",
                                   dragSnapshot.isDragging && "shadow-lg ring-2 ring-primary/20 rotate-[1deg]",
                                   task.is_milestone && "border-l-[3px] border-l-warning",
                                   blocked && "opacity-70 border-dashed"
