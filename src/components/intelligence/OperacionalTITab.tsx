@@ -150,9 +150,9 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
 
   const technicians = useMemo(() => {
     const set = new Set<string>();
-    allTickets.forEach((t) => { if (t.assignee) set.add(t.assignee); });
+    mainTickets.forEach((t) => { if (t.assignee) set.add(t.assignee); });
     return [...set];
-  }, [allTickets]);
+  }, [mainTickets]);
 
   const ticketsByTech = useMemo(() => {
     const map: Record<string, { total: number; completed: number }> = {};
