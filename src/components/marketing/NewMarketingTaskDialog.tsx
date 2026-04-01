@@ -49,6 +49,8 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
   const [assigneeId, setAssigneeId] = useState("");
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [dueDate, setDueDate] = useState<Date | undefined>();
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [recurrenceRule, setRecurrenceRule] = useState("weekly");
 
   const handleSubmit = () => {
     if (!title.trim()) return;
