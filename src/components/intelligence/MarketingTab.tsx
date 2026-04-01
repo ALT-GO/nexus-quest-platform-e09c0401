@@ -304,6 +304,35 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
         </Card>
       </div>
 
+      {/* Estimate vs Actual Chart */}
+      {estimateVsActualData.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2 text-base font-semibold">
+              <Target className="h-4 w-4 text-muted-foreground" />
+              Estimativa vs Tempo Real (Top 10 Tarefas)
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="h-[350px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={estimateVsActualData} layout="vertical">
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                  <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))" }} unit="h" />
+                  <YAxis dataKey="name" type="category" width={160} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                  <Tooltip
+                    contentStyle={tooltipStyle}
+                    formatter={(value: number, name: string) => [`${value}h`, name === "estimativa" ? "Estimativa" : "Tempo Real"]}
+                  />
+                  <Bar dataKey="estimativa" name="Estimativa" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} opacity={0.5} />
+                  <Bar dataKey="real" name="Tempo Real" fill="hsl(var(--chart-4))" radius={[0, 4, 4, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </CardContent>
+        </Card>
+      )}
+
       {/* Events Table */}
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
