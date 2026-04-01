@@ -15,6 +15,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useMarketingStages, useMarketingTasks, MarketingTask } from "@/hooks/use-marketing";
 import { useMarketingTags } from "@/hooks/use-marketing-tags";
 import { useMarketingSprints } from "@/hooks/use-sprints";
+import { useMarketingTaskTypes } from "@/hooks/use-task-types";
+import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
 import { MarketingKanban } from "@/components/marketing/MarketingKanban";
 import { MarketingListView } from "@/components/marketing/MarketingListView";
 import { NewMarketingTaskDialog } from "@/components/marketing/NewMarketingTaskDialog";
