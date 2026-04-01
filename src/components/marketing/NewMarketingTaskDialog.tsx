@@ -46,7 +46,7 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
       priority,
       progress,
       requester_id: user?.id ?? null,
-      requester_name: profile?.full_name ?? "Desconhecido",
+      requester_name: profileData?.full_name ?? "Desconhecido",
       assignee_id: assigneeId || null,
       assignee_name: assignee?.name ?? "",
       order_index: 0,
