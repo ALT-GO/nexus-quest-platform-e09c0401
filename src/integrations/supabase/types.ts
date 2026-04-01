@@ -591,6 +591,39 @@ export type Database = {
           },
         ]
       }
+      marketing_task_types: {
+        Row: {
+          checklist_template: Json
+          color: string
+          created_at: string
+          default_fields: Json
+          icon: string
+          id: string
+          name: string
+          order_index: number
+        }
+        Insert: {
+          checklist_template?: Json
+          color?: string
+          created_at?: string
+          default_fields?: Json
+          icon?: string
+          id?: string
+          name: string
+          order_index?: number
+        }
+        Update: {
+          checklist_template?: Json
+          color?: string
+          created_at?: string
+          default_fields?: Json
+          icon?: string
+          id?: string
+          name?: string
+          order_index?: number
+        }
+        Relationships: []
+      }
       marketing_tasks: {
         Row: {
           assignee_id: string | null
@@ -613,6 +646,7 @@ export type Database = {
           stage_id: string | null
           start_date: string | null
           story_points: number | null
+          task_type_id: string | null
           time_estimate_minutes: number | null
           title: string
           updated_at: string
@@ -638,6 +672,7 @@ export type Database = {
           stage_id?: string | null
           start_date?: string | null
           story_points?: number | null
+          task_type_id?: string | null
           time_estimate_minutes?: number | null
           title: string
           updated_at?: string
@@ -663,6 +698,7 @@ export type Database = {
           stage_id?: string | null
           start_date?: string | null
           story_points?: number | null
+          task_type_id?: string | null
           time_estimate_minutes?: number | null
           title?: string
           updated_at?: string
@@ -680,6 +716,13 @@ export type Database = {
             columns: ["stage_id"]
             isOneToOne: false
             referencedRelation: "marketing_stages"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_tasks_task_type_id_fkey"
+            columns: ["task_type_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_task_types"
             referencedColumns: ["id"]
           },
         ]
