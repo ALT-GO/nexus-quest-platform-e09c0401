@@ -79,7 +79,7 @@ export default function Solicitacoes() {
     );
   };
 
-  const hasActiveFilters = searchQuery || filterPriority !== "all" || filterAssignee !== "all" || filterProgress !== "all" || filterTagIds.length > 0;
+  const hasActiveFilters = searchQuery || filterPriority !== "all" || filterAssignee !== "all" || filterProgress !== "all" || filterTagIds.length > 0 || filterMilestoneOnly;
 
   const clearAllFilters = () => {
     setSearchQuery("");
