@@ -2,8 +2,6 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Sheet,
   SheetContent,
-  SheetHeader,
-  SheetTitle,
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -12,7 +10,6 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -27,7 +24,30 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, Check, X, Plus, Trash2, CalendarIcon, MessageSquare, History, Send, Repeat, Diamond } from "lucide-react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import {
+  AlertTriangle,
+  Check,
+  X,
+  CalendarIcon,
+  MessageSquare,
+  History,
+  Send,
+  Repeat,
+  Diamond,
+  Clock,
+  User,
+  Flag,
+  Tag,
+  Timer,
+  ChevronDown,
+  ChevronRight,
+  Link2,
+  Target,
+  Hash,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { ChecklistEditor } from "./ChecklistEditor";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -73,11 +93,17 @@ const priorityLabels: Record<string, string> = {
   high: "Alta",
 };
 
-const progressDot: Record<string, string> = {
-  "Não iniciado": "bg-muted-foreground",
-  "Em andamento": "bg-blue-500",
-  "Concluído": "bg-green-500",
+const priorityColors: Record<string, string> = {
+  low: "text-muted-foreground",
+  medium: "text-warning",
+  high: "text-destructive",
 };
+
+const progressOptions = [
+  { value: "Não iniciado", label: "NÃO INICIADO", color: "bg-muted-foreground" },
+  { value: "Em andamento", label: "EM PROGRESSO", color: "bg-primary" },
+  { value: "Concluído", label: "CONCLUÍDO", color: "bg-success" },
+];
 
 function TimeEstimateField({ taskId, currentMinutes, updateTask }: {
   taskId: string;
@@ -101,38 +127,58 @@ function TimeEstimateField({ taskId, currentMinutes, updateTask }: {
     }, 800);
   }, [taskId, updateTask]);
 
+  const display = (currentMinutes && currentMinutes > 0)
+    ? `${Math.floor(currentMinutes / 60)}h ${currentMinutes % 60}m`
+    : null;
+
   return (
-    <div>
-      <Label className="text-xs text-muted-foreground">Estimativa de Tempo</Label>
-      <div className="flex items-center gap-2 mt-1">
-        <Input
-          type="number"
-          min={0}
-          placeholder="Horas"
-          value={hours || ""}
-          onChange={(e) => {
-            const h = parseInt(e.target.value) || 0;
-            setHours(h);
-            debouncedSave(h, mins);
-          }}
-          className="h-8 w-20 text-sm"
-        />
-        <span className="text-xs text-muted-foreground">h</span>
-        <Input
-          type="number"
-          min={0}
-          max={59}
-          placeholder="Min"
-          value={mins || ""}
-          onChange={(e) => {
-            const m = Math.min(59, parseInt(e.target.value) || 0);
-            setMins(m);
-            debouncedSave(hours, m);
-          }}
-          className="h-8 w-20 text-sm"
-        />
-        <span className="text-xs text-muted-foreground">min</span>
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="text-sm hover:text-foreground transition-colors text-left">
+          {display || <span className="text-muted-foreground">Vazio</span>}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent className="w-auto p-3" align="start">
+        <div className="flex items-center gap-2">
+          <Input
+            type="number"
+            min={0}
+            placeholder="h"
+            value={hours || ""}
+            onChange={(e) => { const h = parseInt(e.target.value) || 0; setHours(h); debouncedSave(h, mins); }}
+            className="h-8 w-16 text-sm"
+          />
+          <span className="text-xs text-muted-foreground">h</span>
+          <Input
+            type="number"
+            min={0}
+            max={59}
+            placeholder="m"
+            value={mins || ""}
+            onChange={(e) => { const m = Math.min(59, parseInt(e.target.value) || 0); setMins(m); debouncedSave(hours, m); }}
+            className="h-8 w-16 text-sm"
+          />
+          <span className="text-xs text-muted-foreground">min</span>
+        </div>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
+/* ─── Property Row ─── */
+function PropRow({ icon: Icon, label, children, isEmpty }: {
+  icon: React.ElementType;
+  label: string;
+  children: React.ReactNode;
+  isEmpty?: boolean;
+}) {
+  return (
+    <div className="flex items-center py-2 min-h-[36px] group">
+      <div className="flex items-center gap-2 w-[160px] shrink-0">
+        <Icon className="h-4 w-4 text-muted-foreground" />
+        <span className="text-sm text-muted-foreground font-medium">{label}</span>
       </div>
+      <div className="flex-1 min-w-0">{children}</div>
     </div>
   );
 }
@@ -151,6 +197,21 @@ export function MarketingTaskDetailSheet({
   const [rejectReason, setRejectReason] = useState("");
   const [commentText, setCommentText] = useState("");
   const [profile, setProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
+  const [hideEmpty, setHideEmpty] = useState(false);
+  const [editingTitle, setEditingTitle] = useState(false);
+  const [titleValue, setTitleValue] = useState("");
+  const [editingDesc, setEditingDesc] = useState(false);
+  const [descValue, setDescValue] = useState("");
+  const [activityTab, setActivityTab] = useState<"activity" | "comments">("activity");
+
+  useEffect(() => {
+    if (task) {
+      setTitleValue(task.title);
+      setDescValue(task.description || "");
+      setEditingTitle(false);
+      setEditingDesc(false);
+    }
+  }, [task]);
 
   useEffect(() => {
     if (!user) return;
@@ -171,16 +232,12 @@ export function MarketingTaskDetailSheet({
   const currentStage = stages.find((s) => s.id === task.stage_id);
   const isPendingApproval = currentStage?.meta_status === "pending_approval";
   const canApprove = isPendingApproval && isAdmin;
-
   const authorName = profile?.full_name || "Usuário";
+  const currentTaskType = task.task_type_id && taskTypes ? taskTypes.find(t => t.id === task.task_type_id) : null;
+  const currentProgress = progressOptions.find(p => p.value === task.progress) || progressOptions[0];
 
   const logHistory = (action: string, details: string) => {
-    addHistory.mutate({
-      task_id: task.id,
-      author_name: authorName,
-      action,
-      details,
-    });
+    addHistory.mutate({ task_id: task.id, author_name: authorName, action, details });
   };
 
   const handleStageChange = (val: string) => {
@@ -197,16 +254,11 @@ export function MarketingTaskDetailSheet({
 
   const handleAssigneeChange = (val: string) => {
     const member = teamMembers.find((m) => m.id === val);
-    updateTask.mutate({
-      id: task.id,
-      assignee_id: val,
-      assignee_name: member?.name || "",
-    });
+    updateTask.mutate({ id: task.id, assignee_id: val, assignee_name: member?.name || "" });
     logHistory("Mudança de responsável", `${task.assignee_name || "—"} → ${member?.name || "—"}`);
   };
 
   const handleProgressChange = (val: string) => {
-    // Block completing task if it has unresolved dependencies
     if (val === "Concluído" && allDeps && allTasks) {
       const progressMap: Record<string, string> = {};
       allTasks.forEach((t) => { progressMap[t.id] = t.progress; });
@@ -228,8 +280,6 @@ export function MarketingTaskDetailSheet({
       avatar_url: profile?.avatar_url || null,
       content: commentText.trim(),
     });
-
-    // Notify assignee if different from commenter
     if (task.assignee_id && task.assignee_id !== user.id) {
       await supabase.from("notifications").insert({
         user_id: task.assignee_id,
@@ -239,37 +289,18 @@ export function MarketingTaskDetailSheet({
         link: "/marketing/solicitacoes",
       } as any);
     }
-
     setCommentText("");
     toast.success("Comentário adicionado");
   };
 
   const handleApprove = async () => {
     const completedStage = stages.find((s) => s.meta_status === "completed");
-    if (!completedStage) {
-      toast.error("Nenhuma etapa de conclusão configurada");
-      return;
-    }
-
-    await supabase
-      .from("marketing_tasks")
-      .update({
-        stage_id: completedStage.id,
-        progress: "Concluído",
-        updated_at: new Date().toISOString(),
-      } as any)
+    if (!completedStage) { toast.error("Nenhuma etapa de conclusão configurada"); return; }
+    await supabase.from("marketing_tasks")
+      .update({ stage_id: completedStage.id, progress: "Concluído", updated_at: new Date().toISOString() } as any)
       .eq("id", task.id);
-
     logHistory("Aprovação", `Tarefa aprovada por ${authorName}`);
-
-    if (task.requester_id) {
-      notifyTaskCreator({
-        creatorId: task.requester_id,
-        taskTitle: task.title,
-        approved: true,
-      });
-    }
-
+    if (task.requester_id) notifyTaskCreator({ creatorId: task.requester_id, taskTitle: task.title, approved: true });
     qc.invalidateQueries({ queryKey: ["marketing_tasks"] });
     toast.success("Tarefa aprovada e movida para Concluído");
     onOpenChange(false);
@@ -277,33 +308,13 @@ export function MarketingTaskDetailSheet({
 
   const handleReject = async () => {
     if (!rejectReason.trim()) return;
-
     const inProgressStage = stages.find((s) => s.meta_status === "in_progress");
-    if (!inProgressStage) {
-      toast.error("Nenhuma etapa de progresso configurada");
-      return;
-    }
-
-    await supabase
-      .from("marketing_tasks")
-      .update({
-        stage_id: inProgressStage.id,
-        progress: "Em andamento",
-        updated_at: new Date().toISOString(),
-      } as any)
+    if (!inProgressStage) { toast.error("Nenhuma etapa de progresso configurada"); return; }
+    await supabase.from("marketing_tasks")
+      .update({ stage_id: inProgressStage.id, progress: "Em andamento", updated_at: new Date().toISOString() } as any)
       .eq("id", task.id);
-
     logHistory("Reprovação", `Tarefa reprovada por ${authorName}. Motivo: ${rejectReason}`);
-
-    if (task.requester_id) {
-      notifyTaskCreator({
-        creatorId: task.requester_id,
-        taskTitle: task.title,
-        approved: false,
-        reason: rejectReason,
-      });
-    }
-
+    if (task.requester_id) notifyTaskCreator({ creatorId: task.requester_id, taskTitle: task.title, approved: false, reason: rejectReason });
     qc.invalidateQueries({ queryKey: ["marketing_tasks"] });
     toast.success("Tarefa reprovada e devolvida para ajustes");
     setRejectDialogOpen(false);
@@ -311,454 +322,515 @@ export function MarketingTaskDetailSheet({
     onOpenChange(false);
   };
 
+  const handleSaveTitle = () => {
+    if (titleValue.trim() && titleValue !== task.title) {
+      updateTask.mutate({ id: task.id, title: titleValue.trim() });
+      logHistory("Título alterado", `"${task.title}" → "${titleValue.trim()}"`);
+    }
+    setEditingTitle(false);
+  };
+
+  const handleSaveDesc = () => {
+    if (descValue !== task.description) {
+      updateTask.mutate({ id: task.id, description: descValue });
+      logHistory("Descrição atualizada", "Descrição alterada");
+    }
+    setEditingDesc(false);
+  };
+
+  // Merged activity feed (comments + history)
+  const activityFeed = [
+    ...(comments || []).map(c => ({
+      type: "comment" as const,
+      id: c.id,
+      author: c.author_name,
+      avatar: c.avatar_url,
+      content: c.content,
+      date: new Date(c.created_at),
+    })),
+    ...(history || []).map(h => ({
+      type: "history" as const,
+      id: h.id,
+      author: h.author_name,
+      avatar: null as string | null,
+      content: `${h.action}: ${h.details}`,
+      date: new Date(h.created_at),
+    })),
+  ].sort((a, b) => b.date.getTime() - a.date.getTime());
+
+  const hasAssignee = !!task.assignee_name;
+  const hasDates = !!task.start_date || !!task.due_date;
+  const hasTimeEstimate = !!task.time_estimate_minutes;
+  const hasTags = true; // always show
+  const hasRecurrence = task.is_recurring;
+
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-lg overflow-y-auto">
-          <SheetHeader>
-            <SheetTitle className="text-lg">{task.title}</SheetTitle>
-            <p className="text-xs text-muted-foreground">
-              Criado em {format(new Date(task.created_at), "dd/MM/yyyy 'às' HH:mm")}
-            </p>
-          </SheetHeader>
+        <SheetContent className="w-full sm:max-w-[900px] p-0 flex flex-row gap-0 overflow-hidden" side="right">
+          {/* ─── LEFT: Main Content ─── */}
+          <ScrollArea className="flex-1 min-w-0">
+            <div className="p-6 space-y-1">
+              {/* Top bar: Task type + ID */}
+              <div className="flex items-center gap-2 mb-2">
+                {/* Task type selector */}
+                {taskTypes && taskTypes.length > 0 && (
+                  <Select
+                    value={task.task_type_id || ""}
+                    onValueChange={(val) => {
+                      updateTask.mutate({ id: task.id, task_type_id: val || null } as any);
+                      const typeName = taskTypes.find(t => t.id === val)?.name || "—";
+                      logHistory("Tipo alterado", `Tipo → ${typeName}`);
+                    }}
+                  >
+                    <SelectTrigger className="w-auto h-7 text-xs gap-1 border-none shadow-none bg-muted/50 px-2">
+                      {currentTaskType ? (
+                        <span className="flex items-center gap-1.5">
+                          <DynamicLucideIcon name={currentTaskType.icon} className="h-3.5 w-3.5" style={{ color: `hsl(${currentTaskType.color})` }} />
+                          {currentTaskType.name}
+                        </span>
+                      ) : (
+                        <SelectValue placeholder="Tarefa" />
+                      )}
+                    </SelectTrigger>
+                    <SelectContent>
+                      {taskTypes.map((t) => (
+                        <SelectItem key={t.id} value={t.id}>
+                          <div className="flex items-center gap-2">
+                            <DynamicLucideIcon name={t.icon} className="h-3.5 w-3.5" style={{ color: `hsl(${t.color})` }} />
+                            {t.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                )}
 
-          {/* Approval Banner */}
-          {canApprove && (
-            <div className="mt-4 rounded-lg border-2 border-amber-400 bg-amber-50 dark:bg-amber-950/30 p-4">
-              <div className="flex items-center gap-2 mb-3">
-                <AlertTriangle className="h-5 w-5 text-amber-600" />
-                <span className="font-semibold text-amber-800 dark:text-amber-300">
-                  Aprovação Necessária
+                <span className="text-xs text-muted-foreground font-mono">{task.id.slice(0, 8)}</span>
+
+                <div className="flex-1" />
+
+                <span className="text-xs text-muted-foreground">
+                  Criada em {format(new Date(task.created_at), "d MMM", { locale: ptBR })}
                 </span>
               </div>
-              <div className="flex gap-2">
-                <Button
-                  onClick={handleApprove}
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white"
-                >
-                  <Check className="h-4 w-4 mr-2" /> Aprovar
-                </Button>
-                <Button
-                  variant="destructive"
-                  className="flex-1"
-                  onClick={() => setRejectDialogOpen(true)}
-                >
-                  <X className="h-4 w-4 mr-2" /> Reprovar
-                </Button>
-              </div>
-            </div>
-          )}
 
-          <div className="mt-6 space-y-5">
-            {/* Task Type */}
-            {taskTypes && taskTypes.length > 0 && (
-              <div>
-                <Label className="text-xs text-muted-foreground">Tipo de Tarefa</Label>
-                <Select
-                  value={task.task_type_id || ""}
-                  onValueChange={(val) => {
-                    updateTask.mutate({ id: task.id, task_type_id: val || null } as any);
-                    const typeName = taskTypes.find(t => t.id === val)?.name || "—";
-                    logHistory("Tipo alterado", `Tipo → ${typeName}`);
-                  }}
-                >
-                  <SelectTrigger className="mt-1">
-                    <SelectValue placeholder="Selecione o tipo" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {taskTypes.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        <div className="flex items-center gap-2">
-                          <DynamicLucideIcon name={t.icon} className="h-3.5 w-3.5" style={{ color: `hsl(${t.color})` }} />
-                          {t.name}
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
-
-            {/* Timer */}
-            <div>
-              <Label className="text-xs text-muted-foreground">Timer</Label>
-              <div className="mt-1">
-                <MarketingTimerButton taskId={task.id} size="detail" />
-              </div>
-            </div>
-
-            {/* Time Estimate */}
-            <TimeEstimateField
-              taskId={task.id}
-              currentMinutes={task.time_estimate_minutes}
-              updateTask={updateTask}
-            />
-
-            <div>
-              <Label className="text-xs text-muted-foreground">Descrição</Label>
-              <p className="mt-1 text-sm whitespace-pre-wrap">
-                {task.description || "Sem descrição"}
-              </p>
-            </div>
-
-            {/* Stage */}
-            <div>
-              <Label className="text-xs text-muted-foreground">Etapa</Label>
-              <Select
-                value={task.stage_id || ""}
-                onValueChange={handleStageChange}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {stages.map((s) => (
-                    <SelectItem key={s.id} value={s.id}>
-                      {s.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Progress */}
-            <div>
-              <Label className="text-xs text-muted-foreground">Progresso</Label>
-              <div className="flex items-center gap-2 mt-1">
-                <span
-                  className={`inline-block h-3 w-3 rounded-full ${
-                    progressDot[task.progress] || "bg-muted-foreground"
-                  }`}
+              {/* Title — large, editable */}
+              {editingTitle ? (
+                <Input
+                  value={titleValue}
+                  onChange={(e) => setTitleValue(e.target.value)}
+                  onBlur={handleSaveTitle}
+                  onKeyDown={(e) => e.key === "Enter" && handleSaveTitle()}
+                  autoFocus
+                  className="text-2xl font-bold border-none shadow-none p-0 h-auto focus-visible:ring-0"
                 />
-                <Select
-                  value={task.progress}
-                  onValueChange={handleProgressChange}
+              ) : (
+                <h1
+                  className="text-2xl font-bold cursor-pointer hover:text-primary/80 transition-colors"
+                  onClick={() => setEditingTitle(true)}
                 >
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="Não iniciado">Não iniciado</SelectItem>
-                    <SelectItem value="Em andamento">Em andamento</SelectItem>
-                    <SelectItem value="Concluído">Concluído</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+                  {task.is_milestone && <Diamond className="inline h-5 w-5 text-warning fill-warning mr-1.5 -mt-1" />}
+                  {task.title}
+                </h1>
+              )}
 
-            {/* Priority */}
-            <div>
-              <Label className="text-xs text-muted-foreground">Prioridade</Label>
-              <Select
-                value={task.priority}
-                onValueChange={handlePriorityChange}
-              >
-                <SelectTrigger className="mt-1 w-48">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="low">Baixa</SelectItem>
-                  <SelectItem value="medium">Média</SelectItem>
-                  <SelectItem value="high">Alta</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Assignee */}
-            <div>
-              <Label className="text-xs text-muted-foreground">Responsável</Label>
-              <Select
-                value={task.assignee_id || ""}
-                onValueChange={handleAssigneeChange}
-              >
-                <SelectTrigger className="mt-1">
-                  <SelectValue placeholder="Selecione" />
-                </SelectTrigger>
-                <SelectContent>
-                  {teamMembers.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            {/* Dates */}
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <Label className="text-xs text-muted-foreground">Data de Início</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full mt-1 justify-start text-left font-normal text-sm", !task.start_date && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                      {task.start_date ? format(new Date(task.start_date), "dd/MM/yyyy") : "Selecione"}
+              {/* Approval Banner */}
+              {canApprove && (
+                <div className="rounded-lg border-2 border-warning bg-warning/10 p-4 mt-3">
+                  <div className="flex items-center gap-2 mb-3">
+                    <AlertTriangle className="h-5 w-5 text-warning" />
+                    <span className="font-semibold">Aprovação Necessária</span>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button onClick={handleApprove} className="flex-1 bg-success hover:bg-success/90 text-white">
+                      <Check className="h-4 w-4 mr-2" /> Aprovar
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={task.start_date ? new Date(task.start_date) : undefined}
-                      onSelect={(d) => updateTask.mutate({ id: task.id, start_date: d?.toISOString() ?? null } as any)}
-                      locale={ptBR}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-              <div>
-                <Label className="text-xs text-muted-foreground">Prazo Final</Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" className={cn("w-full mt-1 justify-start text-left font-normal text-sm", !task.due_date && "text-muted-foreground")}>
-                      <CalendarIcon className="mr-2 h-3.5 w-3.5" />
-                      {task.due_date ? format(new Date(task.due_date), "dd/MM/yyyy") : "Selecione"}
+                    <Button variant="destructive" className="flex-1" onClick={() => setRejectDialogOpen(true)}>
+                      <X className="h-4 w-4 mr-2" /> Reprovar
                     </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={task.due_date ? new Date(task.due_date) : undefined}
-                      onSelect={(d) => updateTask.mutate({ id: task.id, due_date: d?.toISOString() ?? null } as any)}
-                      locale={ptBR}
-                      initialFocus
-                      className="p-3 pointer-events-auto"
-                    />
-                  </PopoverContent>
-                </Popover>
-              </div>
-            </div>
-
-            {/* Milestone Toggle */}
-            <div className="flex items-center justify-between rounded-lg border p-3 bg-amber-50/50 dark:bg-amber-950/10">
-              <div className="flex items-center gap-2">
-                <Diamond className="h-4 w-4 text-amber-500 fill-amber-500" />
-                <div>
-                  <Label className="text-sm font-medium">Milestone</Label>
-                  <p className="text-[11px] text-muted-foreground">Marcar como entrega crítica</p>
+                  </div>
                 </div>
-              </div>
-              <Switch
-                checked={task.is_milestone ?? false}
-                onCheckedChange={(checked) => {
-                  updateTask.mutate({ id: task.id, is_milestone: checked } as any);
-                  logHistory("Milestone", checked ? "Marcada como milestone" : "Desmarcada como milestone");
-                }}
-              />
-            </div>
+              )}
 
-            {/* Story Points */}
-            <div>
-              <Label className="text-xs text-muted-foreground">Story Points</Label>
-              <Input
-                type="number"
-                min={0}
-                value={(task as any).story_points || ""}
-                onChange={(e) => {
-                  const val = parseInt(e.target.value) || null;
-                  updateTask.mutate({ id: task.id, story_points: val } as any);
-                }}
-                placeholder="0"
-                className="h-8 w-24 mt-1 text-sm"
-              />
-            </div>
+              {/* ─── Properties Grid ─── */}
+              <div className="mt-4 space-y-0 divide-y divide-border/50">
+                {/* Status */}
+                <PropRow icon={Target} label="Status">
+                  <Select value={task.progress} onValueChange={handleProgressChange}>
+                    <SelectTrigger className="w-auto h-7 border-none shadow-none gap-1.5 px-0">
+                      <span className={cn(
+                        "inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white",
+                        currentProgress.color
+                      )}>
+                        {currentProgress.label}
+                      </span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      {progressOptions.map(p => (
+                        <SelectItem key={p.value} value={p.value}>
+                          <span className="flex items-center gap-2">
+                            <span className={cn("h-2.5 w-2.5 rounded-full", p.color)} />
+                            {p.label}
+                          </span>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </PropRow>
 
-            <div>
-              <Label className="text-xs text-muted-foreground">Tags</Label>
-              <div className="mt-1">
-                <MarketingTagSelector taskId={task.id} />
-              </div>
-            </div>
+                {/* Stage */}
+                <PropRow icon={Hash} label="Etapa">
+                  <Select value={task.stage_id || ""} onValueChange={handleStageChange}>
+                    <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {stages.map(s => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
+                    </SelectContent>
+                  </Select>
+                </PropRow>
 
-            {/* Dependencies */}
-            {allDeps && allTasks && (
-              <DependencySection task={task} allTasks={allTasks} dependencies={allDeps} />
-            )}
+                {/* Assignee */}
+                {(!hideEmpty || hasAssignee) && (
+                  <PropRow icon={User} label="Responsáveis" isEmpty={!hasAssignee}>
+                    <Select value={task.assignee_id || ""} onValueChange={handleAssigneeChange}>
+                      <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
+                        {task.assignee_name ? (
+                          <span className="flex items-center gap-1.5">
+                            <UserAvatar name={task.assignee_name} className="h-5 w-5" fallbackClassName="text-[9px]" />
+                            {task.assignee_name}
+                          </span>
+                        ) : (
+                          <span className="text-muted-foreground">Vazio</span>
+                        )}
+                      </SelectTrigger>
+                      <SelectContent>
+                        {teamMembers.map(m => <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>)}
+                      </SelectContent>
+                    </Select>
+                  </PropRow>
+                )}
 
-            {/* Checklist / Subtarefas */}
-            <ChecklistEditor
-              value={task.checklist}
-              onChange={(groups) => updateTask.mutate({ id: task.id, checklist: groups } as any)}
-              teamMembers={teamMembers}
-            />
+                {/* Dates */}
+                {(!hideEmpty || hasDates) && (
+                  <PropRow icon={CalendarIcon} label="Datas" isEmpty={!hasDates}>
+                    <div className="flex items-center gap-2 text-sm">
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className="hover:text-foreground transition-colors">
+                            {task.start_date ? (
+                              <span className="flex items-center gap-1">
+                                <CalendarIcon className="h-3 w-3" />
+                                {format(new Date(task.start_date), "dd/MM/yy")}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground flex items-center gap-1">
+                                <CalendarIcon className="h-3 w-3" /> Início
+                              </span>
+                            )}
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={task.start_date ? new Date(task.start_date) : undefined}
+                            onSelect={(d) => updateTask.mutate({ id: task.id, start_date: d?.toISOString() ?? null } as any)}
+                            locale={ptBR}
+                            initialFocus
+                            className="p-3 pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                      <span className="text-muted-foreground">→</span>
+                      <Popover>
+                        <PopoverTrigger asChild>
+                          <button className="hover:text-foreground transition-colors">
+                            {task.due_date ? (
+                              <span className="flex items-center gap-1">
+                                <CalendarIcon className="h-3 w-3" />
+                                {format(new Date(task.due_date), "dd/MM/yy")}
+                              </span>
+                            ) : (
+                              <span className="text-muted-foreground flex items-center gap-1">
+                                <CalendarIcon className="h-3 w-3" /> Vencimento
+                              </span>
+                            )}
+                          </button>
+                        </PopoverTrigger>
+                        <PopoverContent className="w-auto p-0" align="start">
+                          <Calendar
+                            mode="single"
+                            selected={task.due_date ? new Date(task.due_date) : undefined}
+                            onSelect={(d) => updateTask.mutate({ id: task.id, due_date: d?.toISOString() ?? null } as any)}
+                            locale={ptBR}
+                            initialFocus
+                            className="p-3 pointer-events-auto"
+                          />
+                        </PopoverContent>
+                      </Popover>
+                    </div>
+                  </PropRow>
+                )}
 
-            {/* Recurrence */}
-            <div className="flex items-center justify-between rounded-lg border p-3">
-              <div className="flex items-center gap-2">
-                <Repeat className="h-4 w-4 text-muted-foreground" />
-                <div>
-                  <Label className="text-sm font-medium">Tarefa Recorrente</Label>
-                  <p className="text-xs text-muted-foreground">
-                    {task.is_recurring && task.recurrence_rule
-                      ? `${task.recurrence_rule === 'daily' ? 'Diária' : task.recurrence_rule === 'weekly' ? 'Semanal' : 'Mensal'}`
-                      : 'Desativada'}
-                  </p>
-                </div>
-              </div>
-              <Switch
-                checked={task.is_recurring}
-                onCheckedChange={(checked) => {
-                  const rule = task.recurrence_rule || 'weekly';
-                  let nextDate: string | null = null;
-                  if (checked) {
-                    const base = task.due_date ? new Date(task.due_date) : new Date();
-                    const next = new Date(base);
-                    if (rule === 'daily') next.setDate(next.getDate() + 1);
-                    else if (rule === 'weekly') next.setDate(next.getDate() + 7);
-                    else next.setMonth(next.getMonth() + 1);
-                    nextDate = next.toISOString();
-                  }
-                  updateTask.mutate({
-                    id: task.id,
-                    is_recurring: checked,
-                    recurrence_rule: checked ? rule : null,
-                    next_recurrence_date: nextDate,
-                  } as any);
-                  logHistory("Recorrência", checked ? "Ativada" : "Desativada");
-                }}
-              />
-            </div>
-            {task.is_recurring && (
-              <div>
-                <Label className="text-xs text-muted-foreground">Frequência</Label>
-                <Select
-                  value={task.recurrence_rule || "weekly"}
-                  onValueChange={(val) => {
-                    const base = task.due_date ? new Date(task.due_date) : new Date();
-                    const next = new Date(base);
-                    if (val === 'daily') next.setDate(next.getDate() + 1);
-                    else if (val === 'weekly') next.setDate(next.getDate() + 7);
-                    else next.setMonth(next.getMonth() + 1);
-                    updateTask.mutate({
-                      id: task.id,
-                      recurrence_rule: val,
-                      next_recurrence_date: next.toISOString(),
-                    } as any);
-                    logHistory("Frequência de recorrência", `Alterada para ${val === 'daily' ? 'Diária' : val === 'weekly' ? 'Semanal' : 'Mensal'}`);
-                  }}
-                >
-                  <SelectTrigger className="mt-1 w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="daily">Diária</SelectItem>
-                    <SelectItem value="weekly">Semanal</SelectItem>
-                    <SelectItem value="monthly">Mensal</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            )}
+                {/* Priority */}
+                <PropRow icon={Flag} label="Prioridade">
+                  <Select value={task.priority} onValueChange={handlePriorityChange}>
+                    <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
+                      <span className={cn("flex items-center gap-1.5", priorityColors[task.priority])}>
+                        <Flag className="h-3.5 w-3.5" />
+                        {priorityLabels[task.priority]}
+                      </span>
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="low">Baixa</SelectItem>
+                      <SelectItem value="medium">Média</SelectItem>
+                      <SelectItem value="high">Alta</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </PropRow>
 
-            {/* Requester */}
-            <div>
-              <Label className="text-xs text-muted-foreground">Solicitante</Label>
-              <p className="mt-1 text-sm">
-                {task.requester_name || "Não informado"}
-              </p>
-            </div>
+                {/* Time estimate */}
+                {(!hideEmpty || hasTimeEstimate) && (
+                  <PropRow icon={Clock} label="Tempo estimado" isEmpty={!hasTimeEstimate}>
+                    <TimeEstimateField taskId={task.id} currentMinutes={task.time_estimate_minutes} updateTask={updateTask} />
+                  </PropRow>
+                )}
 
-            {/* Comments & History Tabs */}
-            <Tabs defaultValue="comments" className="mt-4">
-              <TabsList className="w-full">
-                <TabsTrigger value="comments" className="flex-1 gap-1.5">
-                  <MessageSquare className="h-3.5 w-3.5" />
-                  Comentários
-                  {comments && comments.length > 0 && (
-                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
-                      {comments.length}
-                    </Badge>
-                  )}
-                </TabsTrigger>
-                <TabsTrigger value="history" className="flex-1 gap-1.5">
-                  <History className="h-3.5 w-3.5" />
-                  Histórico
-                </TabsTrigger>
-              </TabsList>
+                {/* Timer / Time tracked */}
+                <PropRow icon={Timer} label="Tempo rastreado">
+                  <MarketingTimerButton taskId={task.id} size="detail" />
+                </PropRow>
 
-              <TabsContent value="comments" className="space-y-3 mt-3">
-                {/* Comment input */}
-                <div className="flex gap-2">
-                  <Textarea
-                    placeholder="Escreva um comentário..."
-                    value={commentText}
-                    onChange={(e) => setCommentText(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === "Enter" && !e.shiftKey) {
-                        e.preventDefault();
-                        handleSendComment();
-                      }
+                {/* Tags */}
+                <PropRow icon={Tag} label="Etiquetas">
+                  <MarketingTagSelector taskId={task.id} />
+                </PropRow>
+
+                {/* Dependencies / Relationships */}
+                {allDeps && allTasks && (
+                  <PropRow icon={Link2} label="Relacionamentos">
+                    <DependencySection task={task} allTasks={allTasks} dependencies={allDeps} />
+                  </PropRow>
+                )}
+
+                {/* Story Points */}
+                <PropRow icon={Target} label="Story Points">
+                  <Input
+                    type="number"
+                    min={0}
+                    value={(task as any).story_points || ""}
+                    onChange={(e) => {
+                      const val = parseInt(e.target.value) || null;
+                      updateTask.mutate({ id: task.id, story_points: val } as any);
                     }}
-                    className="min-h-[60px] text-sm"
+                    placeholder="0"
+                    className="h-7 w-20 text-sm border-none shadow-none px-0"
                   />
-                  <Button
-                    size="icon"
-                    onClick={handleSendComment}
-                    disabled={!commentText.trim() || addComment.isPending}
-                    className="shrink-0 self-end"
-                  >
-                    <Send className="h-4 w-4" />
-                  </Button>
-                </div>
+                </PropRow>
 
-                {/* Comment list */}
-                <div className="space-y-3">
-                  {(!comments || comments.length === 0) && (
-                    <p className="text-xs text-muted-foreground text-center py-4">
-                      Nenhum comentário ainda
-                    </p>
+                {/* Milestone */}
+                <PropRow icon={Diamond} label="Milestone">
+                  <Switch
+                    checked={task.is_milestone ?? false}
+                    onCheckedChange={(checked) => {
+                      updateTask.mutate({ id: task.id, is_milestone: checked } as any);
+                      logHistory("Milestone", checked ? "Marcada como milestone" : "Desmarcada como milestone");
+                    }}
+                  />
+                </PropRow>
+
+                {/* Recurrence */}
+                <PropRow icon={Repeat} label="Recorrência">
+                  <div className="flex items-center gap-2">
+                    <Switch
+                      checked={task.is_recurring}
+                      onCheckedChange={(checked) => {
+                        const rule = task.recurrence_rule || 'weekly';
+                        let nextDate: string | null = null;
+                        if (checked) {
+                          const base = task.due_date ? new Date(task.due_date) : new Date();
+                          const next = new Date(base);
+                          if (rule === 'daily') next.setDate(next.getDate() + 1);
+                          else if (rule === 'weekly') next.setDate(next.getDate() + 7);
+                          else next.setMonth(next.getMonth() + 1);
+                          nextDate = next.toISOString();
+                        }
+                        updateTask.mutate({ id: task.id, is_recurring: checked, recurrence_rule: checked ? rule : null, next_recurrence_date: nextDate } as any);
+                        logHistory("Recorrência", checked ? "Ativada" : "Desativada");
+                      }}
+                    />
+                    {task.is_recurring && (
+                      <Select
+                        value={task.recurrence_rule || "weekly"}
+                        onValueChange={(val) => {
+                          const base = task.due_date ? new Date(task.due_date) : new Date();
+                          const next = new Date(base);
+                          if (val === 'daily') next.setDate(next.getDate() + 1);
+                          else if (val === 'weekly') next.setDate(next.getDate() + 7);
+                          else next.setMonth(next.getMonth() + 1);
+                          updateTask.mutate({ id: task.id, recurrence_rule: val, next_recurrence_date: next.toISOString() } as any);
+                          logHistory("Frequência", `→ ${val === 'daily' ? 'Diária' : val === 'weekly' ? 'Semanal' : 'Mensal'}`);
+                        }}
+                      >
+                        <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="daily">Diária</SelectItem>
+                          <SelectItem value="weekly">Semanal</SelectItem>
+                          <SelectItem value="monthly">Mensal</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    )}
+                  </div>
+                </PropRow>
+              </div>
+
+              {/* Hide empty toggle */}
+              <button
+                className="flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors mt-2"
+                onClick={() => setHideEmpty(!hideEmpty)}
+              >
+                {hideEmpty ? <Eye className="h-3 w-3" /> : <EyeOff className="h-3 w-3" />}
+                {hideEmpty ? "Mostrar propriedades vazias" : "Ocultar propriedades vazias"}
+              </button>
+
+              {/* ─── Description ─── */}
+              <div className="mt-6">
+                {editingDesc ? (
+                  <div className="space-y-2">
+                    <Textarea
+                      value={descValue}
+                      onChange={(e) => setDescValue(e.target.value)}
+                      autoFocus
+                      rows={4}
+                      className="text-sm"
+                      placeholder="Adicionar descrição..."
+                    />
+                    <div className="flex gap-2">
+                      <Button size="sm" onClick={handleSaveDesc}>Salvar</Button>
+                      <Button size="sm" variant="ghost" onClick={() => { setDescValue(task.description || ""); setEditingDesc(false); }}>Cancelar</Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    className="text-sm text-muted-foreground hover:bg-muted/30 rounded-md p-2 cursor-pointer transition-colors min-h-[40px]"
+                    onClick={() => setEditingDesc(true)}
+                  >
+                    {task.description ? (
+                      <p className="text-foreground whitespace-pre-wrap">{task.description}</p>
+                    ) : (
+                      <p>Adicionar descrição</p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              {/* ─── Checklist ─── */}
+              <div className="mt-6">
+                <ChecklistEditor
+                  value={task.checklist}
+                  onChange={(groups) => updateTask.mutate({ id: task.id, checklist: groups } as any)}
+                  teamMembers={teamMembers}
+                />
+              </div>
+
+              {/* Requester */}
+              <div className="mt-6 text-xs text-muted-foreground">
+                Solicitante: {task.requester_name || "Não informado"}
+              </div>
+            </div>
+          </ScrollArea>
+
+          {/* ─── RIGHT: Activity Sidebar ─── */}
+          <div className="w-[320px] shrink-0 border-l flex flex-col bg-muted/20">
+            {/* Sidebar header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b">
+              <h3 className="text-sm font-semibold">Atividade</h3>
+              <div className="flex items-center gap-1">
+                <button
+                  className={cn(
+                    "text-xs px-2 py-1 rounded transition-colors",
+                    activityTab === "activity" ? "bg-muted font-medium" : "text-muted-foreground hover:text-foreground"
                   )}
-                  {(comments || []).map((c) => (
-                    <div key={c.id} className="flex gap-2.5">
+                  onClick={() => setActivityTab("activity")}
+                >
+                  Tudo
+                </button>
+                <button
+                  className={cn(
+                    "text-xs px-2 py-1 rounded transition-colors",
+                    activityTab === "comments" ? "bg-muted font-medium" : "text-muted-foreground hover:text-foreground"
+                  )}
+                  onClick={() => setActivityTab("comments")}
+                >
+                  Comentários
+                </button>
+              </div>
+            </div>
+
+            {/* Activity feed */}
+            <ScrollArea className="flex-1">
+              <div className="p-4 space-y-4">
+                {activityFeed.length === 0 && (
+                  <p className="text-xs text-muted-foreground text-center py-8">Nenhuma atividade ainda</p>
+                )}
+                {activityFeed
+                  .filter(item => activityTab === "activity" || item.type === "comment")
+                  .map((item) => (
+                    <div key={item.id} className="flex gap-2.5">
                       <UserAvatar
-                        name={c.author_name}
-                        avatarUrl={c.avatar_url}
-                        className="h-7 w-7 text-[10px] shrink-0 mt-0.5"
+                        name={item.author}
+                        avatarUrl={item.avatar}
+                        className="h-6 w-6 shrink-0 mt-0.5"
+                        fallbackClassName="text-[9px]"
                       />
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-baseline gap-2">
-                          <span className="text-sm font-medium truncate">{c.author_name}</span>
+                        <div className="flex items-baseline gap-1.5">
+                          <span className="text-xs font-medium truncate">{item.author}</span>
                           <span className="text-[10px] text-muted-foreground whitespace-nowrap">
-                            {formatDistanceToNow(new Date(c.created_at), { addSuffix: true, locale: ptBR })}
+                            {formatDistanceToNow(item.date, { addSuffix: true, locale: ptBR })}
                           </span>
                         </div>
-                        <p className="text-sm text-foreground/90 whitespace-pre-wrap mt-0.5">
-                          {c.content}
+                        <p className={cn(
+                          "text-xs mt-0.5 whitespace-pre-wrap",
+                          item.type === "comment" ? "text-foreground" : "text-muted-foreground"
+                        )}>
+                          {item.content}
                         </p>
                       </div>
                     </div>
                   ))}
-                </div>
-              </TabsContent>
+              </div>
+            </ScrollArea>
 
-              <TabsContent value="history" className="mt-3">
-                <div className="space-y-2">
-                  {(!history || history.length === 0) && (
-                    <p className="text-xs text-muted-foreground text-center py-4">
-                      Nenhuma atividade registrada
-                    </p>
-                  )}
-                  {(history || []).map((h) => (
-                    <div key={h.id} className="flex gap-2.5 py-1.5 border-b border-border/50 last:border-0">
-                      <div className="h-2 w-2 rounded-full bg-primary mt-1.5 shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm">
-                          <span className="font-medium">{h.author_name}</span>
-                          {" — "}
-                          <span className="text-muted-foreground">{h.action}</span>
-                        </p>
-                        {h.details && (
-                          <p className="text-xs text-muted-foreground mt-0.5">{h.details}</p>
-                        )}
-                        <p className="text-[10px] text-muted-foreground mt-0.5">
-                          {formatDistanceToNow(new Date(h.created_at), { addSuffix: true, locale: ptBR })}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </TabsContent>
-            </Tabs>
+            {/* Comment input — always visible at bottom */}
+            <div className="border-t p-3">
+              <div className="flex gap-2">
+                <Textarea
+                  placeholder="Escreva um comentário..."
+                  value={commentText}
+                  onChange={(e) => setCommentText(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSendComment();
+                    }
+                  }}
+                  className="min-h-[50px] text-sm resize-none flex-1"
+                  rows={2}
+                />
+                <Button
+                  size="icon"
+                  onClick={handleSendComment}
+                  disabled={!commentText.trim() || addComment.isPending}
+                  className="shrink-0 self-end h-8 w-8"
+                >
+                  <Send className="h-3.5 w-3.5" />
+                </Button>
+              </div>
+            </div>
           </div>
         </SheetContent>
       </Sheet>
@@ -780,17 +852,8 @@ export function MarketingTaskDetailSheet({
             />
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setRejectDialogOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={handleReject}
-              disabled={!rejectReason.trim()}
-            >
+            <Button variant="outline" onClick={() => setRejectDialogOpen(false)}>Cancelar</Button>
+            <Button variant="destructive" onClick={handleReject} disabled={!rejectReason.trim()}>
               Confirmar Reprovação
             </Button>
           </DialogFooter>
