@@ -60,6 +60,20 @@ export default function ServiceDesk() {
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [hideCompleted, setHideCompleted] = useState(true);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [avatarMap, setAvatarMap] = useState<Record<string, string>>({});
+
+  // Fetch avatar URLs for all profiles
+  useEffect(() => {
+    supabase.from("profiles").select("full_name, avatar_url").then(({ data }) => {
+      if (data) {
+        const map: Record<string, string> = {};
+        data.forEach((p) => {
+          if (p.full_name && p.avatar_url) map[p.full_name] = p.avatar_url;
+        });
+        setAvatarMap(map);
+      }
+    });
+  }, []);
 
   const { getSlaInfo, tick } = useSlaTimer();
   const {
@@ -387,6 +401,7 @@ export default function ServiceDesk() {
             priority: t.priority,
             requester: t.requester,
             assignee: t.assignee ?? undefined,
+            assigneeAvatarUrl: t.assignee ? avatarMap[t.assignee] : undefined,
             createdAt: t.created_at,
             completedAt: t.completed_at ?? undefined,
             ativoId: t.asset_id ?? undefined,

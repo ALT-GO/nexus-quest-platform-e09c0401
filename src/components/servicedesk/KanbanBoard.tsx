@@ -23,6 +23,7 @@ interface KanbanTicket {
   priority: "low" | "medium" | "high";
   requester: string;
   assignee?: string;
+  assigneeAvatarUrl?: string;
   createdAt: string;
   completedAt?: string;
   ativoId?: string;
@@ -319,6 +320,7 @@ export function KanbanBoard({
                                       <div className="flex items-center gap-1.5">
                                         <UserAvatar
                                           name={ticket.assignee}
+                                          avatarUrl={ticket.assigneeAvatarUrl}
                                           className="h-5 w-5 text-[10px]"
                                         />
                                         <span className="truncate max-w-[100px]">
