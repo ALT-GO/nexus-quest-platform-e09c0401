@@ -22,11 +22,13 @@ import { useQueryClient } from "@tanstack/react-query";
 import { MarketingTimerButton } from "./MarketingTimerButton";
 import { notifyAdminsForApproval } from "@/lib/marketing-notifications";
 import { useAuth } from "@/hooks/use-auth";
+import { useAllTaskTags, MarketingTag } from "@/hooks/use-marketing-tags";
 
 interface Props {
   stages: MarketingStage[];
   tasks: MarketingTask[];
   onTaskClick?: (task: MarketingTask) => void;
+  filterTagIds?: string[];
 }
 
 const metaStatusColors: Record<string, string> = {
@@ -48,23 +50,33 @@ const progressDot: Record<string, string> = {
   "Concluído": "bg-green-500",
 };
 
-export function MarketingKanban({ stages, tasks, onTaskClick }: Props) {
+export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Props) {
   const updateTask = useUpdateMarketingTask();
   const deleteTask = useDeleteMarketingTask();
   const qc = useQueryClient();
   const { user } = useAuth();
+  const { data: allTaskTags } = useAllTaskTags();
+
+  // Filter tasks by tags if filter is active
+  const filteredTasks = useMemo(() => {
+    if (!filterTagIds || filterTagIds.length === 0) return tasks;
+    return tasks.filter((t) => {
+      const tags = allTaskTags?.[t.id] || [];
+      return filterTagIds.some((fid) => tags.some((tag) => tag.id === fid));
+    });
+  }, [tasks, filterTagIds, allTaskTags]);
 
   const tasksByStage = useMemo(() => {
     const map: Record<string, MarketingTask[]> = {};
     stages.forEach((s) => { map[s.id] = []; });
-    tasks.forEach((t) => {
+    filteredTasks.forEach((t) => {
       if (t.stage_id && map[t.stage_id]) map[t.stage_id].push(t);
     });
     Object.values(map).forEach((arr) =>
       arr.sort((a, b) => a.order_index - b.order_index)
     );
     return map;
-  }, [stages, tasks]);
+  }, [stages, filteredTasks]);
 
   const handleDragEnd = useCallback(
     async (result: DropResult) => {
@@ -176,6 +188,20 @@ export function MarketingKanban({ stages, tasks, onTaskClick }: Props) {
                                 {task.progress}
                               </div>
                             </div>
+                            {/* Tag badges */}
+                            {allTaskTags?.[task.id] && allTaskTags[task.id].length > 0 && (
+                              <div className="flex items-center gap-1 flex-wrap">
+                                {allTaskTags[task.id].map((tag) => (
+                                  <span
+                                    key={tag.id}
+                                    className="inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white"
+                                    style={{ backgroundColor: `hsl(${tag.color})` }}
+                                  >
+                                    {tag.name}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                             {task.assignee_name && (
                               <p className="text-xs text-muted-foreground">👤 {task.assignee_name}</p>
                             )}

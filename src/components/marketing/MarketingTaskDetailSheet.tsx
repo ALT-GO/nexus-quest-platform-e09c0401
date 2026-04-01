@@ -44,6 +44,7 @@ import { format } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
+import { MarketingTagSelector } from "./MarketingTagSelector";
 
 interface Props {
   task: MarketingTask | null;
@@ -373,6 +374,14 @@ export function MarketingTaskDetailSheet({
                     />
                   </PopoverContent>
                 </Popover>
+              </div>
+            </div>
+
+            {/* Tags */}
+            <div>
+              <Label className="text-xs text-muted-foreground">Tags</Label>
+              <div className="mt-1">
+                <MarketingTagSelector taskId={task.id} />
               </div>
             </div>
 
