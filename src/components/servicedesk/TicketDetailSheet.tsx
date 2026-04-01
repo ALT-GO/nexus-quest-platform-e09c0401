@@ -310,11 +310,8 @@ export function TicketDetailSheet({
     // If already completed, toggle it off
     if (isCompleted) {
       const todoStatus = statuses.find((s) => s.statusType === "todo" && s.ativo);
-      const { error } = await supabase
-        .from("tickets")
-        .update({ completed_at: null, status_id: todoStatus?.id || "pending", updated_at: new Date().toISOString() } as any)
-        .eq("id", ticket.id as any);
-      if (!error) {
+      const ok = await onUpdateTicket(ticket.id, { completed_at: null, status_id: todoStatus?.id || "pending", progress: "not_started" } as any);
+      if (ok) {
         toast.info(`${ticket.ticket_number}: marcado como não concluído`);
       }
       return;
