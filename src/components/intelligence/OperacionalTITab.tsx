@@ -76,7 +76,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
-  const [allTimesheetData, setAllTimesheetData] = useState<{ ticket_id: string; duration_seconds: number }[]>([]);
+  const [allTimesheetData, setAllTimesheetData] = useState<{ ticket_id: string; start_time: string; end_time: string | null; duration_seconds: number }[]>([]);
 
   // Fetch inventory from Supabase
   useEffect(() => {
