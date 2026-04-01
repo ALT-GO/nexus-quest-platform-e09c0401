@@ -315,38 +315,11 @@ export function MarketingTaskDetailSheet({
             </div>
 
             {/* Time Estimate */}
-            <div>
-              <Label className="text-xs text-muted-foreground">Estimativa de Tempo</Label>
-              <div className="flex items-center gap-2 mt-1">
-                <Input
-                  type="number"
-                  min={0}
-                  placeholder="Horas"
-                  value={task.time_estimate_minutes ? Math.floor(task.time_estimate_minutes / 60) : ""}
-                  onChange={(e) => {
-                    const hours = parseInt(e.target.value) || 0;
-                    const currentMinutes = (task.time_estimate_minutes || 0) % 60;
-                    updateTask.mutate({ id: task.id, time_estimate_minutes: hours * 60 + currentMinutes } as any);
-                  }}
-                  className="h-8 w-20 text-sm"
-                />
-                <span className="text-xs text-muted-foreground">h</span>
-                <Input
-                  type="number"
-                  min={0}
-                  max={59}
-                  placeholder="Min"
-                  value={task.time_estimate_minutes ? task.time_estimate_minutes % 60 : ""}
-                  onChange={(e) => {
-                    const mins = Math.min(59, parseInt(e.target.value) || 0);
-                    const currentHours = Math.floor((task.time_estimate_minutes || 0) / 60);
-                    updateTask.mutate({ id: task.id, time_estimate_minutes: currentHours * 60 + mins } as any);
-                  }}
-                  className="h-8 w-20 text-sm"
-                />
-                <span className="text-xs text-muted-foreground">min</span>
-              </div>
-            </div>
+            <TimeEstimateField
+              taskId={task.id}
+              currentMinutes={task.time_estimate_minutes}
+              updateTask={updateTask}
+            />
 
             <div>
               <Label className="text-xs text-muted-foreground">Descrição</Label>
