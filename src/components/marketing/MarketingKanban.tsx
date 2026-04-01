@@ -64,6 +64,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
   const { data: allTaskTags } = useAllTaskTags();
   const [timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
   const { data: allDeps } = useTaskDependencies();
+  const { data: taskTypes } = useMarketingTaskTypes();
 
   // Build progress map for blocked checks
   const progressMap = useMemo(() => {
