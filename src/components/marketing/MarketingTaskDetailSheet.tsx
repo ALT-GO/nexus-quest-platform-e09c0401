@@ -30,6 +30,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AlertTriangle, Check, X, Plus, Trash2, CalendarIcon, MessageSquare, History, Send, Repeat, Diamond } from "lucide-react";
+import { ChecklistEditor } from "./ChecklistEditor";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { ptBR } from "date-fns/locale";
