@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Sheet,
   SheetContent,
@@ -14,6 +14,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Dialog,
   DialogContent,
@@ -28,7 +29,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, Check, X, Plus, Trash2, CalendarIcon } from "lucide-react";
+import { AlertTriangle, Check, X, Plus, Trash2, CalendarIcon, MessageSquare, History, Send } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { ptBR } from "date-fns/locale";
 import {
@@ -40,11 +41,18 @@ import {
 import { MarketingTimerButton } from "./MarketingTimerButton";
 import { useAuth } from "@/hooks/use-auth";
 import { notifyTaskCreator } from "@/lib/marketing-notifications";
-import { format } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { MarketingTagSelector } from "./MarketingTagSelector";
+import {
+  useMarketingComments,
+  useAddMarketingComment,
+  useMarketingHistory,
+  useAddMarketingHistory,
+} from "@/hooks/use-marketing-comments";
+import { UserAvatar } from "@/components/ui/user-avatar";
 
 interface Props {
   task: MarketingTask | null;
@@ -74,11 +82,24 @@ export function MarketingTaskDetailSheet({
   onOpenChange,
 }: Props) {
   const updateTask = useUpdateMarketingTask();
-  const { isAdmin } = useAuth();
+  const { user, isAdmin } = useAuth();
   const qc = useQueryClient();
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
   const [newChecklistItem, setNewChecklistItem] = useState("");
+  const [commentText, setCommentText] = useState("");
+  const [profile, setProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).single()
+      .then(({ data }) => { if (data) setProfile(data); });
+  }, [user]);
+
+  const { data: comments } = useMarketingComments(task?.id);
+  const addComment = useAddMarketingComment();
+  const { data: history } = useMarketingHistory(task?.id);
+  const addHistory = useAddMarketingHistory();
 
   if (!task) return null;
 
@@ -89,6 +110,17 @@ export function MarketingTaskDetailSheet({
   const checklist: ChecklistItem[] = Array.isArray(task.checklist) ? task.checklist : [];
   const completedCount = checklist.filter((i) => i.completed).length;
   const checklistProgress = checklist.length > 0 ? (completedCount / checklist.length) * 100 : 0;
+
+  const authorName = profile?.full_name || "Usuário";
+
+  const logHistory = (action: string, details: string) => {
+    addHistory.mutate({
+      task_id: task.id,
+      author_name: authorName,
+      action,
+      details,
+    });
+  };
 
   const saveChecklist = (items: ChecklistItem[]) => {
     updateTask.mutate({ id: task.id, checklist: items } as any);
@@ -115,8 +147,59 @@ export function MarketingTaskDetailSheet({
     saveChecklist(checklist.filter((i) => i.id !== itemId));
   };
 
+  const handleStageChange = (val: string) => {
+    const newStage = stages.find((s) => s.id === val);
+    const oldStage = stages.find((s) => s.id === task.stage_id);
+    updateTask.mutate({ id: task.id, stage_id: val });
+    logHistory("Mudança de etapa", `${oldStage?.name || "—"} → ${newStage?.name || "—"}`);
+  };
+
+  const handlePriorityChange = (val: string) => {
+    updateTask.mutate({ id: task.id, priority: val });
+    logHistory("Mudança de prioridade", `${priorityLabels[task.priority] || task.priority} → ${priorityLabels[val] || val}`);
+  };
+
+  const handleAssigneeChange = (val: string) => {
+    const member = teamMembers.find((m) => m.id === val);
+    updateTask.mutate({
+      id: task.id,
+      assignee_id: val,
+      assignee_name: member?.name || "",
+    });
+    logHistory("Mudança de responsável", `${task.assignee_name || "—"} → ${member?.name || "—"}`);
+  };
+
+  const handleProgressChange = (val: string) => {
+    updateTask.mutate({ id: task.id, progress: val });
+    logHistory("Mudança de progresso", `${task.progress} → ${val}`);
+  };
+
+  const handleSendComment = async () => {
+    if (!commentText.trim() || !user) return;
+    await addComment.mutateAsync({
+      task_id: task.id,
+      author_id: user.id,
+      author_name: authorName,
+      avatar_url: profile?.avatar_url || null,
+      content: commentText.trim(),
+    });
+
+    // Notify assignee if different from commenter
+    if (task.assignee_id && task.assignee_id !== user.id) {
+      await supabase.from("notifications").insert({
+        user_id: task.assignee_id,
+        title: "Novo comentário",
+        message: `${authorName} comentou na tarefa "${task.title}"`,
+        type: "info",
+        link: "/marketing/solicitacoes",
+      } as any);
+    }
+
+    setCommentText("");
+    toast.success("Comentário adicionado");
+  };
+
   const handleApprove = async () => {
-    // Find the next stage with meta_status 'completed'
     const completedStage = stages.find((s) => s.meta_status === "completed");
     if (!completedStage) {
       toast.error("Nenhuma etapa de conclusão configurada");
@@ -131,6 +214,8 @@ export function MarketingTaskDetailSheet({
         updated_at: new Date().toISOString(),
       } as any)
       .eq("id", task.id);
+
+    logHistory("Aprovação", `Tarefa aprovada por ${authorName}`);
 
     if (task.requester_id) {
       notifyTaskCreator({
@@ -148,7 +233,6 @@ export function MarketingTaskDetailSheet({
   const handleReject = async () => {
     if (!rejectReason.trim()) return;
 
-    // Find a stage with meta_status 'in_progress' to send back
     const inProgressStage = stages.find((s) => s.meta_status === "in_progress");
     if (!inProgressStage) {
       toast.error("Nenhuma etapa de progresso configurada");
@@ -163,6 +247,8 @@ export function MarketingTaskDetailSheet({
         updated_at: new Date().toISOString(),
       } as any)
       .eq("id", task.id);
+
+    logHistory("Reprovação", `Tarefa reprovada por ${authorName}. Motivo: ${rejectReason}`);
 
     if (task.requester_id) {
       notifyTaskCreator({
@@ -240,9 +326,7 @@ export function MarketingTaskDetailSheet({
               <Label className="text-xs text-muted-foreground">Etapa</Label>
               <Select
                 value={task.stage_id || ""}
-                onValueChange={(val) =>
-                  updateTask.mutate({ id: task.id, stage_id: val })
-                }
+                onValueChange={handleStageChange}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue />
@@ -268,9 +352,7 @@ export function MarketingTaskDetailSheet({
                 />
                 <Select
                   value={task.progress}
-                  onValueChange={(val) =>
-                    updateTask.mutate({ id: task.id, progress: val })
-                  }
+                  onValueChange={handleProgressChange}
                 >
                   <SelectTrigger className="w-48">
                     <SelectValue />
@@ -289,9 +371,7 @@ export function MarketingTaskDetailSheet({
               <Label className="text-xs text-muted-foreground">Prioridade</Label>
               <Select
                 value={task.priority}
-                onValueChange={(val) =>
-                  updateTask.mutate({ id: task.id, priority: val })
-                }
+                onValueChange={handlePriorityChange}
               >
                 <SelectTrigger className="mt-1 w-48">
                   <SelectValue />
@@ -309,14 +389,7 @@ export function MarketingTaskDetailSheet({
               <Label className="text-xs text-muted-foreground">Responsável</Label>
               <Select
                 value={task.assignee_id || ""}
-                onValueChange={(val) => {
-                  const member = teamMembers.find((m) => m.id === val);
-                  updateTask.mutate({
-                    id: task.id,
-                    assignee_id: val,
-                    assignee_name: member?.name || "",
-                  });
-                }}
+                onValueChange={handleAssigneeChange}
               >
                 <SelectTrigger className="mt-1">
                   <SelectValue placeholder="Selecione" />
@@ -439,6 +512,108 @@ export function MarketingTaskDetailSheet({
                 {task.requester_name || "Não informado"}
               </p>
             </div>
+
+            {/* Comments & History Tabs */}
+            <Tabs defaultValue="comments" className="mt-4">
+              <TabsList className="w-full">
+                <TabsTrigger value="comments" className="flex-1 gap-1.5">
+                  <MessageSquare className="h-3.5 w-3.5" />
+                  Comentários
+                  {comments && comments.length > 0 && (
+                    <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">
+                      {comments.length}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="history" className="flex-1 gap-1.5">
+                  <History className="h-3.5 w-3.5" />
+                  Histórico
+                </TabsTrigger>
+              </TabsList>
+
+              <TabsContent value="comments" className="space-y-3 mt-3">
+                {/* Comment input */}
+                <div className="flex gap-2">
+                  <Textarea
+                    placeholder="Escreva um comentário..."
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !e.shiftKey) {
+                        e.preventDefault();
+                        handleSendComment();
+                      }
+                    }}
+                    className="min-h-[60px] text-sm"
+                  />
+                  <Button
+                    size="icon"
+                    onClick={handleSendComment}
+                    disabled={!commentText.trim() || addComment.isPending}
+                    className="shrink-0 self-end"
+                  >
+                    <Send className="h-4 w-4" />
+                  </Button>
+                </div>
+
+                {/* Comment list */}
+                <div className="space-y-3">
+                  {(!comments || comments.length === 0) && (
+                    <p className="text-xs text-muted-foreground text-center py-4">
+                      Nenhum comentário ainda
+                    </p>
+                  )}
+                  {(comments || []).map((c) => (
+                    <div key={c.id} className="flex gap-2.5">
+                      <UserAvatar
+                        name={c.author_name}
+                        avatarUrl={c.avatar_url}
+                        className="h-7 w-7 text-[10px] shrink-0 mt-0.5"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-sm font-medium truncate">{c.author_name}</span>
+                          <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+                            {formatDistanceToNow(new Date(c.created_at), { addSuffix: true, locale: ptBR })}
+                          </span>
+                        </div>
+                        <p className="text-sm text-foreground/90 whitespace-pre-wrap mt-0.5">
+                          {c.content}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+
+              <TabsContent value="history" className="mt-3">
+                <div className="space-y-2">
+                  {(!history || history.length === 0) && (
+                    <p className="text-xs text-muted-foreground text-center py-4">
+                      Nenhuma atividade registrada
+                    </p>
+                  )}
+                  {(history || []).map((h) => (
+                    <div key={h.id} className="flex gap-2.5 py-1.5 border-b border-border/50 last:border-0">
+                      <div className="h-2 w-2 rounded-full bg-primary mt-1.5 shrink-0" />
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm">
+                          <span className="font-medium">{h.author_name}</span>
+                          {" — "}
+                          <span className="text-muted-foreground">{h.action}</span>
+                        </p>
+                        {h.details && (
+                          <p className="text-xs text-muted-foreground mt-0.5">{h.details}</p>
+                        )}
+                        <p className="text-[10px] text-muted-foreground mt-0.5">
+                          {formatDistanceToNow(new Date(h.created_at), { addSuffix: true, locale: ptBR })}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </TabsContent>
+            </Tabs>
           </div>
         </SheetContent>
       </Sheet>
