@@ -28,6 +28,7 @@ interface Props {
   stages: MarketingStage[];
   tasks: MarketingTask[];
   onTaskClick?: (task: MarketingTask) => void;
+  filterTagIds?: string[];
 }
 
 const metaStatusColors: Record<string, string> = {
