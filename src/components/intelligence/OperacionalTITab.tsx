@@ -47,6 +47,10 @@ interface InventoryItem {
   status: string;
   cost_center_eng: string | null;
   cost_center_man: string | null;
+  operadora: string | null;
+  valor_mensal: number | null;
+  valor_pago: number | null;
+  data_aquisicao: string | null;
 }
 
 const categoryLabels: Record<string, string> = {
