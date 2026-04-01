@@ -279,7 +279,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                               <p className="text-xs text-muted-foreground">👤 {task.assignee_name}</p>
                             )}
                             {(() => {
-                              const raw = Array.isArray(task.checklist) ? task.checklist : [];
+                              const raw: any[] = Array.isArray(task.checklist) ? task.checklist : [];
                               if (raw.length === 0) return null;
                               // Support grouped and flat formats
                               let total = 0, done = 0;
