@@ -234,6 +234,15 @@ export function MarketingTaskDetailSheet({
   };
 
   const handleProgressChange = (val: string) => {
+    // Block completing task if it has unresolved dependencies
+    if (val === "Concluído" && allDeps && allTasks) {
+      const progressMap: Record<string, string> = {};
+      allTasks.forEach((t) => { progressMap[t.id] = t.progress; });
+      if (isTaskBlocked(task.id, allDeps, progressMap)) {
+        toast.error("Esta tarefa possui dependências não concluídas. Resolva-as antes de concluir.");
+        return;
+      }
+    }
     updateTask.mutate({ id: task.id, progress: val });
     logHistory("Mudança de progresso", `${task.progress} → ${val}`);
   };
