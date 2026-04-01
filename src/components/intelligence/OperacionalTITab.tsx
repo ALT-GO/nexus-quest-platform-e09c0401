@@ -559,6 +559,76 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           </CardContent>
         </Card>
       </div>
+
+      {/* ======== Seção: Ativos & Custos ======== */}
+      <Separator className="my-2" />
+      <h2 className="flex items-center gap-2 text-lg font-semibold">
+        <Wallet className="h-5 w-5 text-muted-foreground" />
+        Ativos & Custos
+      </h2>
+
+      {/* Financial Stat Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <StatCard
+          title="Custo Mensal Telecom"
+          value={`R$ ${totalValorMensal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
+          icon={Phone}
+          description={`${filteredInv.filter((a) => a.category === "linhas" && a.valor_mensal && a.valor_mensal > 0).length} linhas ativas`}
+          className="border-l-4 border-l-primary"
+        />
+        <StatCard
+          title="Depreciação Acumulada"
+          value={formatBRL(depreciationTotal.totalDepreciation)}
+          icon={TrendingDown}
+          description={`${depreciationTotal.assetCount} ativos · Original: ${formatBRL(depreciationTotal.totalOriginal)}`}
+          className="border-l-4 border-l-destructive"
+        />
+        <StatCard
+          title="Total de Ativos"
+          value={filteredInv.length}
+          icon={Monitor}
+          description={`${assetsDisponivel} disponíveis · ${assetsManutencao} em manutenção`}
+          className="border-l-4 border-l-success"
+        />
+      </div>
+
+      {/* Custo por Operadora Donut */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <Wifi className="h-4 w-4 text-muted-foreground" />Custo Mensal por Operadora
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {costByOperadora.length === 0 ? (
+            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+              Nenhuma linha com operadora e valor mensal cadastrados
+            </div>
+          ) : (
+            <div className="flex h-[300px] items-center justify-center gap-8">
+              <div className="h-[220px] w-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={costByOperadora} cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={4} dataKey="value">
+                      {costByOperadora.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                    </Pie>
+                    <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-3">
+                {costByOperadora.map((item) => (
+                  <div key={item.name} className="flex items-center gap-2">
+                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="text-sm text-muted-foreground">{item.name}</span>
+                    <span className="ml-auto font-medium">R$ {item.value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
