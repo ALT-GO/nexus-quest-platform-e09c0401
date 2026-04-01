@@ -192,6 +192,17 @@ export function MarketingKanban({ stages, tasks, onTaskClick }: Props) {
                                 </div>
                               );
                             })()}
+                            {task.due_date && (() => {
+                              const due = new Date(task.due_date);
+                              const overdue = task.progress !== "Concluído" && isBefore(due, startOfDay(new Date()));
+                              const dueToday = task.progress !== "Concluído" && isToday(due);
+                              return (
+                                <div className={`flex items-center gap-1 text-xs ${overdue ? "text-destructive font-medium" : dueToday ? "text-warning font-medium" : "text-muted-foreground"}`}>
+                                  <CalendarIcon className="h-3 w-3" />
+                                  {format(due, "dd/MM")}
+                                </div>
+                              );
+                            })()}
                           </CardContent>
                         </Card>
                       )}
