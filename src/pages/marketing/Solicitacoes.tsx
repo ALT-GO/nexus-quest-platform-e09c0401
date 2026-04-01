@@ -54,6 +54,16 @@ export default function Solicitacoes() {
     localStorage.setItem(VIEW_KEY, mode);
   };
 
+  // Keep selectedTask in sync with latest query data
+  useEffect(() => {
+    if (selectedTask && tasks) {
+      const fresh = tasks.find(t => t.id === selectedTask.id);
+      if (fresh && JSON.stringify(fresh) !== JSON.stringify(selectedTask)) {
+        setSelectedTask(fresh);
+      }
+    }
+  }, [tasks, selectedTask]);
+
   const handleTaskClick = (task: MarketingTask) => {
     const fresh = tasks?.find(t => t.id === task.id) || task;
     setSelectedTask(fresh);

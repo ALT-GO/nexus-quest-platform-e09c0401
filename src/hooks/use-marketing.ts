@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -54,6 +55,26 @@ export function useMarketingStages() {
 }
 
 export function useMarketingTasks() {
+  const qc = useQueryClient();
+
+  // Subscribe to realtime changes
+  useEffect(() => {
+    const channel = supabase
+      .channel("marketing_tasks_realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "marketing_tasks" },
+        () => {
+          qc.invalidateQueries({ queryKey: ["marketing_tasks"] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [qc]);
+
   return useQuery({
     queryKey: ["marketing_tasks"],
     queryFn: async () => {

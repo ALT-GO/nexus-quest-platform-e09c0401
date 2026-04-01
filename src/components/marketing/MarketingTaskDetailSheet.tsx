@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import {
   Sheet,
   SheetContent,
@@ -74,6 +74,64 @@ const progressDot: Record<string, string> = {
   "Em andamento": "bg-blue-500",
   "Concluído": "bg-green-500",
 };
+
+function TimeEstimateField({ taskId, currentMinutes, updateTask }: {
+  taskId: string;
+  currentMinutes: number | null;
+  updateTask: ReturnType<typeof useUpdateMarketingTask>;
+}) {
+  const [hours, setHours] = useState(() => currentMinutes ? Math.floor(currentMinutes / 60) : 0);
+  const [mins, setMins] = useState(() => currentMinutes ? currentMinutes % 60 : 0);
+  const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    setHours(currentMinutes ? Math.floor(currentMinutes / 60) : 0);
+    setMins(currentMinutes ? currentMinutes % 60 : 0);
+  }, [currentMinutes]);
+
+  const debouncedSave = useCallback((h: number, m: number) => {
+    if (debounceRef.current) clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(() => {
+      const total = h * 60 + m;
+      updateTask.mutate({ id: taskId, time_estimate_minutes: total || null } as any);
+    }, 800);
+  }, [taskId, updateTask]);
+
+  return (
+    <div>
+      <Label className="text-xs text-muted-foreground">Estimativa de Tempo</Label>
+      <div className="flex items-center gap-2 mt-1">
+        <Input
+          type="number"
+          min={0}
+          placeholder="Horas"
+          value={hours || ""}
+          onChange={(e) => {
+            const h = parseInt(e.target.value) || 0;
+            setHours(h);
+            debouncedSave(h, mins);
+          }}
+          className="h-8 w-20 text-sm"
+        />
+        <span className="text-xs text-muted-foreground">h</span>
+        <Input
+          type="number"
+          min={0}
+          max={59}
+          placeholder="Min"
+          value={mins || ""}
+          onChange={(e) => {
+            const m = Math.min(59, parseInt(e.target.value) || 0);
+            setMins(m);
+            debouncedSave(hours, m);
+          }}
+          className="h-8 w-20 text-sm"
+        />
+        <span className="text-xs text-muted-foreground">min</span>
+      </div>
+    </div>
+  );
+}
 
 export function MarketingTaskDetailSheet({
   task,
@@ -315,38 +373,11 @@ export function MarketingTaskDetailSheet({
             </div>
 
             {/* Time Estimate */}
-            <div>
-              <Label className="text-xs text-muted-foreground">Estimativa de Tempo</Label>
-              <div className="flex items-center gap-2 mt-1">
-                <Input
-                  type="number"
-                  min={0}
-                  placeholder="Horas"
-                  value={task.time_estimate_minutes ? Math.floor(task.time_estimate_minutes / 60) : ""}
-                  onChange={(e) => {
-                    const hours = parseInt(e.target.value) || 0;
-                    const currentMinutes = (task.time_estimate_minutes || 0) % 60;
-                    updateTask.mutate({ id: task.id, time_estimate_minutes: hours * 60 + currentMinutes } as any);
-                  }}
-                  className="h-8 w-20 text-sm"
-                />
-                <span className="text-xs text-muted-foreground">h</span>
-                <Input
-                  type="number"
-                  min={0}
-                  max={59}
-                  placeholder="Min"
-                  value={task.time_estimate_minutes ? task.time_estimate_minutes % 60 : ""}
-                  onChange={(e) => {
-                    const mins = Math.min(59, parseInt(e.target.value) || 0);
-                    const currentHours = Math.floor((task.time_estimate_minutes || 0) / 60);
-                    updateTask.mutate({ id: task.id, time_estimate_minutes: currentHours * 60 + mins } as any);
-                  }}
-                  className="h-8 w-20 text-sm"
-                />
-                <span className="text-xs text-muted-foreground">min</span>
-              </div>
-            </div>
+            <TimeEstimateField
+              taskId={task.id}
+              currentMinutes={task.time_estimate_minutes}
+              updateTask={updateTask}
+            />
 
             <div>
               <Label className="text-xs text-muted-foreground">Descrição</Label>
