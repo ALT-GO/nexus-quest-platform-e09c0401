@@ -312,6 +312,7 @@ export type Database = {
         Row: {
           assignee_id: string | null
           assignee_name: string | null
+          checklist: Json | null
           created_at: string
           description: string | null
           id: string
@@ -327,6 +328,7 @@ export type Database = {
         Insert: {
           assignee_id?: string | null
           assignee_name?: string | null
+          checklist?: Json | null
           created_at?: string
           description?: string | null
           id?: string
@@ -342,6 +344,7 @@ export type Database = {
         Update: {
           assignee_id?: string | null
           assignee_name?: string | null
+          checklist?: Json | null
           created_at?: string
           description?: string | null
           id?: string

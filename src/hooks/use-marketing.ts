@@ -10,6 +10,12 @@ export interface MarketingStage {
   created_at: string;
 }
 
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
 export interface MarketingTask {
   id: string;
   title: string;
@@ -24,6 +30,7 @@ export interface MarketingTask {
   order_index: number;
   created_at: string;
   updated_at: string;
+  checklist: ChecklistItem[] | null;
 }
 
 export function useMarketingStages() {
@@ -49,7 +56,10 @@ export function useMarketingTasks() {
         .select("*")
         .order("order_index");
       if (error) throw error;
-      return data as MarketingTask[];
+      return (data as any[]).map((d) => ({
+        ...d,
+        checklist: Array.isArray(d.checklist) ? d.checklist : [],
+      })) as MarketingTask[];
     },
   });
 }
