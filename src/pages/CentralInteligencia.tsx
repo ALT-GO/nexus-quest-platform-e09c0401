@@ -133,7 +133,7 @@ export default function CentralInteligencia() {
           <OperacionalTITab dateRange={dateRange} costCenter={costCenter} />
         </TabsContent>
         <TabsContent value="marketing" className="mt-6">
-          <MarketingTab />
+          <MarketingTab dateRange={dateRange} />
         </TabsContent>
       </Tabs>
     </AppLayout>

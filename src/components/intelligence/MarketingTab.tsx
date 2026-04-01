@@ -59,7 +59,11 @@ const tooltipStyle = {
   borderRadius: "8px",
 };
 
-export function MarketingTab() {
+interface MarketingTabProps {
+  dateRange: { start: Date; end: Date };
+}
+
+export function MarketingTab({ dateRange }: MarketingTabProps) {
   const [events, setEvents] = useState<Event[]>(initialEvents);
   const [proposals, setProposals] = useState<Proposal[]>(initialProposals);
   const [isEventDialogOpen, setIsEventDialogOpen] = useState(false);
@@ -71,12 +75,15 @@ export function MarketingTab() {
   const { tickets: allTickets } = useTickets();
   const [timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
 
-  // Filter marketing-related tickets (by department or category)
+  // Filter marketing-related tickets by department/category AND date range
   const marketingTickets = useMemo(() => {
-    return allTickets.filter(
-      (t) => t.department?.toLowerCase().includes("marketing") || t.category?.toLowerCase().includes("marketing")
-    );
-  }, [allTickets]);
+    return allTickets.filter((t) => {
+      const isMarketing = t.department?.toLowerCase().includes("marketing") || t.category?.toLowerCase().includes("marketing");
+      if (!isMarketing) return false;
+      const created = new Date(t.created_at);
+      return created >= dateRange.start && created <= dateRange.end;
+    });
+  }, [allTickets, dateRange]);
 
   useEffect(() => {
     const ids = marketingTickets.map((t) => t.id);
@@ -115,10 +122,25 @@ export function MarketingTab() {
       .sort((a, b) => b.hours - a.hours);
   }, [marketingTickets, timesheetTotals]);
 
-  const totalInvestment = events.reduce((sum, e) => sum + e.investedValue, 0);
-  const totalLeads = events.reduce((sum, e) => sum + e.leadsGenerated, 0);
+  // Filter static events/proposals by dateRange
+  const filteredEvents = useMemo(() => {
+    return events.filter((e) => {
+      const d = new Date(e.date);
+      return d >= dateRange.start && d <= dateRange.end;
+    });
+  }, [events, dateRange]);
+
+  const filteredProposals = useMemo(() => {
+    return proposals.filter((p) => {
+      const d = new Date(p.date);
+      return d >= dateRange.start && d <= dateRange.end;
+    });
+  }, [proposals, dateRange]);
+
+  const totalInvestment = filteredEvents.reduce((sum, e) => sum + e.investedValue, 0);
+  const totalLeads = filteredEvents.reduce((sum, e) => sum + e.leadsGenerated, 0);
   const averageCPL = totalInvestment / totalLeads || 0;
-  const totalProposalValue = proposals.reduce((sum, p) => sum + p.value, 0);
+  const totalProposalValue = filteredProposals.reduce((sum, p) => sum + p.value, 0);
 
   const handleAddEvent = () => {
     if (!newEvent.name || !newEvent.investedValue || !newEvent.leadsGenerated) return;
@@ -292,7 +314,7 @@ export function MarketingTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {events.map((event) => (
+              {filteredEvents.map((event) => (
                 <TableRow key={event.id}>
                   <TableCell className="font-medium">{event.name}</TableCell>
                   <TableCell><span className="rounded-full bg-secondary px-2 py-1 text-xs">{event.category}</span></TableCell>
@@ -339,7 +361,7 @@ export function MarketingTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {proposals.map((p) => (
+              {filteredProposals.map((p) => (
                 <TableRow key={p.id}>
                   <TableCell className="font-medium">{p.clientName}</TableCell>
                   <TableCell className="text-right">R$ {p.value.toLocaleString("pt-BR")}</TableCell>
