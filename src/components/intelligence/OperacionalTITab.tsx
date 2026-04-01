@@ -104,27 +104,43 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     fetchTimesheetByDateRange(dateRange).then(setAllTimesheetData);
   }, [allTickets, dateRange]);
 
+  // Exclude subtasks from all dashboard calculations
+  const mainTickets = useMemo(() => allTickets.filter((t) => !t.parent_ticket_id), [allTickets]);
+
   const filtered = useMemo(() => {
-    return allTickets.filter((t) => {
+    return mainTickets.filter((t) => {
       const created = new Date(t.created_at);
       if (created < dateRange.start || created > dateRange.end) return false;
       if (techFilter !== "all" && t.assignee !== techFilter) return false;
       if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
       return true;
     });
-  }, [allTickets, dateRange, techFilter, categoryFilter]);
+  }, [mainTickets, dateRange, techFilter, categoryFilter]);
 
   const completedTickets = filtered.filter((t) => t.completed_at);
+
+  // All currently open tickets (regardless of date range) for "Chamados Abertos"
+  const allOpenTickets = useMemo(() => {
+    return mainTickets.filter((t) => {
+      if (t.completed_at) return false;
+      if (techFilter !== "all" && t.assignee !== techFilter) return false;
+      if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
+      return true;
+    });
+  }, [mainTickets, techFilter, categoryFilter]);
 
   const avgResolutionHours = useMemo(() => {
     if (completedTickets.length === 0) return 0;
     const totalSeconds = completedTickets.reduce((sum, t) => {
-      const ts = timesheetTotals[t.id];
-      if (ts && ts > 0) return sum + ts;
+      // Check date-range-filtered timesheet data first
+      const ticketLogs = allTimesheetData.filter((l) => l.ticket_id === t.id && l.end_time);
+      const timesheetSecs = ticketLogs.reduce((s, l) => s + l.duration_seconds, 0);
+      if (timesheetSecs > 0) return sum + timesheetSecs;
+      // Fallback to wall-clock time
       return sum + (new Date(t.completed_at!).getTime() - new Date(t.created_at).getTime()) / 1000;
     }, 0);
     return Math.round((totalSeconds / completedTickets.length / 3600) * 10) / 10;
-  }, [completedTickets, timesheetTotals]);
+  }, [completedTickets, allTimesheetData]);
 
   const slaCumprido = useMemo(() => {
     if (completedTickets.length === 0) return 100;
