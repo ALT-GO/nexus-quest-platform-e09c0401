@@ -55,6 +55,18 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
   const handleSubmit = () => {
     if (!title.trim()) return;
     const assignee = teamMembers.find(m => m.id === assigneeId);
+
+    // Calculate next_recurrence_date based on rule
+    let nextRecurrenceDate: string | null = null;
+    if (isRecurring) {
+      const base = dueDate || startDate || new Date();
+      const next = new Date(base);
+      if (recurrenceRule === 'daily') next.setDate(next.getDate() + 1);
+      else if (recurrenceRule === 'weekly') next.setDate(next.getDate() + 7);
+      else if (recurrenceRule === 'monthly') next.setMonth(next.getMonth() + 1);
+      nextRecurrenceDate = next.toISOString();
+    }
+
     createTask.mutate({
       title,
       description,
@@ -68,6 +80,9 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
       order_index: 0,
       start_date: startDate?.toISOString() ?? null,
       due_date: dueDate?.toISOString() ?? null,
+      is_recurring: isRecurring,
+      recurrence_rule: isRecurring ? recurrenceRule : null,
+      next_recurrence_date: nextRecurrenceDate,
     } as any, {
       onSuccess: () => {
         setTitle(""); setDescription(""); setStageId(""); setPriority("medium"); setProgress("Não iniciado"); setAssigneeId("");
