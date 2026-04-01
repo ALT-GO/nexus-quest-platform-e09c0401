@@ -2,8 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 import { ActiveTimersCard } from "@/components/dashboard/ActiveTimersCard";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchTimesheetByDateRange, formatDuration } from "@/hooks/use-timesheet";
+import { calcDepreciation, formatBRL } from "@/lib/depreciation";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -12,7 +14,7 @@ import {
 } from "@/components/ui/table";
 import {
   Clock, CheckCircle2, AlertTriangle, Monitor, Wrench, Users, BarChart3, Ticket, Loader2,
-  Laptop, Smartphone, Phone, KeyRound, Timer, CalendarDays,
+  Laptop, Smartphone, Phone, KeyRound, Timer, CalendarDays, DollarSign, TrendingDown, Wifi, Wallet,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
@@ -45,6 +47,10 @@ interface InventoryItem {
   status: string;
   cost_center_eng: string | null;
   cost_center_man: string | null;
+  operadora: string | null;
+  valor_mensal: number | null;
+  valor_pago: number | null;
+  data_aquisicao: string | null;
 }
 
 const categoryLabels: Record<string, string> = {
@@ -80,13 +86,14 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
 
   // Fetch inventory from Supabase
   useEffect(() => {
-    supabase.from("inventory").select("id, category, status, cost_center_eng, cost_center_man").then(({ data }) => {
+    const fields = "id, category, status, cost_center_eng, cost_center_man, operadora, valor_mensal, valor_pago, data_aquisicao";
+    supabase.from("inventory").select(fields).then(({ data }) => {
       if (data) setInventoryItems(data as InventoryItem[]);
     });
     const channel = supabase
       .channel("operacional-inventory-rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "inventory" }, () => {
-        supabase.from("inventory").select("id, category, status, cost_center_eng, cost_center_man").then(({ data }) => {
+        supabase.from("inventory").select(fields).then(({ data }) => {
           if (data) setInventoryItems(data as InventoryItem[]);
         });
       })
@@ -249,6 +256,54 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
       total: filteredInv.filter((i) => i.category === cat).length,
     }));
   }, [filteredInv]);
+
+  // ---- Financial: Custo por Operadora ----
+  const costByOperadora = useMemo(() => {
+    const linhas = filteredInv.filter((a) => a.category === "linhas" && a.operadora && a.operadora.trim() !== "");
+    const map: Record<string, number> = {};
+    linhas.forEach((a) => {
+      const op = a.operadora!.trim();
+      let normalized = op;
+      const lower = op.toLowerCase();
+      if (lower.includes("vivo")) normalized = "Vivo";
+      else if (lower.includes("claro")) normalized = "Claro";
+      else if (lower.includes("salvy") || lower.includes("salvi")) normalized = "Salvy";
+      else if (lower.includes("tim")) normalized = "TIM";
+      else if (lower.includes("oi")) normalized = "Oi";
+      const value = a.valor_mensal || 0;
+      if (value > 0) {
+        map[normalized] = (map[normalized] || 0) + value;
+      }
+    });
+    return Object.entries(map)
+      .map(([name, value], i) => ({ name, value: Math.round(value * 100) / 100, color: chartColors[i % chartColors.length] }))
+      .sort((a, b) => b.value - a.value);
+  }, [filteredInv]);
+
+  // ---- Financial: Depreciação Acumulada ----
+  const depreciationTotal = useMemo(() => {
+    const hardwareAssets = filteredInv.filter(
+      (a) => (a.category === "notebooks" || a.category === "celulares") && a.valor_pago && a.valor_pago > 0 && a.data_aquisicao
+    );
+    let totalDepreciation = 0;
+    let totalOriginal = 0;
+    hardwareAssets.forEach((a) => {
+      const result = calcDepreciation(a.valor_pago, a.data_aquisicao);
+      if (result) {
+        totalDepreciation += result.depreciacaoAcumulada;
+        totalOriginal += result.valorAquisicao;
+      }
+    });
+    return { totalDepreciation, totalOriginal, assetCount: hardwareAssets.length };
+  }, [filteredInv]);
+
+  // ---- Financial: Total valor mensal linhas ----
+  const totalValorMensal = useMemo(() => {
+    return filteredInv
+      .filter((a) => a.category === "linhas" && a.valor_mensal && a.valor_mensal > 0)
+      .reduce((sum, a) => sum + (a.valor_mensal || 0), 0);
+  }, [filteredInv]);
+
   const categories = useMemo(() => [...new Set(mainTickets.map((t) => t.category))], [mainTickets]);
 
   if (loading) {
@@ -504,6 +559,76 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           </CardContent>
         </Card>
       </div>
+
+      {/* ======== Seção: Ativos & Custos ======== */}
+      <Separator className="my-2" />
+      <h2 className="flex items-center gap-2 text-lg font-semibold">
+        <Wallet className="h-5 w-5 text-muted-foreground" />
+        Ativos & Custos
+      </h2>
+
+      {/* Financial Stat Cards */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+        <StatCard
+          title="Custo Mensal Telecom"
+          value={`R$ ${totalValorMensal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
+          icon={Phone}
+          description={`${filteredInv.filter((a) => a.category === "linhas" && a.valor_mensal && a.valor_mensal > 0).length} linhas ativas`}
+          className="border-l-4 border-l-primary"
+        />
+        <StatCard
+          title="Depreciação Acumulada"
+          value={formatBRL(depreciationTotal.totalDepreciation)}
+          icon={TrendingDown}
+          description={`${depreciationTotal.assetCount} ativos · Original: ${formatBRL(depreciationTotal.totalOriginal)}`}
+          className="border-l-4 border-l-destructive"
+        />
+        <StatCard
+          title="Total de Ativos"
+          value={filteredInv.length}
+          icon={Monitor}
+          description={`${assetsDisponivel} disponíveis · ${assetsManutencao} em manutenção`}
+          className="border-l-4 border-l-success"
+        />
+      </div>
+
+      {/* Custo por Operadora Donut */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <Wifi className="h-4 w-4 text-muted-foreground" />Custo Mensal por Operadora
+          </CardTitle>
+        </CardHeader>
+        <CardContent>
+          {costByOperadora.length === 0 ? (
+            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
+              Nenhuma linha com operadora e valor mensal cadastrados
+            </div>
+          ) : (
+            <div className="flex h-[300px] items-center justify-center gap-8">
+              <div className="h-[220px] w-[220px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie data={costByOperadora} cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={4} dataKey="value">
+                      {costByOperadora.map((entry, i) => <Cell key={i} fill={entry.color} />)}
+                    </Pie>
+                    <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+              <div className="space-y-3">
+                {costByOperadora.map((item) => (
+                  <div key={item.name} className="flex items-center gap-2">
+                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
+                    <span className="text-sm text-muted-foreground">{item.name}</span>
+                    <span className="ml-auto font-medium">R$ {item.value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }

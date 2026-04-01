@@ -10,14 +10,12 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
-import { CalendarIcon, Eye, Monitor, Megaphone, Wallet, Building2 } from "lucide-react";
+import { CalendarIcon, Monitor, Megaphone, Building2 } from "lucide-react";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 
-import { GeralTab } from "@/components/intelligence/GeralTab";
 import { OperacionalTITab } from "@/components/intelligence/OperacionalTITab";
 import { MarketingTab } from "@/components/intelligence/MarketingTab";
-import { FinanceiroTab } from "@/components/intelligence/FinanceiroTab";
 
 type PeriodFilter = "7d" | "30d" | "90d" | "custom";
 
@@ -28,20 +26,13 @@ const periodOptions: { value: PeriodFilter; label: string }[] = [
   { value: "custom", label: "Personalizado" },
 ];
 
-const financeMonths = [
-  { value: "2024-11", label: "Novembro 2024" },
-  { value: "2024-10", label: "Outubro 2024" },
-  { value: "2024-09", label: "Setembro 2024" },
-];
-
 export type CostCenterFilter = "all" | "eng" | "man";
 
 export default function CentralInteligencia() {
-  const [activeTab, setActiveTab] = useState("executiva");
+  const [activeTab, setActiveTab] = useState("ti");
   const [period, setPeriod] = useState<PeriodFilter>("30d");
   const [customFrom, setCustomFrom] = useState<Date | undefined>();
   const [customTo, setCustomTo] = useState<Date | undefined>();
-  const [financeMonth, setFinanceMonth] = useState("2024-11");
   const [costCenter, setCostCenter] = useState<CostCenterFilter>("all");
 
   const dateRange = useMemo(() => {
@@ -86,56 +77,41 @@ export default function CentralInteligencia() {
               <SelectItem value="man">Centro de Custo - MAN</SelectItem>
             </SelectContent>
           </Select>
-          {activeTab === "ativos-custos" ? (
-            <Select value={financeMonth} onValueChange={setFinanceMonth}>
-              <SelectTrigger className="w-[180px]">
-                <CalendarIcon className="mr-2 h-4 w-4" />
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {financeMonths.map((m) => (
-                  <SelectItem key={m.value} value={m.value}>{m.label}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          ) : (
-            <>
-              <Select value={period} onValueChange={(v) => setPeriod(v as PeriodFilter)}>
-                <SelectTrigger className="w-[170px]">
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {periodOptions.map((p) => (
-                    <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
 
-              {period === "custom" && (
-                <>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className={cn("w-[130px] justify-start text-left font-normal", !customFrom && "text-muted-foreground")}>
-                        {customFrom ? format(customFrom, "dd/MM/yyyy") : "Início"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} className="p-3 pointer-events-auto" />
-                    </PopoverContent>
-                  </Popover>
-                  <Popover>
-                    <PopoverTrigger asChild>
-                      <Button variant="outline" className={cn("w-[130px] justify-start text-left font-normal", !customTo && "text-muted-foreground")}>
-                        {customTo ? format(customTo, "dd/MM/yyyy") : "Fim"}
-                      </Button>
-                    </PopoverTrigger>
-                    <PopoverContent className="w-auto p-0" align="start">
-                      <Calendar mode="single" selected={customTo} onSelect={setCustomTo} className="p-3 pointer-events-auto" />
-                    </PopoverContent>
-                  </Popover>
-                </>
-              )}
+          <Select value={period} onValueChange={(v) => setPeriod(v as PeriodFilter)}>
+            <SelectTrigger className="w-[170px]">
+              <CalendarIcon className="mr-2 h-4 w-4" />
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              {periodOptions.map((p) => (
+                <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {period === "custom" && (
+            <>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-[130px] justify-start text-left font-normal", !customFrom && "text-muted-foreground")}>
+                    {customFrom ? format(customFrom, "dd/MM/yyyy") : "Início"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customFrom} onSelect={setCustomFrom} className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button variant="outline" className={cn("w-[130px] justify-start text-left font-normal", !customTo && "text-muted-foreground")}>
+                    {customTo ? format(customTo, "dd/MM/yyyy") : "Fim"}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar mode="single" selected={customTo} onSelect={setCustomTo} className="p-3 pointer-events-auto" />
+                </PopoverContent>
+              </Popover>
             </>
           )}
         </div>
@@ -143,17 +119,9 @@ export default function CentralInteligencia() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
         <TabsList className="h-auto flex-wrap gap-1 bg-muted/50 p-1">
-          <TabsTrigger value="executiva" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <Eye className="h-4 w-4" />
-            Visão Executiva
-          </TabsTrigger>
           <TabsTrigger value="ti" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Monitor className="h-4 w-4" />
-            Operações de T.I.
-          </TabsTrigger>
-          <TabsTrigger value="ativos-custos" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
-            <Wallet className="h-4 w-4" />
-            Ativos & Custos
+            T.I.
           </TabsTrigger>
           <TabsTrigger value="marketing" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
             <Megaphone className="h-4 w-4" />
@@ -161,14 +129,8 @@ export default function CentralInteligencia() {
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="executiva" className="mt-6">
-          <GeralTab costCenter={costCenter} />
-        </TabsContent>
         <TabsContent value="ti" className="mt-6">
           <OperacionalTITab dateRange={dateRange} costCenter={costCenter} />
-        </TabsContent>
-        <TabsContent value="ativos-custos" className="mt-6">
-          <FinanceiroTab selectedMonth={financeMonth} />
         </TabsContent>
         <TabsContent value="marketing" className="mt-6">
           <MarketingTab />
