@@ -57,6 +57,8 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { useTaskDependencies, isTaskBlocked } from "@/hooks/use-dependencies";
 import { useMarketingTasks } from "@/hooks/use-marketing";
 import { DependencySection } from "./DependencySection";
+import { useMarketingTaskTypes } from "@/hooks/use-task-types";
+import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
 
 interface Props {
   task: MarketingTask | null;
