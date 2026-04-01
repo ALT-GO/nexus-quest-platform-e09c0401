@@ -382,6 +382,25 @@ export async function fetchTimesheetTotals(
   return totals;
 }
 
+// Fetch total timesheet seconds for a list of marketing task IDs
+export async function fetchMarketingTimesheetTotals(
+  taskIds: string[]
+): Promise<Record<string, number>> {
+  if (taskIds.length === 0) return {};
+
+  const { data } = await supabase
+    .from("timesheet_logs")
+    .select("marketing_task_id, duration_seconds")
+    .in("marketing_task_id", taskIds as any)
+    .not("end_time", "is", null);
+
+  const totals: Record<string, number> = {};
+  ((data as unknown as { marketing_task_id: string; duration_seconds: number }[]) || []).forEach((row) => {
+    totals[row.marketing_task_id] = (totals[row.marketing_task_id] || 0) + row.duration_seconds;
+  });
+  return totals;
+}
+
 // Fetch timesheet logs filtered by date range (for dashboard charts)
 export async function fetchTimesheetByDateRange(
   dateRange: { start: Date; end: Date }

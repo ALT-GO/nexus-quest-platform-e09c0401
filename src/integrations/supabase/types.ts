@@ -454,6 +454,7 @@ export type Database = {
           requester_name: string
           stage_id: string | null
           start_date: string | null
+          time_estimate_minutes: number | null
           title: string
           updated_at: string
         }
@@ -475,6 +476,7 @@ export type Database = {
           requester_name?: string
           stage_id?: string | null
           start_date?: string | null
+          time_estimate_minutes?: number | null
           title: string
           updated_at?: string
         }
@@ -496,6 +498,7 @@ export type Database = {
           requester_name?: string
           stage_id?: string | null
           start_date?: string | null
+          time_estimate_minutes?: number | null
           title?: string
           updated_at?: string
         }

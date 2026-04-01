@@ -1,9 +1,10 @@
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useState, useEffect } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { GripVertical, Trash2, CheckSquare, CalendarIcon } from "lucide-react";
+import { GripVertical, Trash2, CheckSquare, CalendarIcon, Timer } from "lucide-react";
+import { fetchMarketingTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
 import { format, isToday, isBefore, startOfDay } from "date-fns";
 import {
   MarketingStage,
@@ -56,6 +57,15 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
   const qc = useQueryClient();
   const { user } = useAuth();
   const { data: allTaskTags } = useAllTaskTags();
+  const [timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
+
+  // Fetch timesheet totals for all tasks
+  useEffect(() => {
+    const ids = tasks.map((t) => t.id);
+    if (ids.length > 0) {
+      fetchMarketingTimesheetTotals(ids).then(setTimesheetTotals);
+    }
+  }, [tasks]);
 
   // Filter tasks by tags if filter is active
   const filteredTasks = useMemo(() => {
@@ -215,6 +225,23 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                   <span className={done === cl.length ? "text-green-600 dark:text-green-400 font-medium" : ""}>
                                     {done}/{cl.length}
                                   </span>
+                                </div>
+                              );
+                            })()}
+                            {/* Time estimate vs actual */}
+                            {task.time_estimate_minutes && task.time_estimate_minutes > 0 && (() => {
+                              const estimateSec = task.time_estimate_minutes * 60;
+                              const actualSec = timesheetTotals[task.id] || 0;
+                              const overBudget = actualSec > estimateSec;
+                              const fmtMinutes = (sec: number) => {
+                                const h = Math.floor(sec / 3600);
+                                const m = Math.floor((sec % 3600) / 60);
+                                return h > 0 ? `${h}h${m > 0 ? m + 'm' : ''}` : `${m}m`;
+                              };
+                              return (
+                                <div className={`flex items-center gap-1 text-xs ${overBudget ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                                  <Timer className="h-3 w-3" />
+                                  {fmtMinutes(actualSec)} / {fmtMinutes(estimateSec)}
                                 </div>
                               );
                             })()}
