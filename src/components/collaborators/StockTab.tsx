@@ -534,13 +534,25 @@ export function StockTab({ onAssigned }: StockTabProps) {
   };
 
   const handleCellSave = async (id: string, field: string, value: string) => {
+    const updates: Record<string, any> = { [field]: value, updated_at: new Date().toISOString() };
+
+    // Auto-fill data_bloqueio when marking license as Inativo
+    if (field === "status" && value === "Inativo") {
+      updates.data_bloqueio = new Date().toISOString().split("T")[0];
+    }
+    // Clear data_bloqueio when reactivating
+    if (field === "status" && value === "Ativo") {
+      updates.data_bloqueio = null;
+    }
+
     const { error } = await supabase
       .from("inventory")
-      .update({ [field]: value, updated_at: new Date().toISOString() } as any)
+      .update(updates as any)
       .eq("id", id);
     if (error) {
       toast.error("Erro ao salvar alteração");
     } else {
+      refetch();
       fetchAllLicenses();
     }
   };
