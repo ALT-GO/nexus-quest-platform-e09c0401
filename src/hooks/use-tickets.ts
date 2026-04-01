@@ -292,6 +292,14 @@ export async function runTicketCreatedAutomations(
             .update({ assignee: actionConfig.assignee, updated_at: new Date().toISOString() } as any)
             .eq("id", ticketId as any);
           console.log(`[AUTOMAÇÃO] "${rule.name}": chamado atribuído a ${actionConfig.assignee}`);
+          // Notify the assignee
+          sendNotification({
+            recipientName: actionConfig.assignee,
+            title: "Nova Tarefa Atribuída",
+            message: `Você foi atribuído automaticamente a um chamado na categoria "${category}".`,
+            type: "task_assigned",
+            link: "/ti/service-desk",
+          });
         }
         break;
       case "change_priority":
