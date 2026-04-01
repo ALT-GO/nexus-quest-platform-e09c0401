@@ -215,6 +215,15 @@ export default function Solicitacoes() {
             <SelectItem value="Concluído">Concluído</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant={filterMilestoneOnly ? "default" : "outline"}
+          size="sm"
+          className="h-8 gap-1.5 text-xs"
+          onClick={() => setFilterMilestoneOnly(!filterMilestoneOnly)}
+        >
+          <Diamond className="h-3.5 w-3.5" />
+          Milestones
+        </Button>
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" onClick={clearAllFilters}>
             <FilterX className="h-3.5 w-3.5" />
