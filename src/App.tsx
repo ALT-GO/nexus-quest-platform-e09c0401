@@ -7,6 +7,7 @@ import { AuthProvider, useAuth, UserPermissions } from "@/hooks/use-auth";
 import Dashboard from "./pages/Dashboard";
 import Projetos from "./pages/marketing/Projetos";
 import Solicitacoes from "./pages/marketing/Solicitacoes";
+import Metas from "./pages/marketing/Metas";
 import ServiceDesk from "./pages/ti/ServiceDesk";
 import Colaboradores from "./pages/ti/Colaboradores";
 import CentralInteligencia from "./pages/CentralInteligencia";
@@ -88,6 +89,11 @@ function AppRoutes() {
           <Route path="/marketing/solicitacoes" element={
             <PermissionRoute permission="acessar_kanban_marketing" fallbackRoles={["admin", "marketing"]}>
               <Solicitacoes />
+            </PermissionRoute>
+          } />
+          <Route path="/marketing/metas" element={
+            <PermissionRoute permission="acessar_kanban_marketing" fallbackRoles={["admin", "marketing"]}>
+              <Metas />
             </PermissionRoute>
           } />
           <Route path="/ti/service-desk" element={

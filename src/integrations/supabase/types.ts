@@ -284,6 +284,90 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_goal_targets: {
+        Row: {
+          created_at: string
+          goal_id: string
+          id: string
+          manual_value: number | null
+          task_id: string | null
+        }
+        Insert: {
+          created_at?: string
+          goal_id: string
+          id?: string
+          manual_value?: number | null
+          task_id?: string | null
+        }
+        Update: {
+          created_at?: string
+          goal_id?: string
+          id?: string
+          manual_value?: number | null
+          task_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_goal_targets_goal_id_fkey"
+            columns: ["goal_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_goals"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_goal_targets_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_goals: {
+        Row: {
+          color: string
+          created_at: string
+          current_value: number
+          description: string | null
+          due_date: string | null
+          folder: string | null
+          id: string
+          status: string
+          target_type: string
+          target_value: number
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          color?: string
+          created_at?: string
+          current_value?: number
+          description?: string | null
+          due_date?: string | null
+          folder?: string | null
+          id?: string
+          status?: string
+          target_type?: string
+          target_value?: number
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          color?: string
+          created_at?: string
+          current_value?: number
+          description?: string | null
+          due_date?: string | null
+          folder?: string | null
+          id?: string
+          status?: string
+          target_type?: string
+          target_value?: number
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketing_sprints: {
         Row: {
           created_at: string
