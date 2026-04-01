@@ -579,51 +579,11 @@ export function MarketingTaskDetailSheet({
             )}
 
             {/* Checklist / Subtarefas */}
-            <div>
-              <Label className="text-xs text-muted-foreground">
-                Subtarefas {checklist.length > 0 && `(${completedCount}/${checklist.length})`}
-              </Label>
-              {checklist.length > 0 && (
-                <Progress value={checklistProgress} className="mt-1 h-2" />
-              )}
-              <div className="mt-2 space-y-1">
-                {checklist.map((item) => (
-                  <div key={item.id} className="flex items-center gap-2 group">
-                    <Checkbox
-                      checked={item.completed}
-                      onCheckedChange={() => toggleChecklistItem(item.id)}
-                    />
-                    <span
-                      className={`flex-1 text-sm ${
-                        item.completed ? "line-through text-muted-foreground" : ""
-                      }`}
-                    >
-                      {item.text}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
-                      onClick={() => removeChecklistItem(item.id)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2 mt-2">
-                <Input
-                  placeholder="Adicionar subtarefa..."
-                  value={newChecklistItem}
-                  onChange={(e) => setNewChecklistItem(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addChecklistItem()}
-                  className="h-8 text-sm"
-                />
-                <Button size="sm" variant="outline" onClick={addChecklistItem} disabled={!newChecklistItem.trim()}>
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
+            <ChecklistEditor
+              value={task.checklist}
+              onChange={(groups) => updateTask.mutate({ id: task.id, checklist: groups } as any)}
+              teamMembers={teamMembers}
+            />
 
             {/* Recurrence */}
             <div className="flex items-center justify-between rounded-lg border p-3">
