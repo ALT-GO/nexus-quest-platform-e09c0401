@@ -166,6 +166,7 @@ export function MarketingTaskDetailSheet({
   const addHistory = useAddMarketingHistory();
   const { data: allDeps } = useTaskDependencies();
   const { data: allTasks } = useMarketingTasks();
+  const { data: taskTypes } = useMarketingTaskTypes();
 
   if (!task) return null;
 
