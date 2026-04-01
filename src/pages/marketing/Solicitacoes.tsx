@@ -115,8 +115,11 @@ export default function Solicitacoes() {
     if (filterProgress !== "all") {
       result = result.filter((t) => t.progress === filterProgress);
     }
+    if (filterMilestoneOnly) {
+      result = result.filter((t) => t.is_milestone);
+    }
     return result;
-  }, [tasks, selectedSprintId, searchQuery, filterPriority, filterAssignee, filterProgress]);
+  }, [tasks, selectedSprintId, searchQuery, filterPriority, filterAssignee, filterProgress, filterMilestoneOnly]);
 
   const activeSprint = sprints?.find((s) => s.id === selectedSprintId) || null;
   const loading = stagesLoading || tasksLoading;
