@@ -32,6 +32,7 @@ export default function Solicitacoes() {
   const { data: tasks, isLoading: tasksLoading } = useMarketingTasks();
   const { data: tags } = useMarketingTags();
   const { data: sprints } = useMarketingSprints();
+  const { data: taskTypes } = useMarketingTaskTypes();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<MarketingTask | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
