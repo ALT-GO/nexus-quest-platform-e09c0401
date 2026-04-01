@@ -113,8 +113,20 @@ export function MarketingKanban({ stages, tasks, onTaskClick }: Props) {
         )
       );
       qc.invalidateQueries({ queryKey: ["marketing_tasks"] });
+
+      // Check if moved to a pending_approval stage and notify admins
+      if (sourceStageId !== destStageId) {
+        const destStage = stages.find((s) => s.id === destStageId);
+        if (destStage?.meta_status === "pending_approval") {
+          notifyAdminsForApproval({
+            taskTitle: movedTask.title,
+            taskId: movedTask.id,
+            excludeUserId: user?.id,
+          });
+        }
+      }
     },
-    [tasksByStage, tasks, qc]
+    [tasksByStage, tasks, qc, stages, user]
   );
 
   return (
