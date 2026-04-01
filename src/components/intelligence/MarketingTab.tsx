@@ -95,6 +95,34 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
     }
   }, [marketingTickets]);
 
+  // Fetch timesheet totals for marketing module tasks
+  useEffect(() => {
+    const ids = (marketingTasks || []).map((t) => t.id);
+    if (ids.length > 0) {
+      fetchMarketingTimesheetTotals(ids).then(setMktTimesheetTotals);
+    }
+  }, [marketingTasks]);
+
+  // Estimate vs Actual chart data
+  const estimateVsActualData = useMemo(() => {
+    if (!marketingTasks) return [];
+    return marketingTasks
+      .filter((t) => t.time_estimate_minutes && t.time_estimate_minutes > 0)
+      .map((t) => {
+        const estimateHours = Math.round((t.time_estimate_minutes! / 60) * 10) / 10;
+        const actualSeconds = mktTimesheetTotals[t.id] || 0;
+        const actualHours = Math.round((actualSeconds / 3600) * 10) / 10;
+        return {
+          name: t.title.length > 25 ? t.title.substring(0, 25) + "…" : t.title,
+          assignee: t.assignee_name || "—",
+          estimativa: estimateHours,
+          real: actualHours,
+        };
+      })
+      .sort((a, b) => b.real - a.real)
+      .slice(0, 10);
+  }, [marketingTasks, mktTimesheetTotals]);
+
   // Top 5 tarefas demoradas (marketing)
   const top5SlowTasks = useMemo(() => {
     return marketingTickets
