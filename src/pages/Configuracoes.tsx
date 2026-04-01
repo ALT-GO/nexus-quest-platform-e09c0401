@@ -7,8 +7,9 @@ import { SystemPreferencesTab } from "@/components/settings/SystemPreferencesTab
 import { CsvImportTab } from "@/components/settings/CsvImportTab";
 import { TicketImportTab } from "@/components/settings/TicketImportTab";
 import { MarketingWorkflowTab } from "@/components/settings/MarketingWorkflowTab";
+import { TaskTypesManagerTab } from "@/components/settings/TaskTypesManagerTab";
 import { useAuth } from "@/hooks/use-auth";
-import { User, Users, Settings, Upload, Workflow } from "lucide-react";
+import { User, Users, Settings, Upload, Workflow, Shapes } from "lucide-react";
 
 export default function Configuracoes() {
   const { isAdmin, hasRole } = useAuth();
