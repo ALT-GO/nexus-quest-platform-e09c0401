@@ -3,7 +3,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
-import { GripVertical, Trash2, Play, Pause } from "lucide-react";
+import { GripVertical, Trash2, CheckSquare } from "lucide-react";
 import {
   MarketingStage,
   MarketingTask,
