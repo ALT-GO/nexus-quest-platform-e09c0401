@@ -2,15 +2,17 @@ import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Plus, X } from "lucide-react";
+import { Plus, X, LayoutGrid, List } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarketingStages, useMarketingTasks, MarketingTask } from "@/hooks/use-marketing";
 import { useMarketingTags } from "@/hooks/use-marketing-tags";
 import { MarketingKanban } from "@/components/marketing/MarketingKanban";
+import { MarketingListView } from "@/components/marketing/MarketingListView";
 import { NewMarketingTaskDialog } from "@/components/marketing/NewMarketingTaskDialog";
 import { MarketingTaskDetailSheet } from "@/components/marketing/MarketingTaskDetailSheet";
 import { supabase } from "@/integrations/supabase/client";
+
+const VIEW_KEY = "marketing_view_preference";
 
 export default function Solicitacoes() {
   const { data: stages, isLoading: stagesLoading } = useMarketingStages();
@@ -21,12 +23,26 @@ export default function Solicitacoes() {
   const [detailOpen, setDetailOpen] = useState(false);
   const [teamMembers, setTeamMembers] = useState<{ id: string; name: string }[]>([]);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
+  const [viewMode, setViewMode] = useState<"kanban" | "list">(() => {
+    return (localStorage.getItem(VIEW_KEY) as "kanban" | "list") || "kanban";
+  });
+
+  // List view filters
+  const [filterStage, setFilterStage] = useState("all");
+  const [filterPriority, setFilterPriority] = useState("all");
+  const [filterAssignee, setFilterAssignee] = useState("all");
+  const [filterProgress, setFilterProgress] = useState("all");
 
   useEffect(() => {
     supabase.from("profiles").select("id, full_name").then(({ data }) => {
       if (data) setTeamMembers(data.map(p => ({ id: p.id, name: p.full_name })));
     });
   }, []);
+
+  const handleViewChange = (mode: "kanban" | "list") => {
+    setViewMode(mode);
+    localStorage.setItem(VIEW_KEY, mode);
+  };
 
   const handleTaskClick = (task: MarketingTask) => {
     const fresh = tasks?.find(t => t.id === task.id) || task;
@@ -49,12 +65,35 @@ export default function Solicitacoes() {
           title="Solicitações de Marketing"
           description="Kanban de tarefas e solicitações"
         />
-        <Button onClick={() => setDialogOpen(true)}>
-          <Plus className="h-4 w-4 mr-2" /> Nova Tarefa
-        </Button>
+        <div className="flex items-center gap-2">
+          {/* View Toggle */}
+          <div className="flex items-center rounded-md border bg-muted p-0.5">
+            <Button
+              variant={viewMode === "kanban" ? "default" : "ghost"}
+              size="sm"
+              className="h-7 px-2.5 gap-1.5 text-xs"
+              onClick={() => handleViewChange("kanban")}
+            >
+              <LayoutGrid className="h-3.5 w-3.5" />
+              Kanban
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="sm"
+              className="h-7 px-2.5 gap-1.5 text-xs"
+              onClick={() => handleViewChange("list")}
+            >
+              <List className="h-3.5 w-3.5" />
+              Lista
+            </Button>
+          </div>
+          <Button onClick={() => setDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" /> Nova Tarefa
+          </Button>
+        </div>
       </div>
 
-      {/* Tag Filters */}
+      {/* Tag Filters (shown for both views) */}
       {tags && tags.length > 0 && (
         <div className="flex items-center gap-2 mb-4 flex-wrap">
           <span className="text-xs text-muted-foreground font-medium">Filtrar por tag:</span>
@@ -86,12 +125,27 @@ export default function Solicitacoes() {
         <div className="flex gap-4">
           {[1, 2, 3].map(i => <Skeleton key={i} className="h-64 w-72" />)}
         </div>
-      ) : (
+      ) : viewMode === "kanban" ? (
         <MarketingKanban
           stages={stages ?? []}
           tasks={tasks ?? []}
           onTaskClick={handleTaskClick}
           filterTagIds={filterTagIds.length > 0 ? filterTagIds : undefined}
+        />
+      ) : (
+        <MarketingListView
+          tasks={tasks ?? []}
+          stages={stages ?? []}
+          teamMembers={teamMembers}
+          onTaskClick={handleTaskClick}
+          filterStage={filterStage}
+          filterPriority={filterPriority}
+          filterAssignee={filterAssignee}
+          filterProgress={filterProgress}
+          onFilterStageChange={setFilterStage}
+          onFilterPriorityChange={setFilterPriority}
+          onFilterAssigneeChange={setFilterAssignee}
+          onFilterProgressChange={setFilterProgress}
         />
       )}
 
