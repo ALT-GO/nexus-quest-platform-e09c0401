@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, Diamond } from "lucide-react";
 import { format, isBefore, isToday, startOfDay } from "date-fns";
 import { MarketingTask, MarketingStage, useUpdateMarketingTask } from "@/hooks/use-marketing";
 
