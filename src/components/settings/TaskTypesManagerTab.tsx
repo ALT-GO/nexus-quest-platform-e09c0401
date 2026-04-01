@@ -143,14 +143,11 @@ export function TaskTypesManagerTab() {
                     <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => openEdit(t)}>
                       <Pencil className="h-3.5 w-3.5" />
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-7 w-7 text-destructive"
-                      onClick={() => setDeleteId(t.id)}
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </Button>
+                    <ConfirmDeleteDialog
+                      onConfirm={() => deleteType.mutate(t.id)}
+                      title="Excluir Tipo de Tarefa"
+                      description="As tarefas existentes deste tipo ficarão sem tipo. Deseja continuar?"
+                    />
                   </TableCell>
                 </TableRow>
               ))}
