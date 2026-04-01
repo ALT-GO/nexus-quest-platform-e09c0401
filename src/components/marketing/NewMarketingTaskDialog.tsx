@@ -18,7 +18,16 @@ interface Props {
 }
 
 export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers }: Props) {
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
+  const { data: profileData } = useQuery({
+    queryKey: ["my-profile", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+      return data;
+    },
+    enabled: !!user,
+  });
   const createTask = useCreateMarketingTask();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
