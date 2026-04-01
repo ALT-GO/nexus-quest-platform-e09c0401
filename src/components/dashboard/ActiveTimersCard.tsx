@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,7 +11,6 @@ import { Badge } from "@/components/ui/badge";
 import { Timer, Pause, ExternalLink } from "lucide-react";
 import { useActiveTimers, formatDuration } from "@/hooks/use-timesheet";
 import { useTickets, Ticket } from "@/hooks/use-tickets";
-import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -19,26 +18,11 @@ import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 
 export function ActiveTimersCard() {
-  const { user } = useAuth();
   const { tickets } = useTickets();
   const navigate = useNavigate();
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
 
-  const userName = user?.user_metadata?.full_name || "";
-  const userEmail = user?.email || "";
-
-  const myTicketIds = useMemo(() => {
-    return tickets
-      .filter(
-        (t) =>
-          t.assignee === userName ||
-          t.email === userEmail ||
-          t.requester === userName
-      )
-      .map((t) => t.id);
-  }, [tickets, userName, userEmail]);
-
-  const { activeTimers, loading, refetch } = useActiveTimers(myTicketIds);
+  const { activeTimers, loading, refetch } = useActiveTimers();
   const top5 = activeTimers.slice(0, 5);
 
   const handlePause = async (logId: string, startTime: string) => {
@@ -104,7 +88,7 @@ export function ActiveTimersCard() {
                     {timer.ticket_title || "Sem título"}
                   </button>
                   <p className="text-xs text-muted-foreground">
-                    {timer.ticket_number}
+                    {timer.ticket_number} {timer.ticket_assignee ? `· ${timer.ticket_assignee}` : ""}
                   </p>
                 </div>
 
@@ -197,7 +181,7 @@ export function ActiveTimersCard() {
                   className="w-full gap-2"
                   onClick={() => {
                     setSelectedTicket(null);
-                    navigate("/ti/servicedesk");
+                    navigate("/ti/service-desk");
                   }}
                 >
                   <ExternalLink className="h-4 w-4" />

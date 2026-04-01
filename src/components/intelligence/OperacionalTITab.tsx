@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { ActiveTimersCard } from "@/components/dashboard/ActiveTimersCard";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
+import { fetchTimesheetTotals, fetchTimesheetByDateRange, formatDuration } from "@/hooks/use-timesheet";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
@@ -76,7 +76,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
   const [categoryFilter, setCategoryFilter] = useState("all");
   const [timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
-  const [allTimesheetData, setAllTimesheetData] = useState<{ ticket_id: string; duration_seconds: number }[]>([]);
+  const [allTimesheetData, setAllTimesheetData] = useState<{ ticket_id: string; start_time: string; end_time: string | null; duration_seconds: number }[]>([]);
 
   // Fetch inventory from Supabase
   useEffect(() => {
@@ -94,22 +94,15 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // Fetch all timesheet data for all tickets
+  // Fetch timesheet data filtered by date range
   useEffect(() => {
     const ids = allTickets.map((t) => t.id);
     if (ids.length > 0) {
       fetchTimesheetTotals(ids).then(setTimesheetTotals);
-      // Also fetch raw timesheet logs for per-assignee aggregation
-      supabase
-        .from("timesheet_logs")
-        .select("ticket_id, duration_seconds")
-        .in("ticket_id", ids as any)
-        .not("end_time", "is", null)
-        .then(({ data }) => {
-          if (data) setAllTimesheetData(data as { ticket_id: string; duration_seconds: number }[]);
-        });
     }
-  }, [allTickets]);
+    // Fetch date-range-filtered timesheet logs for per-assignee aggregation
+    fetchTimesheetByDateRange(dateRange).then(setAllTimesheetData);
+  }, [allTickets, dateRange]);
 
   const filtered = useMemo(() => {
     return allTickets.filter((t) => {
@@ -184,20 +177,33 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
       .slice(0, 5);
   }, [filtered, timesheetTotals]);
 
-  // ---- NEW: Horas Trabalhadas por Colaborador ----
+  // ---- Horas Trabalhadas por Colaborador (date-range filtered) ----
   const hoursByAssignee = useMemo(() => {
+    // Build a map of ticket_id -> assignee from tickets
+    const ticketAssigneeMap = new Map<string, string>();
+    allTickets.forEach((t) => {
+      ticketAssigneeMap.set(t.id, t.assignee || "Sem atribuição");
+    });
+
     const map: Record<string, number> = {};
-    filtered.forEach((t) => {
-      const assignee = t.assignee || "Sem atribuição";
-      const secs = timesheetTotals[t.id] || 0;
+    allTimesheetData.forEach((log) => {
+      const assignee = ticketAssigneeMap.get(log.ticket_id) || "Sem atribuição";
+      let secs = 0;
+      if (log.end_time) {
+        secs = log.duration_seconds;
+      } else {
+        // Running timer — calculate elapsed live
+        secs = Math.floor((Date.now() - new Date(log.start_time).getTime()) / 1000);
+      }
       if (secs > 0) {
         map[assignee] = (map[assignee] || 0) + secs;
       }
     });
+
     return Object.entries(map)
       .map(([name, seconds]) => ({ name, hours: Math.round((seconds / 3600) * 10) / 10 }))
       .sort((a, b) => b.hours - a.hours);
-  }, [filtered, timesheetTotals]);
+  }, [allTimesheetData, allTickets]);
 
   // ---- NEW: Volume de Chamados por Dia da Semana ----
   const ticketsByDayOfWeek = useMemo(() => {

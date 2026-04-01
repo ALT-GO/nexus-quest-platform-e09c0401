@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState } from "react";
 import {
   Popover,
   PopoverContent,
@@ -7,31 +7,12 @@ import {
 import { Button } from "@/components/ui/button";
 import { Timer, Pause } from "lucide-react";
 import { useActiveTimers, formatDuration } from "@/hooks/use-timesheet";
-import { useTickets } from "@/hooks/use-tickets";
-import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
 export function GlobalTimerBadge() {
-  const { user } = useAuth();
-  const { tickets } = useTickets();
   const [open, setOpen] = useState(false);
-
-  const userName = user?.user_metadata?.full_name || "";
-  const userEmail = user?.email || "";
-
-  const myTicketIds = useMemo(() => {
-    return tickets
-      .filter(
-        (t) =>
-          t.assignee === userName ||
-          t.email === userEmail ||
-          t.requester === userName
-      )
-      .map((t) => t.id);
-  }, [tickets, userName, userEmail]);
-
-  const { activeTimers, refetch } = useActiveTimers(myTicketIds);
+  const { activeTimers, refetch } = useActiveTimers();
 
   const handlePause = async (logId: string, startTime: string) => {
     const now = new Date();
@@ -91,7 +72,7 @@ export function GlobalTimerBadge() {
                   {timer.ticket_title || "Sem título"}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  {timer.ticket_number}
+                  {timer.ticket_number} {timer.ticket_assignee ? `· ${timer.ticket_assignee}` : ""}
                 </p>
               </div>
               <span className="font-mono text-xs font-semibold text-primary tabular-nums">

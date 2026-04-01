@@ -13,6 +13,7 @@ export interface TimesheetLog {
 export interface ActiveTimer extends TimesheetLog {
   ticket_title?: string;
   ticket_number?: string;
+  ticket_assignee?: string;
   elapsed_seconds: number;
 }
 
@@ -121,24 +122,22 @@ export function useTimesheet(ticketId: string | null) {
  * for tickets assigned to the logged-in user.
  * Returns the list ordered by most recently started, with live elapsed seconds.
  */
-export function useActiveTimers(userTicketIds: string[]) {
+export function useActiveTimers(userTicketIds?: string[]) {
   const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
   const [loading, setLoading] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const fetchActive = useCallback(async () => {
-    if (userTicketIds.length === 0) {
-      setActiveTimers([]);
-      return;
-    }
     setLoading(true);
 
-    const { data: logs } = await supabase
+    // Fetch ALL active timers (end_time IS NULL) regardless of user
+    let query = supabase
       .from("timesheet_logs")
       .select("*")
-      .in("ticket_id", userTicketIds as any)
       .is("end_time", null)
       .order("start_time", { ascending: false });
+
+    const { data: logs } = await query;
 
     const fetched = (logs as unknown as TimesheetLog[]) || [];
 
@@ -152,7 +151,7 @@ export function useActiveTimers(userTicketIds: string[]) {
     const ticketIds = [...new Set(fetched.map((l) => l.ticket_id))];
     const { data: tickets } = await supabase
       .from("tickets")
-      .select("id, title, ticket_number")
+      .select("id, title, ticket_number, assignee")
       .in("id", ticketIds as any);
 
     const ticketMap = new Map(
@@ -166,13 +165,14 @@ export function useActiveTimers(userTicketIds: string[]) {
         ...l,
         ticket_title: ticket?.title || "",
         ticket_number: ticket?.ticket_number || "",
+        ticket_assignee: ticket?.assignee || "",
         elapsed_seconds: Math.floor((now - new Date(l.start_time).getTime()) / 1000),
       };
     });
 
     setActiveTimers(timers);
     setLoading(false);
-  }, [userTicketIds]);
+  }, []);
 
   // Initial fetch
   useEffect(() => { fetchActive(); }, [fetchActive]);
@@ -222,4 +222,17 @@ export async function fetchTimesheetTotals(
     totals[row.ticket_id] = (totals[row.ticket_id] || 0) + row.duration_seconds;
   });
   return totals;
+}
+
+// Fetch timesheet logs filtered by date range (for dashboard charts)
+export async function fetchTimesheetByDateRange(
+  dateRange: { start: Date; end: Date }
+): Promise<{ ticket_id: string; start_time: string; end_time: string | null; duration_seconds: number }[]> {
+  const { data } = await supabase
+    .from("timesheet_logs")
+    .select("ticket_id, start_time, end_time, duration_seconds")
+    .gte("start_time", dateRange.start.toISOString())
+    .lte("start_time", dateRange.end.toISOString());
+
+  return (data as unknown as { ticket_id: string; start_time: string; end_time: string | null; duration_seconds: number }[]) || [];
 }
