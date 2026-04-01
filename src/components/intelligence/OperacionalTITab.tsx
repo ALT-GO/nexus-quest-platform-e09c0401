@@ -96,13 +96,8 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
 
   // Fetch timesheet data filtered by date range
   useEffect(() => {
-    const ids = allTickets.map((t) => t.id);
-    if (ids.length > 0) {
-      fetchTimesheetTotals(ids).then(setTimesheetTotals);
-    }
-    // Fetch date-range-filtered timesheet logs for per-assignee aggregation
     fetchTimesheetByDateRange(dateRange).then(setAllTimesheetData);
-  }, [allTickets, dateRange]);
+  }, [dateRange]);
 
   // Exclude subtasks from all dashboard calculations
   const mainTickets = useMemo(() => allTickets.filter((t) => !t.parent_ticket_id), [allTickets]);
