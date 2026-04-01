@@ -239,6 +239,7 @@ export function MarketingListView({
               <TableHead className="cursor-pointer select-none w-28" onClick={() => toggleSort("due_date")}>
                 <span className="flex items-center">Prazo <SortIcon col="due_date" /></span>
               </TableHead>
+              <TableHead className="w-28">Deps</TableHead>
               <TableHead className="w-16">Ações</TableHead>
             </TableRow>
           </TableHeader>
