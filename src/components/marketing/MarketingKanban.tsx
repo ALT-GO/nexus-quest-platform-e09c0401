@@ -1,11 +1,23 @@
-import { useMemo, useState } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { useMemo, useCallback } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { GripVertical, Trash2 } from "lucide-react";
-import { MarketingStage, MarketingTask, useUpdateMarketingTask, useDeleteMarketingTask } from "@/hooks/use-marketing";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  MarketingStage,
+  MarketingTask,
+  useUpdateMarketingTask,
+  useDeleteMarketingTask,
+} from "@/hooks/use-marketing";
+import {
+  DragDropContext,
+  Droppable,
+  Draggable,
+  type DropResult,
+} from "@hello-pangea/dnd";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 
 interface Props {
   stages: MarketingStage[];
@@ -20,95 +32,218 @@ const metaStatusColors: Record<string, string> = {
   completed: "bg-green-500/10 text-green-700 dark:text-green-400",
 };
 
-const priorityLabels: Record<string, string> = { low: "Baixa", medium: "Média", high: "Alta" };
+const priorityLabels: Record<string, string> = {
+  low: "Baixa",
+  medium: "Média",
+  high: "Alta",
+};
+
+const progressDot: Record<string, string> = {
+  "Não iniciado": "bg-muted-foreground",
+  "Em andamento": "bg-blue-500",
+  "Concluído": "bg-green-500",
+};
 
 export function MarketingKanban({ stages, tasks, onTaskClick }: Props) {
   const updateTask = useUpdateMarketingTask();
   const deleteTask = useDeleteMarketingTask();
-  const [draggedTaskId, setDraggedTaskId] = useState<string | null>(null);
+  const qc = useQueryClient();
 
   const tasksByStage = useMemo(() => {
     const map: Record<string, MarketingTask[]> = {};
-    stages.forEach(s => { map[s.id] = []; });
-    tasks.forEach(t => {
+    stages.forEach((s) => {
+      map[s.id] = [];
+    });
+    tasks.forEach((t) => {
       if (t.stage_id && map[t.stage_id]) map[t.stage_id].push(t);
     });
+    // Sort each column by order_index
+    Object.values(map).forEach((arr) =>
+      arr.sort((a, b) => a.order_index - b.order_index)
+    );
     return map;
   }, [stages, tasks]);
 
-  const handleDrop = (stageId: string) => {
-    if (draggedTaskId) {
-      updateTask.mutate({ id: draggedTaskId, stage_id: stageId });
-      setDraggedTaskId(null);
-    }
-  };
+  const handleDragEnd = useCallback(
+    async (result: DropResult) => {
+      const { source, destination, draggableId } = result;
+      if (!destination) return;
+      if (
+        source.droppableId === destination.droppableId &&
+        source.index === destination.index
+      )
+        return;
+
+      const sourceStageId = source.droppableId;
+      const destStageId = destination.droppableId;
+
+      // Build new arrays
+      const sourceItems = [...(tasksByStage[sourceStageId] ?? [])];
+      const destItems =
+        sourceStageId === destStageId
+          ? sourceItems
+          : [...(tasksByStage[destStageId] ?? [])];
+
+      // Remove from source
+      const [movedTask] = sourceItems.splice(source.index, 1);
+      if (!movedTask) return;
+
+      // Insert at destination
+      if (sourceStageId === destStageId) {
+        sourceItems.splice(destination.index, 0, movedTask);
+      } else {
+        destItems.splice(destination.index, 0, movedTask);
+      }
+
+      // Optimistic update
+      const updatedTasks = tasks.map((t) => ({ ...t }));
+      const updateOrderForList = (list: MarketingTask[], stageId: string) => {
+        list.forEach((item, idx) => {
+          const found = updatedTasks.find((t) => t.id === item.id);
+          if (found) {
+            found.order_index = idx;
+            found.stage_id = stageId;
+          }
+        });
+      };
+
+      updateOrderForList(sourceItems, sourceStageId);
+      if (sourceStageId !== destStageId) {
+        updateOrderForList(destItems, destStageId);
+      }
+
+      qc.setQueryData(["marketing_tasks"], updatedTasks);
+
+      // Persist changes
+      const updates: { id: string; stage_id: string; order_index: number }[] =
+        [];
+
+      const addUpdates = (list: MarketingTask[], stageId: string) => {
+        list.forEach((item, idx) => {
+          updates.push({ id: item.id, stage_id: stageId, order_index: idx });
+        });
+      };
+
+      addUpdates(sourceItems, sourceStageId);
+      if (sourceStageId !== destStageId) {
+        addUpdates(destItems, destStageId);
+      }
+
+      // Batch update
+      await Promise.all(
+        updates.map((u) =>
+          supabase
+            .from("marketing_tasks")
+            .update({
+              stage_id: u.stage_id,
+              order_index: u.order_index,
+              updated_at: new Date().toISOString(),
+            } as any)
+            .eq("id", u.id)
+        )
+      );
+
+      qc.invalidateQueries({ queryKey: ["marketing_tasks"] });
+    },
+    [tasksByStage, tasks, qc]
+  );
 
   return (
-    <div className="flex gap-4 overflow-x-auto pb-4">
-      {stages.map(stage => (
-        <div
-          key={stage.id}
-          className="min-w-[280px] max-w-[320px] flex-shrink-0"
-          onDragOver={e => e.preventDefault()}
-          onDrop={() => handleDrop(stage.id)}
-        >
-          <div className={`rounded-t-lg px-3 py-2 flex items-center justify-between ${metaStatusColors[stage.meta_status] || "bg-muted"}`}>
-            <span className="font-semibold text-sm">{stage.name}</span>
-            <Badge variant="secondary" className="text-xs">{tasksByStage[stage.id]?.length ?? 0}</Badge>
+    <DragDropContext onDragEnd={handleDragEnd}>
+      <div className="flex gap-4 overflow-x-auto pb-4">
+        {stages.map((stage) => (
+          <div key={stage.id} className="min-w-[280px] max-w-[320px] flex-shrink-0">
+            <div
+              className={`rounded-t-lg px-3 py-2 flex items-center justify-between ${
+                metaStatusColors[stage.meta_status] || "bg-muted"
+              }`}
+            >
+              <span className="font-semibold text-sm">{stage.name}</span>
+              <Badge variant="secondary" className="text-xs">
+                {tasksByStage[stage.id]?.length ?? 0}
+              </Badge>
+            </div>
+            <Droppable droppableId={stage.id}>
+              {(provided, snapshot) => (
+                <div
+                  ref={provided.innerRef}
+                  {...provided.droppableProps}
+                  className={`space-y-2 rounded-b-lg border border-t-0 p-2 min-h-[200px] transition-colors ${
+                    snapshot.isDraggingOver
+                      ? "bg-accent/40"
+                      : "bg-muted/30"
+                  }`}
+                >
+                  {(tasksByStage[stage.id] ?? []).map((task, index) => (
+                    <Draggable
+                      key={task.id}
+                      draggableId={task.id}
+                      index={index}
+                    >
+                      {(dragProvided, dragSnapshot) => (
+                        <Card
+                          ref={dragProvided.innerRef}
+                          {...dragProvided.draggableProps}
+                          className={`transition-shadow ${
+                            dragSnapshot.isDragging
+                              ? "shadow-lg ring-2 ring-primary/30"
+                              : "hover:shadow-md"
+                          }`}
+                        >
+                          <CardContent className="p-3 space-y-2">
+                            <div className="flex items-start justify-between gap-2">
+                              <div
+                                {...dragProvided.dragHandleProps}
+                                className="mt-0.5 cursor-grab active:cursor-grabbing"
+                              >
+                                <GripVertical className="h-4 w-4 text-muted-foreground" />
+                              </div>
+                              <p
+                                className="text-sm font-medium flex-1 cursor-pointer hover:text-primary"
+                                onClick={() => onTaskClick?.(task)}
+                              >
+                                {task.title}
+                              </p>
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                                onClick={() => deleteTask.mutate(task.id)}
+                              >
+                                <Trash2 className="h-3 w-3" />
+                              </Button>
+                            </div>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              <StatusBadge variant={task.priority as any}>
+                                {priorityLabels[task.priority] || task.priority}
+                              </StatusBadge>
+                              {/* Progress indicator dot + label */}
+                              <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                                <span
+                                  className={`inline-block h-2.5 w-2.5 rounded-full ${
+                                    progressDot[task.progress] || "bg-muted-foreground"
+                                  }`}
+                                />
+                                {task.progress}
+                              </div>
+                            </div>
+                            {task.assignee_name && (
+                              <p className="text-xs text-muted-foreground">
+                                👤 {task.assignee_name}
+                              </p>
+                            )}
+                          </CardContent>
+                        </Card>
+                      )}
+                    </Draggable>
+                  ))}
+                  {provided.placeholder}
+                </div>
+              )}
+            </Droppable>
           </div>
-          <div className="space-y-2 rounded-b-lg border border-t-0 bg-muted/30 p-2 min-h-[200px]">
-            {(tasksByStage[stage.id] ?? []).map(task => (
-              <Card
-                key={task.id}
-                draggable
-                onDragStart={() => setDraggedTaskId(task.id)}
-                className="cursor-grab active:cursor-grabbing hover:shadow-md transition-shadow"
-              >
-                <CardContent className="p-3 space-y-2">
-                  <div className="flex items-start justify-between gap-2">
-                    <GripVertical className="h-4 w-4 mt-0.5 text-muted-foreground flex-shrink-0" />
-                    <p
-                      className="text-sm font-medium flex-1 cursor-pointer hover:text-primary"
-                      onClick={() => onTaskClick?.(task)}
-                    >
-                      {task.title}
-                    </p>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 text-muted-foreground hover:text-destructive"
-                      onClick={() => deleteTask.mutate(task.id)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <StatusBadge variant={task.priority as any}>
-                      {priorityLabels[task.priority] || task.priority}
-                    </StatusBadge>
-                    <Select
-                      value={task.progress}
-                      onValueChange={val => updateTask.mutate({ id: task.id, progress: val })}
-                    >
-                      <SelectTrigger className="h-6 text-xs w-auto border-0 bg-transparent px-1">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="Não iniciado">Não iniciado</SelectItem>
-                        <SelectItem value="Em andamento">Em andamento</SelectItem>
-                        <SelectItem value="Concluído">Concluído</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  {task.assignee_name && (
-                    <p className="text-xs text-muted-foreground">👤 {task.assignee_name}</p>
-                  )}
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      ))}
-    </div>
+        ))}
+      </div>
+    </DragDropContext>
   );
 }
