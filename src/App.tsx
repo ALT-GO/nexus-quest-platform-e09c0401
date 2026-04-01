@@ -77,56 +77,52 @@ function AppRoutes() {
         <Route path="*" element={<LoadingScreen />} />
       ) : (
         <>
+          <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+          <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
 
+          <Route path="/marketing/projetos" element={
+            <PermissionRoute permission="acessar_kanban_marketing" fallbackRoles={["admin", "marketing"]}>
+              <Projetos />
+            </PermissionRoute>
+          } />
+          <Route path="/marketing/solicitacoes" element={
+            <PermissionRoute permission="acessar_kanban_marketing" fallbackRoles={["admin", "marketing"]}>
+              <Solicitacoes />
+            </PermissionRoute>
+          } />
+          <Route path="/ti/service-desk" element={
+            <PermissionRoute permission="criar_chamados" fallbackRoles={["admin", "ti"]}>
+              <ServiceDesk />
+            </PermissionRoute>
+          } />
+          <Route path="/ti/ativos" element={<Navigate to="/ti/colaboradores" replace />} />
+          <Route path="/ti/colaboradores" element={
+            <PermissionRoute permission="gerenciar_estoque" fallbackRoles={["admin", "ti"]}>
+              <Colaboradores />
+            </PermissionRoute>
+          } />
+          <Route path="/ti/faturas" element={
+            <PermissionRoute permission="ver_custos_faturas" fallbackRoles={["admin", "ti"]}>
+              <GestaoFaturas />
+            </PermissionRoute>
+          } />
+          <Route path="/ti/cofre-senhas" element={
+            <PermissionRoute permission="acessar_cofre_senhas" fallbackRoles={["admin", "ti"]}>
+              <CofreSenhas />
+            </PermissionRoute>
+          } />
+          <Route path="/central-inteligencia" element={
+            <PermissionRoute permission="ver_dashboard_financeiro" fallbackRoles={["admin", "ti"]}>
+              <CentralInteligencia />
+            </PermissionRoute>
+          } />
 
-      {/* Protected routes */}
-      <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-      <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
+          <Route path="/ti/dashboard" element={<Navigate to="/central-inteligencia" replace />} />
+          <Route path="/ti/financeiro" element={<Navigate to="/central-inteligencia" replace />} />
 
-      {/* Permission-gated routes */}
-      <Route path="/marketing/projetos" element={
-        <PermissionRoute permission="acessar_kanban_marketing" fallbackRoles={["admin", "marketing"]}>
-          <Projetos />
-        </PermissionRoute>
-      } />
-      <Route path="/marketing/solicitacoes" element={
-        <PermissionRoute permission="acessar_kanban_marketing" fallbackRoles={["admin", "marketing"]}>
-          <Solicitacoes />
-        </PermissionRoute>
-      } />
-      <Route path="/ti/service-desk" element={
-        <PermissionRoute permission="criar_chamados" fallbackRoles={["admin", "ti"]}>
-          <ServiceDesk />
-        </PermissionRoute>
-      } />
-      <Route path="/ti/ativos" element={<Navigate to="/ti/colaboradores" replace />} />
-      <Route path="/ti/colaboradores" element={
-        <PermissionRoute permission="gerenciar_estoque" fallbackRoles={["admin", "ti"]}>
-          <Colaboradores />
-        </PermissionRoute>
-      } />
-      <Route path="/ti/faturas" element={
-        <PermissionRoute permission="ver_custos_faturas" fallbackRoles={["admin", "ti"]}>
-          <GestaoFaturas />
-        </PermissionRoute>
-      } />
-      <Route path="/ti/cofre-senhas" element={
-        <PermissionRoute permission="acessar_cofre_senhas" fallbackRoles={["admin", "ti"]}>
-          <CofreSenhas />
-        </PermissionRoute>
-      } />
-      <Route path="/central-inteligencia" element={
-        <PermissionRoute permission="ver_dashboard_financeiro" fallbackRoles={["admin", "ti"]}>
-          <CentralInteligencia />
-        </PermissionRoute>
-      } />
-
-      {/* Legacy redirects */}
-      <Route path="/ti/dashboard" element={<Navigate to="/central-inteligencia" replace />} />
-      <Route path="/ti/financeiro" element={<Navigate to="/central-inteligencia" replace />} />
-
-      {/* 404 */}
-      <Route path="*" element={<NotFound />} />
+          <Route path="*" element={<NotFound />} />
+        </>
+      )}
     </Routes>
   );
 }
