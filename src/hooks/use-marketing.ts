@@ -56,7 +56,10 @@ export function useMarketingTasks() {
         .select("*")
         .order("order_index");
       if (error) throw error;
-      return data as MarketingTask[];
+      return (data as any[]).map((d) => ({
+        ...d,
+        checklist: Array.isArray(d.checklist) ? d.checklist : [],
+      })) as MarketingTask[];
     },
   });
 }
