@@ -59,12 +59,21 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
   const { data: allTaskTags } = useAllTaskTags();
   const [timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
 
-  // Fetch timesheet totals for all tasks
+  // Fetch timesheet totals for all tasks - auto-refresh every 30s
+  const refreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {
     const ids = tasks.map((t) => t.id);
     if (ids.length > 0) {
       fetchMarketingTimesheetTotals(ids).then(setTimesheetTotals);
     }
+    // Refresh periodically to keep in sync with running timers
+    refreshRef.current = setInterval(() => {
+      const taskIds = tasks.map((t) => t.id);
+      if (taskIds.length > 0) {
+        fetchMarketingTimesheetTotals(taskIds).then(setTimesheetTotals);
+      }
+    }, 30000);
+    return () => { if (refreshRef.current) clearInterval(refreshRef.current); };
   }, [tasks]);
 
   // Filter tasks by tags if filter is active
