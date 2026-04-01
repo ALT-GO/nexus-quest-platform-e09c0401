@@ -69,14 +69,14 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
   const tasksByStage = useMemo(() => {
     const map: Record<string, MarketingTask[]> = {};
     stages.forEach((s) => { map[s.id] = []; });
-    tasks.forEach((t) => {
+    filteredTasks.forEach((t) => {
       if (t.stage_id && map[t.stage_id]) map[t.stage_id].push(t);
     });
     Object.values(map).forEach((arr) =>
       arr.sort((a, b) => a.order_index - b.order_index)
     );
     return map;
-  }, [stages, tasks]);
+  }, [stages, filteredTasks]);
 
   const handleDragEnd = useCallback(
     async (result: DropResult) => {
