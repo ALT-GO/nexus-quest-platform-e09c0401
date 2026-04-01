@@ -314,7 +314,8 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                             })()}
                           </CardContent>
                         </Card>
-                      )}
+                        );
+                      }}
                     </Draggable>
                   ))}
                   {provided.placeholder}
