@@ -299,7 +299,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           title="SLA Cumprido" value={`${slaCumprido}%`} icon={CheckCircle2} description="No período"
           trend={slaCumprido >= 90 ? { value: slaCumprido - 90, isPositive: true } : { value: 90 - slaCumprido, isPositive: false }}
         />
-        <StatCard title="Chamados Abertos" value={filtered.filter((t) => !t.completed_at).length} icon={AlertTriangle} description="Sem conclusão" />
+        <StatCard title="Chamados Abertos" value={allOpenTickets.length} icon={AlertTriangle} description="Atualmente sem conclusão" />
       </div>
 
       {/* Charts Row 1 */}
