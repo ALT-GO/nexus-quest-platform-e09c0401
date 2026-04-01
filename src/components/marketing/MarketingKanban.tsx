@@ -61,7 +61,14 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
   const { user } = useAuth();
   const { data: allTaskTags } = useAllTaskTags();
   const [timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
+  const { data: allDeps } = useTaskDependencies();
 
+  // Build progress map for blocked checks
+  const progressMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    tasks.forEach((t) => { map[t.id] = t.progress; });
+    return map;
+  }, [tasks]);
   // Fetch timesheet totals for all tasks - auto-refresh every 30s
   const refreshRef = useRef<ReturnType<typeof setInterval> | null>(null);
   useEffect(() => {

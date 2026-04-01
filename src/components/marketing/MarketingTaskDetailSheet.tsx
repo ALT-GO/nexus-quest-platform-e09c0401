@@ -570,6 +570,11 @@ export function MarketingTaskDetailSheet({
               </div>
             </div>
 
+            {/* Dependencies */}
+            {allDeps && allTasks && (
+              <DependencySection task={task} allTasks={allTasks} dependencies={allDeps} />
+            )}
+
             {/* Checklist / Subtarefas */}
             <div>
               <Label className="text-xs text-muted-foreground">
