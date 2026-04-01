@@ -94,22 +94,15 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // Fetch all timesheet data for all tickets
+  // Fetch timesheet data filtered by date range
   useEffect(() => {
     const ids = allTickets.map((t) => t.id);
     if (ids.length > 0) {
       fetchTimesheetTotals(ids).then(setTimesheetTotals);
-      // Also fetch raw timesheet logs for per-assignee aggregation
-      supabase
-        .from("timesheet_logs")
-        .select("ticket_id, duration_seconds")
-        .in("ticket_id", ids as any)
-        .not("end_time", "is", null)
-        .then(({ data }) => {
-          if (data) setAllTimesheetData(data as { ticket_id: string; duration_seconds: number }[]);
-        });
     }
-  }, [allTickets]);
+    // Fetch date-range-filtered timesheet logs for per-assignee aggregation
+    fetchTimesheetByDateRange(dateRange).then(setAllTimesheetData);
+  }, [allTickets, dateRange]);
 
   const filtered = useMemo(() => {
     return allTickets.filter((t) => {
