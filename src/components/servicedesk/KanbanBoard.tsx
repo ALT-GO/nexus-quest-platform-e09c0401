@@ -23,6 +23,7 @@ interface KanbanTicket {
   priority: "low" | "medium" | "high";
   requester: string;
   assignee?: string;
+  assigneeAvatarUrl?: string;
   createdAt: string;
   completedAt?: string;
   ativoId?: string;
