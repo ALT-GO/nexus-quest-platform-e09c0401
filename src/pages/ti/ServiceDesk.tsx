@@ -401,6 +401,7 @@ export default function ServiceDesk() {
             priority: t.priority,
             requester: t.requester,
             assignee: t.assignee ?? undefined,
+            assigneeAvatarUrl: t.assignee ? avatarMap[t.assignee] : undefined,
             createdAt: t.created_at,
             completedAt: t.completed_at ?? undefined,
             ativoId: t.asset_id ?? undefined,
