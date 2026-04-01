@@ -10,6 +10,12 @@ export interface MarketingStage {
   created_at: string;
 }
 
+export interface ChecklistItem {
+  id: string;
+  text: string;
+  completed: boolean;
+}
+
 export interface MarketingTask {
   id: string;
   title: string;
@@ -24,6 +30,7 @@ export interface MarketingTask {
   order_index: number;
   created_at: string;
   updated_at: string;
+  checklist: ChecklistItem[] | null;
 }
 
 export function useMarketingStages() {
