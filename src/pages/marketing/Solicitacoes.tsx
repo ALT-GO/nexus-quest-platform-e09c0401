@@ -46,7 +46,7 @@ export default function Solicitacoes() {
   const [filterAssignee, setFilterAssignee] = useState("all");
   const [filterProgress, setFilterProgress] = useState("all");
   const [filterStage, setFilterStage] = useState("all");
-
+  const [filterMilestoneOnly, setFilterMilestoneOnly] = useState(false);
   useEffect(() => {
     supabase.from("profiles").select("id, full_name").then(({ data }) => {
       if (data) setTeamMembers(data.map(p => ({ id: p.id, name: p.full_name })));
