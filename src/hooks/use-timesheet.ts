@@ -13,6 +13,7 @@ export interface TimesheetLog {
 export interface ActiveTimer extends TimesheetLog {
   ticket_title?: string;
   ticket_number?: string;
+  ticket_assignee?: string;
   elapsed_seconds: number;
 }
 
