@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Progress } from "@/components/ui/progress";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import {
   Dialog,
   DialogContent,
@@ -26,7 +28,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { AlertTriangle, Check, X, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, Check, X, Plus, Trash2, CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { ptBR } from "date-fns/locale";
+import {
+  MarketingStage,
+  MarketingTask,
+  ChecklistItem,
+  useUpdateMarketingTask,
+} from "@/hooks/use-marketing";
+import { MarketingTimerButton } from "./MarketingTimerButton";
+import { useAuth } from "@/hooks/use-auth";
+import { notifyTaskCreator } from "@/lib/marketing-notifications";
+import { format } from "date-fns";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import {
   MarketingStage,
   MarketingTask,
