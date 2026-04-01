@@ -1,0 +1,1 @@
+ALTER TABLE public.marketing_tasks ADD COLUMN time_estimate_minutes integer;
