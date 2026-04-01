@@ -50,11 +50,21 @@ const progressDot: Record<string, string> = {
   "Concluído": "bg-green-500",
 };
 
-export function MarketingKanban({ stages, tasks, onTaskClick }: Props) {
+export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Props) {
   const updateTask = useUpdateMarketingTask();
   const deleteTask = useDeleteMarketingTask();
   const qc = useQueryClient();
   const { user } = useAuth();
+  const { data: allTaskTags } = useAllTaskTags();
+
+  // Filter tasks by tags if filter is active
+  const filteredTasks = useMemo(() => {
+    if (!filterTagIds || filterTagIds.length === 0) return tasks;
+    return tasks.filter((t) => {
+      const tags = allTaskTags?.[t.id] || [];
+      return filterTagIds.some((fid) => tags.some((tag) => tag.id === fid));
+    });
+  }, [tasks, filterTagIds, allTaskTags]);
 
   const tasksByStage = useMemo(() => {
     const map: Record<string, MarketingTask[]> = {};
