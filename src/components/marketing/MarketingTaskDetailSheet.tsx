@@ -151,7 +151,6 @@ export function MarketingTaskDetailSheet({
   const qc = useQueryClient();
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
-  const [newChecklistItem, setNewChecklistItem] = useState("");
   const [commentText, setCommentText] = useState("");
   const [profile, setProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
 
