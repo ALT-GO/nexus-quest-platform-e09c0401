@@ -329,6 +329,79 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_task_comments: {
+        Row: {
+          author_id: string
+          author_name: string
+          avatar_url: string | null
+          content: string
+          created_at: string
+          id: string
+          task_id: string
+        }
+        Insert: {
+          author_id: string
+          author_name?: string
+          avatar_url?: string | null
+          content: string
+          created_at?: string
+          id?: string
+          task_id: string
+        }
+        Update: {
+          author_id?: string
+          author_name?: string
+          avatar_url?: string | null
+          content?: string
+          created_at?: string
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_task_comments_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_task_history: {
+        Row: {
+          action: string
+          author_name: string
+          created_at: string
+          details: string
+          id: string
+          task_id: string
+        }
+        Insert: {
+          action: string
+          author_name?: string
+          created_at?: string
+          details?: string
+          id?: string
+          task_id: string
+        }
+        Update: {
+          action?: string
+          author_name?: string
+          created_at?: string
+          details?: string
+          id?: string
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_task_history_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_task_tags: {
         Row: {
           id: string
