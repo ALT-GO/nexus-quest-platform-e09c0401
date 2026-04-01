@@ -123,8 +123,11 @@ export default function Solicitacoes() {
     if (filterMilestoneOnly) {
       result = result.filter((t) => t.is_milestone);
     }
+    if (filterTaskType !== "all") {
+      result = result.filter((t) => t.task_type_id === filterTaskType);
+    }
     return result;
-  }, [tasks, selectedSprintId, searchQuery, filterPriority, filterAssignee, filterProgress, filterMilestoneOnly]);
+  }, [tasks, selectedSprintId, searchQuery, filterPriority, filterAssignee, filterProgress, filterMilestoneOnly, filterTaskType]);
 
   const activeSprint = sprints?.find((s) => s.id === selectedSprintId) || null;
   const loading = stagesLoading || tasksLoading;
