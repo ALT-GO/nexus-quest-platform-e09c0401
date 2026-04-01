@@ -376,6 +376,14 @@ export function MarketingTaskDetailSheet({
               </div>
             </div>
 
+            {/* Tags */}
+            <div>
+              <Label className="text-xs text-muted-foreground">Tags</Label>
+              <div className="mt-1">
+                <MarketingTagSelector taskId={task.id} />
+              </div>
+            </div>
+
             {/* Checklist / Subtarefas */}
             <div>
               <Label className="text-xs text-muted-foreground">
