@@ -87,6 +87,7 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
       onSuccess: () => {
         setTitle(""); setDescription(""); setStageId(""); setPriority("medium"); setProgress("Não iniciado"); setAssigneeId("");
         setStartDate(undefined); setDueDate(undefined);
+        setIsRecurring(false); setRecurrenceRule("weekly");
         onOpenChange(false);
       }
     });
