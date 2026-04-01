@@ -220,6 +220,10 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                 <GripVertical className="h-4 w-4 text-muted-foreground" />
                               </div>
                               <p className={`text-sm flex-1 cursor-pointer hover:text-primary flex items-center gap-1.5 ${task.is_milestone ? "font-bold" : "font-medium"}`} onClick={() => onTaskClick?.(task)}>
+                                {(() => {
+                                  const tt = task.task_type_id && taskTypes ? taskTypes.find(t => t.id === task.task_type_id) : null;
+                                  return tt ? <DynamicLucideIcon name={tt.icon} className="h-3.5 w-3.5 shrink-0" style={{ color: `hsl(${tt.color})` }} /> : null;
+                                })()}
                                 {task.is_milestone && <Diamond className="h-3.5 w-3.5 text-amber-500 shrink-0 fill-amber-500" />}
                                 {blocked && (
                                   <TooltipProvider>
