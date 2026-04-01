@@ -75,6 +75,8 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   // Timesheet data for marketing tasks
   const { tickets: allTickets } = useTickets();
   const [timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
+  const { data: marketingTasks } = useMarketingTasks();
+  const [mktTimesheetTotals, setMktTimesheetTotals] = useState<Record<string, number>>({});
 
   // Filter marketing-related tickets by department/category AND date range
   const marketingTickets = useMemo(() => {
