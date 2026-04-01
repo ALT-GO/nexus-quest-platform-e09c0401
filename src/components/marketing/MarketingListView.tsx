@@ -22,6 +22,8 @@ import { format, isBefore, isToday, startOfDay } from "date-fns";
 import { MarketingTask, MarketingStage, useUpdateMarketingTask } from "@/hooks/use-marketing";
 import { useTaskDependencies, isTaskBlocked } from "@/hooks/use-dependencies";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
+import { useMarketingTaskTypes } from "@/hooks/use-task-types";
+import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
 
 type SortKey = "title" | "stage" | "priority" | "progress" | "assignee_name" | "due_date";
 type SortDir = "asc" | "desc";

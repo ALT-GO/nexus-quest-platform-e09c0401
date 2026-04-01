@@ -4,6 +4,8 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { StatusBadge } from "@/components/ui/status-badge";
 import { GripVertical, Trash2, CheckSquare, CalendarIcon, Timer, Diamond, Lock } from "lucide-react";
+import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
+import { useMarketingTaskTypes } from "@/hooks/use-task-types";
 import { fetchMarketingTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
 import { format, isToday, isBefore, startOfDay } from "date-fns";
 import {
