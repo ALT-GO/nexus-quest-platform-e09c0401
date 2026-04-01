@@ -181,6 +181,27 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
               </Popover>
             </div>
           </div>
+          {/* Recurrence */}
+          <div className="flex items-center justify-between rounded-lg border p-3">
+            <div>
+              <Label className="text-sm font-medium">Tarefa Recorrente</Label>
+              <p className="text-xs text-muted-foreground">Cria automaticamente novas instâncias</p>
+            </div>
+            <Switch checked={isRecurring} onCheckedChange={setIsRecurring} />
+          </div>
+          {isRecurring && (
+            <div>
+              <Label>Frequência</Label>
+              <Select value={recurrenceRule} onValueChange={setRecurrenceRule}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Diária</SelectItem>
+                  <SelectItem value="weekly">Semanal</SelectItem>
+                  <SelectItem value="monthly">Mensal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
