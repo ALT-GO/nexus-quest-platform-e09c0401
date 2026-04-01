@@ -10,8 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Progress } from "@/components/ui/progress";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -30,6 +28,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { AlertTriangle, Check, X, Plus, Trash2, CalendarIcon, MessageSquare, History, Send, Repeat, Diamond } from "lucide-react";
+import { ChecklistEditor } from "./ChecklistEditor";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { ptBR } from "date-fns/locale";
@@ -150,7 +149,6 @@ export function MarketingTaskDetailSheet({
   const qc = useQueryClient();
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
   const [rejectReason, setRejectReason] = useState("");
-  const [newChecklistItem, setNewChecklistItem] = useState("");
   const [commentText, setCommentText] = useState("");
   const [profile, setProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
 
@@ -174,10 +172,6 @@ export function MarketingTaskDetailSheet({
   const isPendingApproval = currentStage?.meta_status === "pending_approval";
   const canApprove = isPendingApproval && isAdmin;
 
-  const checklist: ChecklistItem[] = Array.isArray(task.checklist) ? task.checklist : [];
-  const completedCount = checklist.filter((i) => i.completed).length;
-  const checklistProgress = checklist.length > 0 ? (completedCount / checklist.length) * 100 : 0;
-
   const authorName = profile?.full_name || "Usuário";
 
   const logHistory = (action: string, details: string) => {
@@ -187,31 +181,6 @@ export function MarketingTaskDetailSheet({
       action,
       details,
     });
-  };
-
-  const saveChecklist = (items: ChecklistItem[]) => {
-    updateTask.mutate({ id: task.id, checklist: items } as any);
-  };
-
-  const addChecklistItem = () => {
-    if (!newChecklistItem.trim()) return;
-    const item: ChecklistItem = {
-      id: crypto.randomUUID(),
-      text: newChecklistItem.trim(),
-      completed: false,
-    };
-    saveChecklist([...checklist, item]);
-    setNewChecklistItem("");
-  };
-
-  const toggleChecklistItem = (itemId: string) => {
-    saveChecklist(
-      checklist.map((i) => (i.id === itemId ? { ...i, completed: !i.completed } : i))
-    );
-  };
-
-  const removeChecklistItem = (itemId: string) => {
-    saveChecklist(checklist.filter((i) => i.id !== itemId));
   };
 
   const handleStageChange = (val: string) => {
@@ -608,51 +577,11 @@ export function MarketingTaskDetailSheet({
             )}
 
             {/* Checklist / Subtarefas */}
-            <div>
-              <Label className="text-xs text-muted-foreground">
-                Subtarefas {checklist.length > 0 && `(${completedCount}/${checklist.length})`}
-              </Label>
-              {checklist.length > 0 && (
-                <Progress value={checklistProgress} className="mt-1 h-2" />
-              )}
-              <div className="mt-2 space-y-1">
-                {checklist.map((item) => (
-                  <div key={item.id} className="flex items-center gap-2 group">
-                    <Checkbox
-                      checked={item.completed}
-                      onCheckedChange={() => toggleChecklistItem(item.id)}
-                    />
-                    <span
-                      className={`flex-1 text-sm ${
-                        item.completed ? "line-through text-muted-foreground" : ""
-                      }`}
-                    >
-                      {item.text}
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="h-6 w-6 opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive"
-                      onClick={() => removeChecklistItem(item.id)}
-                    >
-                      <Trash2 className="h-3 w-3" />
-                    </Button>
-                  </div>
-                ))}
-              </div>
-              <div className="flex gap-2 mt-2">
-                <Input
-                  placeholder="Adicionar subtarefa..."
-                  value={newChecklistItem}
-                  onChange={(e) => setNewChecklistItem(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && addChecklistItem()}
-                  className="h-8 text-sm"
-                />
-                <Button size="sm" variant="outline" onClick={addChecklistItem} disabled={!newChecklistItem.trim()}>
-                  <Plus className="h-3.5 w-3.5" />
-                </Button>
-              </div>
-            </div>
+            <ChecklistEditor
+              value={task.checklist}
+              onChange={(groups) => updateTask.mutate({ id: task.id, checklist: groups } as any)}
+              teamMembers={teamMembers}
+            />
 
             {/* Recurrence */}
             <div className="flex items-center justify-between rounded-lg border p-3">

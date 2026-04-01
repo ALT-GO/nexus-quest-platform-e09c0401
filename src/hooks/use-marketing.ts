@@ -15,6 +15,15 @@ export interface ChecklistItem {
   id: string;
   text: string;
   completed: boolean;
+  assignee_id?: string | null;
+  assignee_name?: string | null;
+  children?: ChecklistItem[];
+}
+
+export interface ChecklistGroup {
+  id: string;
+  title: string;
+  items: ChecklistItem[];
 }
 
 export interface MarketingTask {
