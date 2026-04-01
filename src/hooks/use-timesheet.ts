@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
 export interface TimesheetLog {
   id: string;
@@ -126,11 +127,12 @@ export function useActiveTimers(userTicketIds?: string[]) {
   const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
   const [loading, setLoading] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const { isAdmin, user } = useAuth();
 
   const fetchActive = useCallback(async () => {
     setLoading(true);
 
-    // Fetch ALL active timers (end_time IS NULL) regardless of user
+    // Fetch ALL active timers (end_time IS NULL)
     let query = supabase
       .from("timesheet_logs")
       .select("*")
@@ -158,8 +160,19 @@ export function useActiveTimers(userTicketIds?: string[]) {
       ((tickets as any[]) || []).map((t: any) => [t.id, t])
     );
 
+    // Get current user's profile name for filtering
+    let currentUserName = "";
+    if (user && !isAdmin) {
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("full_name")
+        .eq("id", user.id)
+        .single();
+      currentUserName = profile?.full_name || "";
+    }
+
     const now = Date.now();
-    const timers: ActiveTimer[] = fetched.map((l) => {
+    let timers: ActiveTimer[] = fetched.map((l) => {
       const ticket = ticketMap.get(l.ticket_id);
       return {
         ...l,
@@ -170,9 +183,14 @@ export function useActiveTimers(userTicketIds?: string[]) {
       };
     });
 
+    // Admin sees all timers; non-admin (TI) sees only their own assigned tickets
+    if (!isAdmin && currentUserName) {
+      timers = timers.filter((t) => t.ticket_assignee === currentUserName);
+    }
+
     setActiveTimers(timers);
     setLoading(false);
-  }, []);
+  }, [isAdmin, user]);
 
   // Initial fetch
   useEffect(() => { fetchActive(); }, [fetchActive]);
