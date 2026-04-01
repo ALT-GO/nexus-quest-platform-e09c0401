@@ -284,6 +284,86 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_stages: {
+        Row: {
+          created_at: string
+          id: string
+          meta_status: string
+          name: string
+          order_index: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          meta_status?: string
+          name: string
+          order_index?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          meta_status?: string
+          name?: string
+          order_index?: number
+        }
+        Relationships: []
+      }
+      marketing_tasks: {
+        Row: {
+          assignee_id: string | null
+          assignee_name: string | null
+          created_at: string
+          description: string | null
+          id: string
+          order_index: number
+          priority: string
+          progress: string
+          requester_id: string | null
+          requester_name: string
+          stage_id: string | null
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          assignee_id?: string | null
+          assignee_name?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_index?: number
+          priority?: string
+          progress?: string
+          requester_id?: string | null
+          requester_name?: string
+          stage_id?: string | null
+          title: string
+          updated_at?: string
+        }
+        Update: {
+          assignee_id?: string | null
+          assignee_name?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          order_index?: number
+          priority?: string
+          progress?: string
+          requester_id?: string | null
+          requester_name?: string
+          stage_id?: string | null
+          title?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_tasks_stage_id_fkey"
+            columns: ["stage_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_stages"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notifications: {
         Row: {
           created_at: string
