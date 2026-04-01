@@ -1,8 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
-import { Plus, X, LayoutGrid, List } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Plus, X, LayoutGrid, List, Search, FilterX } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarketingStages, useMarketingTasks, MarketingTask } from "@/hooks/use-marketing";
 import { useMarketingTags } from "@/hooks/use-marketing-tags";
@@ -27,11 +35,13 @@ export default function Solicitacoes() {
     return (localStorage.getItem(VIEW_KEY) as "kanban" | "list") || "kanban";
   });
 
-  // List view filters
-  const [filterStage, setFilterStage] = useState("all");
+  // Shared filters
+  const [searchQuery, setSearchQuery] = useState("");
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterAssignee, setFilterAssignee] = useState("all");
   const [filterProgress, setFilterProgress] = useState("all");
+  // List-only filter
+  const [filterStage, setFilterStage] = useState("all");
 
   useEffect(() => {
     supabase.from("profiles").select("id, full_name").then(({ data }) => {
@@ -56,6 +66,36 @@ export default function Solicitacoes() {
     );
   };
 
+  const hasActiveFilters = searchQuery || filterPriority !== "all" || filterAssignee !== "all" || filterProgress !== "all" || filterTagIds.length > 0;
+
+  const clearAllFilters = () => {
+    setSearchQuery("");
+    setFilterPriority("all");
+    setFilterAssignee("all");
+    setFilterProgress("all");
+    setFilterStage("all");
+    setFilterTagIds([]);
+  };
+
+  // Client-side filtered tasks (shared between both views)
+  const filteredTasks = useMemo(() => {
+    let result = tasks ?? [];
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((t) => t.title.toLowerCase().includes(q));
+    }
+    if (filterPriority !== "all") {
+      result = result.filter((t) => t.priority === filterPriority);
+    }
+    if (filterAssignee !== "all") {
+      result = result.filter((t) => t.assignee_id === filterAssignee);
+    }
+    if (filterProgress !== "all") {
+      result = result.filter((t) => t.progress === filterProgress);
+    }
+    return result;
+  }, [tasks, searchQuery, filterPriority, filterAssignee, filterProgress]);
+
   const loading = stagesLoading || tasksLoading;
 
   return (
@@ -66,7 +106,6 @@ export default function Solicitacoes() {
           description="Kanban de tarefas e solicitações"
         />
         <div className="flex items-center gap-2">
-          {/* View Toggle */}
           <div className="flex items-center rounded-md border bg-muted p-0.5">
             <Button
               variant={viewMode === "kanban" ? "default" : "ghost"}
@@ -93,10 +132,62 @@ export default function Solicitacoes() {
         </div>
       </div>
 
-      {/* Tag Filters (shown for both views) */}
+      {/* Filter Bar */}
+      <div className="flex items-center gap-3 mb-4 flex-wrap">
+        <div className="relative">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Buscar por título..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-8 w-52 pl-8 text-xs"
+          />
+        </div>
+        <Select value={filterPriority} onValueChange={setFilterPriority}>
+          <SelectTrigger className="w-32 h-8 text-xs">
+            <SelectValue placeholder="Prioridade" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Prioridade</SelectItem>
+            <SelectItem value="high">Alta</SelectItem>
+            <SelectItem value="medium">Média</SelectItem>
+            <SelectItem value="low">Baixa</SelectItem>
+          </SelectContent>
+        </Select>
+        <Select value={filterAssignee} onValueChange={setFilterAssignee}>
+          <SelectTrigger className="w-40 h-8 text-xs">
+            <SelectValue placeholder="Responsável" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Responsável</SelectItem>
+            {teamMembers.map((m) => (
+              <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterProgress} onValueChange={setFilterProgress}>
+          <SelectTrigger className="w-36 h-8 text-xs">
+            <SelectValue placeholder="Progresso" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Progresso</SelectItem>
+            <SelectItem value="Não iniciado">Não iniciado</SelectItem>
+            <SelectItem value="Em andamento">Em andamento</SelectItem>
+            <SelectItem value="Concluído">Concluído</SelectItem>
+          </SelectContent>
+        </Select>
+        {hasActiveFilters && (
+          <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" onClick={clearAllFilters}>
+            <FilterX className="h-3.5 w-3.5" />
+            Limpar Filtros
+          </Button>
+        )}
+      </div>
+
+      {/* Tag Filters */}
       {tags && tags.length > 0 && (
         <div className="flex items-center gap-2 mb-4 flex-wrap">
-          <span className="text-xs text-muted-foreground font-medium">Filtrar por tag:</span>
+          <span className="text-xs text-muted-foreground font-medium">Tags:</span>
           {tags.map((tag) => {
             const isActive = filterTagIds.includes(tag.id);
             return (
@@ -113,11 +204,6 @@ export default function Solicitacoes() {
               </button>
             );
           })}
-          {filterTagIds.length > 0 && (
-            <Button variant="ghost" size="sm" className="text-xs h-6" onClick={() => setFilterTagIds([])}>
-              Limpar
-            </Button>
-          )}
         </div>
       )}
 
@@ -128,24 +214,24 @@ export default function Solicitacoes() {
       ) : viewMode === "kanban" ? (
         <MarketingKanban
           stages={stages ?? []}
-          tasks={tasks ?? []}
+          tasks={filteredTasks}
           onTaskClick={handleTaskClick}
           filterTagIds={filterTagIds.length > 0 ? filterTagIds : undefined}
         />
       ) : (
         <MarketingListView
-          tasks={tasks ?? []}
+          tasks={filteredTasks}
           stages={stages ?? []}
           teamMembers={teamMembers}
           onTaskClick={handleTaskClick}
           filterStage={filterStage}
-          filterPriority={filterPriority}
-          filterAssignee={filterAssignee}
-          filterProgress={filterProgress}
+          filterPriority="all"
+          filterAssignee="all"
+          filterProgress="all"
           onFilterStageChange={setFilterStage}
-          onFilterPriorityChange={setFilterPriority}
-          onFilterAssigneeChange={setFilterAssignee}
-          onFilterProgressChange={setFilterProgress}
+          onFilterPriorityChange={() => {}}
+          onFilterAssigneeChange={() => {}}
+          onFilterProgressChange={() => {}}
         />
       )}
 
