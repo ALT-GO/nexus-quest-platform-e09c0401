@@ -350,6 +350,33 @@ export function MarketingListView({
                     {task.due_date ? format(new Date(task.due_date), "dd/MM/yyyy") : "—"}
                   </TableCell>
 
+                  {/* Dependencies */}
+                  <TableCell>
+                    {(() => {
+                      if (!allDeps) return "—";
+                      const progressMap: Record<string, string> = {};
+                      tasks.forEach((t) => { progressMap[t.id] = t.progress; });
+                      const blocked = isTaskBlocked(task.id, allDeps, progressMap);
+                      const waitingCount = allDeps.filter((d) => d.task_id === task.id && d.dependency_type === "waiting_on").length;
+                      if (waitingCount === 0) return <span className="text-xs text-muted-foreground">—</span>;
+                      return (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className={`flex items-center gap-1 text-xs ${blocked ? "text-amber-600 font-medium" : "text-muted-foreground"}`}>
+                                <Lock className="h-3 w-3" />
+                                {waitingCount}
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent>
+                              <p className="text-xs">{blocked ? "Bloqueada — dependências pendentes" : "Todas dependências concluídas"}</p>
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      );
+                    })()}
+                  </TableCell>
+
                   {/* Actions */}
                   <TableCell>
                     <Button
