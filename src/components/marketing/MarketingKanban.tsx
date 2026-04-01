@@ -188,6 +188,20 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                 {task.progress}
                               </div>
                             </div>
+                            {/* Tag badges */}
+                            {allTaskTags?.[task.id] && allTaskTags[task.id].length > 0 && (
+                              <div className="flex items-center gap-1 flex-wrap">
+                                {allTaskTags[task.id].map((tag) => (
+                                  <span
+                                    key={tag.id}
+                                    className="inline-block rounded-full px-1.5 py-0.5 text-[10px] font-medium text-white"
+                                    style={{ backgroundColor: `hsl(${tag.color})` }}
+                                  >
+                                    {tag.name}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
                             {task.assignee_name && (
                               <p className="text-xs text-muted-foreground">👤 {task.assignee_name}</p>
                             )}
