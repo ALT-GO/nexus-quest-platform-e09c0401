@@ -91,6 +91,11 @@ function AppRoutes() {
               <Solicitacoes />
             </PermissionRoute>
           } />
+          <Route path="/marketing/metas" element={
+            <PermissionRoute permission="acessar_kanban_marketing" fallbackRoles={["admin", "marketing"]}>
+              <Metas />
+            </PermissionRoute>
+          } />
           <Route path="/ti/service-desk" element={
             <PermissionRoute permission="criar_chamados" fallbackRoles={["admin", "ti"]}>
               <ServiceDesk />

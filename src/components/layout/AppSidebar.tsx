@@ -53,6 +53,7 @@ export function AppSidebar() {
   if (hasPermission("acessar_kanban_marketing") || hasAnyRole("admin", "marketing")) {
     marketingChildren.push({ title: "Projetos", href: "/marketing/projetos" });
     marketingChildren.push({ title: "Solicitações", href: "/marketing/solicitacoes" });
+    marketingChildren.push({ title: "Metas", href: "/marketing/metas" });
   }
 
   const navigation: NavItem[] = [

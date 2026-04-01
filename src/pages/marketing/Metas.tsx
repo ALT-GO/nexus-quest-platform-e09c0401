@@ -31,6 +31,16 @@ import { useMarketingTasks } from "@/hooks/use-marketing";
 import { GoalDialog } from "@/components/marketing/GoalDialog";
 import { GoalDetailSheet } from "@/components/marketing/GoalDetailSheet";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 const STATUS_CONFIG: Record<string, { label: string; icon: React.ElementType; className: string }> = {
   on_track: { label: "No ritmo", icon: CheckCircle2, className: "text-emerald-600 bg-emerald-50 border-emerald-200" },
