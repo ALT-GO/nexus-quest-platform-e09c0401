@@ -204,7 +204,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
   const hoursByAssignee = useMemo(() => {
     // Build a map of ticket_id -> assignee from tickets
     const ticketAssigneeMap = new Map<string, string>();
-    allTickets.forEach((t) => {
+    mainTickets.forEach((t) => {
       ticketAssigneeMap.set(t.id, t.assignee || "Sem atribuição");
     });
 
