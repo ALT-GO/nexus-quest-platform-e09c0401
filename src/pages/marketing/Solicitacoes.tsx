@@ -14,10 +14,13 @@ import { Plus, X, LayoutGrid, List, Search, FilterX } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarketingStages, useMarketingTasks, MarketingTask } from "@/hooks/use-marketing";
 import { useMarketingTags } from "@/hooks/use-marketing-tags";
+import { useMarketingSprints } from "@/hooks/use-sprints";
 import { MarketingKanban } from "@/components/marketing/MarketingKanban";
 import { MarketingListView } from "@/components/marketing/MarketingListView";
 import { NewMarketingTaskDialog } from "@/components/marketing/NewMarketingTaskDialog";
 import { MarketingTaskDetailSheet } from "@/components/marketing/MarketingTaskDetailSheet";
+import { SprintSelector } from "@/components/marketing/SprintSelector";
+import { SprintDashboard } from "@/components/marketing/SprintDashboard";
 import { supabase } from "@/integrations/supabase/client";
 
 const VIEW_KEY = "marketing_view_preference";
@@ -26,11 +29,13 @@ export default function Solicitacoes() {
   const { data: stages, isLoading: stagesLoading } = useMarketingStages();
   const { data: tasks, isLoading: tasksLoading } = useMarketingTasks();
   const { data: tags } = useMarketingTags();
+  const { data: sprints } = useMarketingSprints();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<MarketingTask | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [teamMembers, setTeamMembers] = useState<{ id: string; name: string }[]>([]);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
+  const [selectedSprintId, setSelectedSprintId] = useState("all");
   const [viewMode, setViewMode] = useState<"kanban" | "list">(() => {
     return (localStorage.getItem(VIEW_KEY) as "kanban" | "list") || "kanban";
   });
@@ -40,7 +45,6 @@ export default function Solicitacoes() {
   const [filterPriority, setFilterPriority] = useState("all");
   const [filterAssignee, setFilterAssignee] = useState("all");
   const [filterProgress, setFilterProgress] = useState("all");
-  // List-only filter
   const [filterStage, setFilterStage] = useState("all");
 
   useEffect(() => {
@@ -54,7 +58,6 @@ export default function Solicitacoes() {
     localStorage.setItem(VIEW_KEY, mode);
   };
 
-  // Keep selectedTask in sync with latest query data
   useEffect(() => {
     if (selectedTask && tasks) {
       const fresh = tasks.find(t => t.id === selectedTask.id);
@@ -87,9 +90,17 @@ export default function Solicitacoes() {
     setFilterTagIds([]);
   };
 
-  // Client-side filtered tasks (shared between both views)
+  // Filter by sprint first, then by other filters
   const filteredTasks = useMemo(() => {
     let result = tasks ?? [];
+
+    // Sprint filter
+    if (selectedSprintId === "backlog") {
+      result = result.filter((t) => !(t as any).sprint_id);
+    } else if (selectedSprintId !== "all") {
+      result = result.filter((t) => (t as any).sprint_id === selectedSprintId);
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter((t) => t.title.toLowerCase().includes(q));
@@ -104,8 +115,9 @@ export default function Solicitacoes() {
       result = result.filter((t) => t.progress === filterProgress);
     }
     return result;
-  }, [tasks, searchQuery, filterPriority, filterAssignee, filterProgress]);
+  }, [tasks, selectedSprintId, searchQuery, filterPriority, filterAssignee, filterProgress]);
 
+  const activeSprint = sprints?.find((s) => s.id === selectedSprintId) || null;
   const loading = stagesLoading || tasksLoading;
 
   return (
@@ -141,6 +153,19 @@ export default function Solicitacoes() {
           </Button>
         </div>
       </div>
+
+      {/* Sprint Selector */}
+      <div className="flex items-center gap-3 mb-4">
+        <SprintSelector
+          selectedSprintId={selectedSprintId}
+          onSprintChange={setSelectedSprintId}
+        />
+      </div>
+
+      {/* Sprint Dashboard */}
+      {activeSprint && tasks && (
+        <SprintDashboard sprint={activeSprint} tasks={tasks} />
+      )}
 
       {/* Filter Bar */}
       <div className="flex items-center gap-3 mb-4 flex-wrap">
@@ -250,6 +275,7 @@ export default function Solicitacoes() {
         onOpenChange={setDialogOpen}
         stages={stages ?? []}
         teamMembers={teamMembers}
+        sprints={sprints ?? []}
       />
 
       <MarketingTaskDetailSheet
