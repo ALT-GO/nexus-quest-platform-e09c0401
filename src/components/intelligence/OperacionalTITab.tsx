@@ -2,8 +2,10 @@ import { useState, useEffect, useMemo } from "react";
 import { ActiveTimersCard } from "@/components/dashboard/ActiveTimersCard";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchTimesheetByDateRange, formatDuration } from "@/hooks/use-timesheet";
+import { calcDepreciation, formatBRL } from "@/lib/depreciation";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -12,7 +14,7 @@ import {
 } from "@/components/ui/table";
 import {
   Clock, CheckCircle2, AlertTriangle, Monitor, Wrench, Users, BarChart3, Ticket, Loader2,
-  Laptop, Smartphone, Phone, KeyRound, Timer, CalendarDays,
+  Laptop, Smartphone, Phone, KeyRound, Timer, CalendarDays, DollarSign, TrendingDown, Wifi, Wallet,
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
