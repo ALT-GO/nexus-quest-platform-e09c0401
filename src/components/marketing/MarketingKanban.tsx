@@ -57,6 +57,15 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
   const qc = useQueryClient();
   const { user } = useAuth();
   const { data: allTaskTags } = useAllTaskTags();
+  const [timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
+
+  // Fetch timesheet totals for all tasks
+  useEffect(() => {
+    const ids = tasks.map((t) => t.id);
+    if (ids.length > 0) {
+      fetchMarketingTimesheetTotals(ids).then(setTimesheetTotals);
+    }
+  }, [tasks]);
 
   // Filter tasks by tags if filter is active
   const filteredTasks = useMemo(() => {
