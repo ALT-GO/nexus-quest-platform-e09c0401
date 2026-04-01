@@ -51,6 +51,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick }: Props) {
   const updateTask = useUpdateMarketingTask();
   const deleteTask = useDeleteMarketingTask();
   const qc = useQueryClient();
+  const { user } = useAuth();
 
   const tasksByStage = useMemo(() => {
     const map: Record<string, MarketingTask[]> = {};
