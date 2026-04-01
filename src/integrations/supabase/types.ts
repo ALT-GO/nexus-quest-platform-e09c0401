@@ -561,6 +561,7 @@ export type Database = {
           description: string | null
           due_date: string | null
           id: string
+          is_milestone: boolean
           is_recurring: boolean
           next_recurrence_date: string | null
           order_index: number
@@ -585,6 +586,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          is_milestone?: boolean
           is_recurring?: boolean
           next_recurrence_date?: string | null
           order_index?: number
@@ -609,6 +611,7 @@ export type Database = {
           description?: string | null
           due_date?: string | null
           id?: string
+          is_milestone?: boolean
           is_recurring?: boolean
           next_recurrence_date?: string | null
           order_index?: number

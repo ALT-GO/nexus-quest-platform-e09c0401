@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, X, LayoutGrid, List, Search, FilterX } from "lucide-react";
+import { Plus, X, LayoutGrid, List, Search, FilterX, Diamond } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarketingStages, useMarketingTasks, MarketingTask } from "@/hooks/use-marketing";
 import { useMarketingTags } from "@/hooks/use-marketing-tags";
@@ -46,7 +46,7 @@ export default function Solicitacoes() {
   const [filterAssignee, setFilterAssignee] = useState("all");
   const [filterProgress, setFilterProgress] = useState("all");
   const [filterStage, setFilterStage] = useState("all");
-
+  const [filterMilestoneOnly, setFilterMilestoneOnly] = useState(false);
   useEffect(() => {
     supabase.from("profiles").select("id, full_name").then(({ data }) => {
       if (data) setTeamMembers(data.map(p => ({ id: p.id, name: p.full_name })));
@@ -79,7 +79,7 @@ export default function Solicitacoes() {
     );
   };
 
-  const hasActiveFilters = searchQuery || filterPriority !== "all" || filterAssignee !== "all" || filterProgress !== "all" || filterTagIds.length > 0;
+  const hasActiveFilters = searchQuery || filterPriority !== "all" || filterAssignee !== "all" || filterProgress !== "all" || filterTagIds.length > 0 || filterMilestoneOnly;
 
   const clearAllFilters = () => {
     setSearchQuery("");
@@ -88,6 +88,7 @@ export default function Solicitacoes() {
     setFilterProgress("all");
     setFilterStage("all");
     setFilterTagIds([]);
+    setFilterMilestoneOnly(false);
   };
 
   // Filter by sprint first, then by other filters
@@ -114,8 +115,11 @@ export default function Solicitacoes() {
     if (filterProgress !== "all") {
       result = result.filter((t) => t.progress === filterProgress);
     }
+    if (filterMilestoneOnly) {
+      result = result.filter((t) => t.is_milestone);
+    }
     return result;
-  }, [tasks, selectedSprintId, searchQuery, filterPriority, filterAssignee, filterProgress]);
+  }, [tasks, selectedSprintId, searchQuery, filterPriority, filterAssignee, filterProgress, filterMilestoneOnly]);
 
   const activeSprint = sprints?.find((s) => s.id === selectedSprintId) || null;
   const loading = stagesLoading || tasksLoading;
@@ -211,6 +215,15 @@ export default function Solicitacoes() {
             <SelectItem value="Concluído">Concluído</SelectItem>
           </SelectContent>
         </Select>
+        <Button
+          variant={filterMilestoneOnly ? "default" : "outline"}
+          size="sm"
+          className="h-8 gap-1.5 text-xs"
+          onClick={() => setFilterMilestoneOnly(!filterMilestoneOnly)}
+        >
+          <Diamond className="h-3.5 w-3.5" />
+          Milestones
+        </Button>
         {hasActiveFilters && (
           <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-xs" onClick={clearAllFilters}>
             <FilterX className="h-3.5 w-3.5" />

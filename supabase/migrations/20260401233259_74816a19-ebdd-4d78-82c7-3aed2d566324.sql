@@ -1,0 +1,1 @@
+ALTER TABLE public.marketing_tasks ADD COLUMN is_milestone BOOLEAN NOT NULL DEFAULT false;
