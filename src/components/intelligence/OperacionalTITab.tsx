@@ -178,20 +178,27 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
       .sort((a, b) => b.value - a.value);
   }, [filtered]);
 
-  // ---- NEW: Top 5 Tarefas Demoradas ----
+  // ---- Top 5 Tarefas Demoradas (using date-range-filtered timesheet) ----
   const top5SlowTasks = useMemo(() => {
+    // Aggregate timesheet seconds per ticket from date-range data
+    const timesheetByTicket: Record<string, number> = {};
+    allTimesheetData.forEach((log) => {
+      const secs = log.end_time ? log.duration_seconds : Math.floor((Date.now() - new Date(log.start_time).getTime()) / 1000);
+      if (secs > 0) timesheetByTicket[log.ticket_id] = (timesheetByTicket[log.ticket_id] || 0) + secs;
+    });
+
     return filtered
-      .filter((t) => timesheetTotals[t.id] && timesheetTotals[t.id] > 0)
+      .filter((t) => timesheetByTicket[t.id] && timesheetByTicket[t.id] > 0)
       .map((t) => ({
         id: t.id,
         ticketNumber: t.ticket_number,
         title: t.title,
         assignee: t.assignee || "—",
-        totalSeconds: timesheetTotals[t.id],
+        totalSeconds: timesheetByTicket[t.id],
       }))
       .sort((a, b) => b.totalSeconds - a.totalSeconds)
       .slice(0, 5);
-  }, [filtered, timesheetTotals]);
+  }, [filtered, allTimesheetData]);
 
   // ---- Horas Trabalhadas por Colaborador (date-range filtered) ----
   const hoursByAssignee = useMemo(() => {
