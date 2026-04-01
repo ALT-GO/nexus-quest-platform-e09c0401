@@ -54,6 +54,9 @@ import {
   useAddMarketingHistory,
 } from "@/hooks/use-marketing-comments";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { useTaskDependencies, isTaskBlocked } from "@/hooks/use-dependencies";
+import { useMarketingTasks } from "@/hooks/use-marketing";
+import { DependencySection } from "./DependencySection";
 
 interface Props {
   task: MarketingTask | null;
