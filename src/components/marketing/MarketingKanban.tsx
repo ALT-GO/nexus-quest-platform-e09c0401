@@ -228,6 +228,23 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                 </div>
                               );
                             })()}
+                            {/* Time estimate vs actual */}
+                            {task.time_estimate_minutes && task.time_estimate_minutes > 0 && (() => {
+                              const estimateSec = task.time_estimate_minutes * 60;
+                              const actualSec = timesheetTotals[task.id] || 0;
+                              const overBudget = actualSec > estimateSec;
+                              const fmtMinutes = (sec: number) => {
+                                const h = Math.floor(sec / 3600);
+                                const m = Math.floor((sec % 3600) / 60);
+                                return h > 0 ? `${h}h${m > 0 ? m + 'm' : ''}` : `${m}m`;
+                              };
+                              return (
+                                <div className={`flex items-center gap-1 text-xs ${overBudget ? "text-destructive font-medium" : "text-muted-foreground"}`}>
+                                  <Timer className="h-3 w-3" />
+                                  {fmtMinutes(actualSec)} / {fmtMinutes(estimateSec)}
+                                </div>
+                              );
+                            })()}
                             {task.due_date && (() => {
                               const due = new Date(task.due_date);
                               const overdue = task.progress !== "Concluído" && isBefore(due, startOfDay(new Date()));
