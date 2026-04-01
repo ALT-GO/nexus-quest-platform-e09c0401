@@ -679,26 +679,36 @@ export type Database = {
           duration_seconds: number | null
           end_time: string | null
           id: string
+          marketing_task_id: string | null
           start_time: string
-          ticket_id: string
+          ticket_id: string | null
         }
         Insert: {
           created_at?: string
           duration_seconds?: number | null
           end_time?: string | null
           id?: string
+          marketing_task_id?: string | null
           start_time?: string
-          ticket_id: string
+          ticket_id?: string | null
         }
         Update: {
           created_at?: string
           duration_seconds?: number | null
           end_time?: string | null
           id?: string
+          marketing_task_id?: string | null
           start_time?: string
-          ticket_id?: string
+          ticket_id?: string | null
         }
         Relationships: [
+          {
+            foreignKeyName: "timesheet_logs_marketing_task_id_fkey"
+            columns: ["marketing_task_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_tasks"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "timesheet_logs_ticket_id_fkey"
             columns: ["ticket_id"]
