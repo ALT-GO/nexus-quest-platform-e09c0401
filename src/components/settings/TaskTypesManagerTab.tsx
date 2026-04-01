@@ -220,17 +220,6 @@ export function TaskTypesManagerTab() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
-
-      <ConfirmDeleteDialog
-        open={!!deleteId}
-        onOpenChange={(open) => { if (!open) setDeleteId(null); }}
-        onConfirm={() => {
-          if (deleteId) deleteType.mutate(deleteId);
-          setDeleteId(null);
-        }}
-        title="Excluir Tipo de Tarefa"
-        description="As tarefas existentes deste tipo ficarão sem tipo. Deseja continuar?"
-      />
     </>
   );
 }

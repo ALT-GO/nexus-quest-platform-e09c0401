@@ -75,8 +75,9 @@ export default function Configuracoes() {
         )}
 
         {canManageMarketing && (
-          <TabsContent value="marketing-workflow">
+          <TabsContent value="marketing-workflow" className="space-y-6">
             <MarketingWorkflowTab />
+            <TaskTypesManagerTab />
           </TabsContent>
         )}
       </Tabs>
