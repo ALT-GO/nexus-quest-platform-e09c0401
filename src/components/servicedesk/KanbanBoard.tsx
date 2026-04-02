@@ -128,13 +128,9 @@ export function KanbanBoard({
               <div
                 key={status.id}
                 className="w-[300px] shrink-0 flex flex-col h-full rounded-xl border bg-muted/30"
-                style={{ borderTopColor: `hsl(${status.cor})`, borderTopWidth: 3 }}
               >
-                {/* Column Header — colored background from status config */}
-                <div
-                  className="flex items-center gap-2.5 px-3 py-3 rounded-t-xl"
-                  style={{ backgroundColor: `hsl(${status.cor} / 0.1)` }}
-                >
+                {/* Column Header — minimal pill badge */}
+                <div className="flex items-center gap-2.5 px-3 py-3">
                   <span
                     className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-wide border"
                     style={{
