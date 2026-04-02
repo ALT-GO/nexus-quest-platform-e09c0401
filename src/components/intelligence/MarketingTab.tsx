@@ -305,18 +305,21 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             value={activeEvents.length}
             icon={CalendarIcon}
             description={`${events?.length ?? 0} eventos no total`}
+            onClick={() => navigate("/marketing/eventos")}
           />
           <StatCard
             title="Orçamento Total"
             value={totalBudget > 0 ? totalBudget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
             icon={DollarSign}
             description="planejado para todos os eventos"
+            onClick={() => navigate("/marketing/eventos")}
           />
           <StatCard
             title="Valor Real Gasto"
             value={totalActualCost > 0 ? totalActualCost.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
             icon={DollarSign}
             description={`${eventsWithActualCost} evento(s) com valor real`}
+            onClick={() => navigate("/marketing/eventos")}
           />
           <StatCard
             title={budgetDifference >= 0 ? "Economia" : "Excedente"}
@@ -331,6 +334,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
                   : "acima do orçamento ⚠"
                 : "sem dados de custo real"
             }
+            onClick={() => navigate("/marketing/eventos")}
           />
         </div>
 
