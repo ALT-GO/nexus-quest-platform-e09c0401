@@ -20,6 +20,7 @@ export interface ActiveTimer extends TimesheetLog {
   ticket_assignee?: string;
   source?: "ti" | "marketing";
   elapsed_seconds: number;
+  total_accumulated_seconds: number;
 }
 
 export function useTimesheet(ticketId: string | null) {
@@ -295,27 +296,62 @@ export function useActiveTimers(userTicketIds?: string[]) {
 
     const currentUserId = user?.id || "";
 
+    // Fetch ALL completed logs for same tickets/tasks to accumulate total time
+    const allEntityIds = [...ticketIds, ...mktIds];
+    let completedLogsByEntity = new Map<string, number>();
+    if (allEntityIds.length > 0) {
+      // Fetch completed logs for TI tickets
+      if (ticketIds.length > 0) {
+        const { data: completedTi } = await supabase
+          .from("timesheet_logs")
+          .select("ticket_id, duration_seconds")
+          .in("ticket_id", ticketIds as any)
+          .not("end_time", "is", null);
+        ((completedTi as any[]) || []).forEach((r: any) => {
+          const key = `ti_${r.ticket_id}`;
+          completedLogsByEntity.set(key, (completedLogsByEntity.get(key) || 0) + (r.duration_seconds || 0));
+        });
+      }
+      // Fetch completed logs for marketing tasks
+      if (mktIds.length > 0) {
+        const { data: completedMkt } = await supabase
+          .from("timesheet_logs")
+          .select("marketing_task_id, duration_seconds")
+          .in("marketing_task_id", mktIds as any)
+          .not("end_time", "is", null);
+        ((completedMkt as any[]) || []).forEach((r: any) => {
+          const key = `mkt_${r.marketing_task_id}`;
+          completedLogsByEntity.set(key, (completedLogsByEntity.get(key) || 0) + (r.duration_seconds || 0));
+        });
+      }
+    }
+
     const now = Date.now();
     let timers: ActiveTimer[] = fetched.map((l) => {
+      const currentSessionSeconds = Math.floor((now - new Date(l.start_time).getTime()) / 1000);
       if (l.ticket_id) {
         const ticket = ticketMap.get(l.ticket_id);
+        const accumulated = completedLogsByEntity.get(`ti_${l.ticket_id}`) || 0;
         return {
           ...l,
           ticket_title: ticket?.title || "",
           ticket_number: ticket?.ticket_number || "",
           ticket_assignee: ticket?.assignee || "",
           source: "ti" as const,
-          elapsed_seconds: Math.floor((now - new Date(l.start_time).getTime()) / 1000),
+          elapsed_seconds: currentSessionSeconds,
+          total_accumulated_seconds: accumulated + currentSessionSeconds,
         };
       } else {
         const mkt = mktMap.get(l.marketing_task_id!);
+        const accumulated = completedLogsByEntity.get(`mkt_${l.marketing_task_id}`) || 0;
         return {
           ...l,
           ticket_title: mkt?.title || "",
           ticket_number: "MKT",
           ticket_assignee: mkt?.assignee_name || "",
           source: "marketing" as const,
-          elapsed_seconds: Math.floor((now - new Date(l.start_time).getTime()) / 1000),
+          elapsed_seconds: currentSessionSeconds,
+          total_accumulated_seconds: accumulated + currentSessionSeconds,
         };
       }
     });
