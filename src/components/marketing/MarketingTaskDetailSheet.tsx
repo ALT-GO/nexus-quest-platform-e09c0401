@@ -270,6 +270,9 @@ export function MarketingTaskDetailSheet({
     const oldStage = stages.find((s) => s.id === task.stage_id);
     updateTask.mutate({ id: task.id, stage_id: val });
     logHistory("Mudança de etapa", `${oldStage?.name || "—"} → ${newStage?.name || "—"}`);
+    if (newStage?.meta_status === "pending_approval") {
+      notifyAdminsForApproval({ taskTitle: task.title, taskId: task.id, excludeUserId: user?.id });
+    }
   };
 
   const handlePriorityChange = (val: string) => {

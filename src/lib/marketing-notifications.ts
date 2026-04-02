@@ -25,7 +25,7 @@ export async function notifyAdminsForApproval(params: {
       title: `Aprovação Pendente: ${params.taskTitle}`,
       message: `A tarefa "${params.taskTitle}" está aguardando aprovação.`,
       type: "warning",
-      link: `/marketing/solicitacoes`,
+      link: `/marketing/solicitacoes?task=${params.taskId}`,
       scope: "marketing",
     }));
 
