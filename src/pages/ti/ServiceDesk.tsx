@@ -434,6 +434,28 @@ export default function ServiceDesk() {
           }}
           onReorder={handleReorder}
         />
+      ) : viewMode === "gantt" ? (
+        <GanttChart
+          items={filteredTickets.map((t): GanttItem => {
+            const statusObj = statuses.find(s => s.id === t.status_id);
+            return {
+              id: t.id,
+              title: `${t.ticket_number} - ${t.title}`,
+              group: t.category,
+              startDate: t.created_at,
+              endDate: t.completed_at || null,
+              progress: t.completed_at ? "Concluído" : "Em andamento",
+              priority: t.priority,
+              assigneeName: t.assignee || undefined,
+              assigneeAvatarUrl: t.assignee ? avatarMap[t.assignee] : undefined,
+              color: statusObj?.cor,
+            };
+          })}
+          onItemClick={(id) => {
+            const ticket = tickets.find(t => t.id === id);
+            if (ticket) handleTicketClick(ticket.id);
+          }}
+        />
       ) : (
         <TicketTable
           tickets={filteredTickets.map((t) => ({
