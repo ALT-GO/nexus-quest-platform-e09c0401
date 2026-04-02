@@ -95,7 +95,7 @@ export default function Configuracoes() {
 
   const isVisible = (item: NavItem) => {
     if (item.adminOnly) return isAdmin;
-    if (item.roles) return item.roles.some((r) => r === "admin" ? isAdmin : hasRole(r));
+    if (item.roles) return item.roles.some((r) => r === "admin" ? isAdmin : hasRole(r as AppRole));
     return true;
   };
 
