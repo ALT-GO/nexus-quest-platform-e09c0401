@@ -24,9 +24,10 @@ interface Props {
   stages: MarketingStage[];
   teamMembers: { id: string; name: string }[];
   sprints?: MarketingSprint[];
+  eventId?: string;
 }
 
-export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers, sprints }: Props) {
+export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers, sprints, eventId }: Props) {
   const { user } = useAuth();
   const { data: profileData } = useQuery({
     queryKey: ["my-profile", user?.id],
