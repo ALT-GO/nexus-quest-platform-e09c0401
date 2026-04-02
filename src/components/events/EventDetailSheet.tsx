@@ -227,42 +227,20 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
 
             <Separator />
 
-            {/* Participants */}
+            {/* Participants (free text) */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Participantes ({participantProfiles.length})
-                </h4>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {participantProfiles.map((p) => (
-                  <div key={p.id} className="flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs group">
-                    <UserAvatar name={p.name} avatarUrl={p.avatarUrl} className="h-5 w-5" fallbackClassName="text-[8px]" />
-                    <span>{p.name}</span>
-                    <button
-                      onClick={() => participantsMgr.remove(event.id, p.profile_id)}
-                      className="opacity-0 group-hover:opacity-100 text-destructive ml-1"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-                {nonParticipantMembers.length > 0 && (
-                  <select
-                    className="text-xs border rounded px-2 py-1 bg-background"
-                    value=""
-                    onChange={(e) => {
-                      if (e.target.value) participantsMgr.add(event.id, e.target.value);
-                    }}
-                  >
-                    <option value="">+ Adicionar</option>
-                    {nonParticipantMembers.map(m => (
-                      <option key={m.id} value={m.id}>{m.name}</option>
-                    ))}
-                  </select>
-                )}
-              </div>
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Participantes
+              </h4>
+              <Textarea
+                placeholder="Digite os nomes dos participantes (ex: João Silva, Maria Souza, Carlos Lima)"
+                value={event.notes_participants ?? ""}
+                onChange={(e) => {
+                  updateEvent.mutate({ id: event.id, notes_participants: e.target.value } as any);
+                }}
+                className="text-sm min-h-[60px]"
+              />
             </div>
 
             <Separator />
