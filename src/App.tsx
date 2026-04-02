@@ -45,22 +45,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 function PermissionRoute({
   children,
   permission,
-  fallbackRoles,
 }: {
   children: React.ReactNode;
   permission: keyof UserPermissions;
-  fallbackRoles?: string[];
 }) {
-  const { user, loading, hasPermission, roles, isAdmin } = useAuth();
+  const { user, loading, hasPermission } = useAuth();
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
-
-  const hasAccess =
-    isAdmin ||
-    hasPermission(permission) ||
-    (fallbackRoles && fallbackRoles.some((r) => roles.includes(r as any)));
-
-  if (!hasAccess) return <Navigate to="/" replace />;
+  if (!hasPermission(permission)) return <Navigate to="/" replace />;
   return <>{children}</>;
 }
 
@@ -69,7 +61,7 @@ function AppRoutes() {
 
   return (
     <Routes>
-      {/* Public routes — never blocked by loading */}
+      {/* Public routes */}
       <Route path="/chamado-publico" element={<ChamadoPublico />} />
       <Route path="/solicitacao-marketing" element={<SolicitacaoPublica />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
@@ -77,7 +69,7 @@ function AppRoutes() {
       <Route path="/login" element={loading ? <LoadingScreen /> : user ? <Navigate to="/" replace /> : <Login />} />
       <Route path="/signup" element={loading ? <LoadingScreen /> : user ? <Navigate to="/" replace /> : <Signup />} />
 
-      {/* Protected routes — wait for auth */}
+      {/* Protected routes */}
       {loading ? (
         <Route path="*" element={<LoadingScreen />} />
       ) : (
@@ -86,45 +78,29 @@ function AppRoutes() {
           <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
 
           <Route path="/marketing/solicitacoes" element={
-            <PermissionRoute permission="acessar_kanban_marketing" fallbackRoles={["admin", "marketing"]}>
-              <Solicitacoes />
-            </PermissionRoute>
+            <PermissionRoute permission="ver_solicitacoes_marketing"><Solicitacoes /></PermissionRoute>
           } />
           <Route path="/marketing/metas" element={
-            <PermissionRoute permission="acessar_kanban_marketing" fallbackRoles={["admin", "marketing"]}>
-              <Metas />
-            </PermissionRoute>
+            <PermissionRoute permission="ver_metas_marketing"><Metas /></PermissionRoute>
           } />
           <Route path="/marketing/eventos" element={
-            <PermissionRoute permission="acessar_kanban_marketing" fallbackRoles={["admin", "marketing"]}>
-              <Eventos />
-            </PermissionRoute>
+            <PermissionRoute permission="ver_eventos_marketing"><Eventos /></PermissionRoute>
           } />
           <Route path="/ti/service-desk" element={
-            <PermissionRoute permission="criar_chamados" fallbackRoles={["admin", "ti"]}>
-              <ServiceDesk />
-            </PermissionRoute>
+            <PermissionRoute permission="ver_service_desk"><ServiceDesk /></PermissionRoute>
           } />
           <Route path="/ti/ativos" element={<Navigate to="/ti/colaboradores" replace />} />
           <Route path="/ti/colaboradores" element={
-            <PermissionRoute permission="gerenciar_estoque" fallbackRoles={["admin", "ti"]}>
-              <Colaboradores />
-            </PermissionRoute>
+            <PermissionRoute permission="ver_colaboradores"><Colaboradores /></PermissionRoute>
           } />
           <Route path="/ti/faturas" element={
-            <PermissionRoute permission="ver_custos_faturas" fallbackRoles={["admin", "ti"]}>
-              <GestaoFaturas />
-            </PermissionRoute>
+            <PermissionRoute permission="ver_gestao_custos"><GestaoFaturas /></PermissionRoute>
           } />
           <Route path="/ti/cofre-senhas" element={
-            <PermissionRoute permission="acessar_cofre_senhas" fallbackRoles={["admin", "ti"]}>
-              <CofreSenhas />
-            </PermissionRoute>
+            <PermissionRoute permission="ver_cofre_senhas"><CofreSenhas /></PermissionRoute>
           } />
           <Route path="/central-inteligencia" element={
-            <PermissionRoute permission="ver_dashboard_financeiro" fallbackRoles={["admin", "ti"]}>
-              <CentralInteligencia />
-            </PermissionRoute>
+            <PermissionRoute permission="ver_central_inteligencia"><CentralInteligencia /></PermissionRoute>
           } />
 
           <Route path="/ti/dashboard" element={<Navigate to="/central-inteligencia" replace />} />
