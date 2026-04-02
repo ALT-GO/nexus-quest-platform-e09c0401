@@ -292,7 +292,10 @@ export function MarketingTaskDetailSheet({
         return;
       }
     }
-    updateTask.mutate({ id: task.id, progress: val });
+    const completionData = val === "Concluído"
+      ? { completed_at: new Date().toISOString(), completed_by: authorName }
+      : { completed_at: null, completed_by: null };
+    updateTask.mutate({ id: task.id, progress: val, ...completionData } as any);
     logHistory("Mudança de progresso", `${task.progress} → ${val}`);
   };
 
