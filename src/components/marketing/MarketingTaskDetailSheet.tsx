@@ -540,7 +540,7 @@ export function MarketingTaskDetailSheet({
 
                 {/* Dates */}
                 {(!hideEmpty || hasDates) && (
-                  <PropRow icon={CalendarIcon} label="Datas" isEmpty={!hasDates}>
+                  <PropRow icon={CalendarIcon} label="Datas" isEmpty={!hasDates} tooltip="Data de início e data de vencimento da tarefa">
                     <div className="flex items-center gap-2 text-sm">
                       <Popover>
                         <PopoverTrigger asChild>
