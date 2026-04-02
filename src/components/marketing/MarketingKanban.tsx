@@ -358,11 +358,16 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                   <div className="space-y-1.5 text-muted-foreground">
                                     {/* Assignee row */}
                                     <div className="flex items-center gap-2 text-xs">
-                                      <User className="h-3.5 w-3.5 shrink-0" />
                                       {task.assignee_name ? (
-                                        <span className="text-foreground truncate">{task.assignee_name}</span>
+                                        <>
+                                          <UserAvatar name={task.assignee_name} className="h-5 w-5" fallbackClassName="text-[9px]" />
+                                          <span className="text-foreground truncate">{task.assignee_name}</span>
+                                        </>
                                       ) : (
-                                        <span>-</span>
+                                        <>
+                                          <User className="h-3.5 w-3.5 shrink-0" />
+                                          <span>-</span>
+                                        </>
                                       )}
                                     </div>
 
