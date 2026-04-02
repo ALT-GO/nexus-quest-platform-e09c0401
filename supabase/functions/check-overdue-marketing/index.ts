@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
           message: msgKey,
           type: 'warning',
           link: '/marketing/solicitacoes',
+          scope: 'marketing',
         });
       }
 
