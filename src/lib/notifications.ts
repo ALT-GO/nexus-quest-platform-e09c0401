@@ -26,6 +26,7 @@ export async function sendNotification(params: {
       message: params.message,
       type: params.type || "info",
       link: params.link || null,
+      scope: "ti",
     });
   } catch {
     // Silent fail — notifications should never break the app
