@@ -195,22 +195,24 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
 
             {/* Leads Gerados */}
             <div className="space-y-2 p-3 rounded-lg border bg-muted/20">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2 font-medium">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  Leads Gerados
-                </div>
-                {event.leads_gerados != null ? (
-                  <span className="font-semibold">{event.leads_gerados}</span>
-                ) : (
-                  <Badge variant="outline" className="text-xs text-warning">Não preenchido</Badge>
-                )}
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <Users className="h-3.5 w-3.5" />
+                Leads Gerados
               </div>
-              {event.leads_gerados != null && event.budget > 0 && (
+              <Input
+                type="number"
+                min={0}
+                placeholder="Quantidade de leads"
+                value={event.leads_gerados ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value ? parseInt(e.target.value) : null;
+                  updateEvent.mutate({ id: event.id, leads_gerados: val } as any);
+                }}
+                className="h-8 w-full text-sm"
+              />
+              {event.leads_gerados != null && event.leads_gerados > 0 && event.budget > 0 && (
                 <div className="text-xs text-muted-foreground">
-                  Custo por Lead: {event.leads_gerados > 0
-                    ? (event.budget / event.leads_gerados).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-                    : "—"}
+                  Custo por Lead: {(event.budget / event.leads_gerados).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </div>
               )}
             </div>
