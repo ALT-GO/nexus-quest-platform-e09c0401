@@ -246,7 +246,7 @@ export function useActiveTimers(userTicketIds?: string[]) {
   const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
   const [loading, setLoading] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, hasRole, user } = useAuth();
 
   const fetchActive = useCallback(async () => {
     setLoading(true);
@@ -327,7 +327,7 @@ export function useActiveTimers(userTicketIds?: string[]) {
       }
     });
 
-    // Admin sees all; non-admin sees only their own
+    // Admin sees all; non-admin sees only their own timers
     if (!isAdmin && currentUserName) {
       timers = timers.filter((t) => t.ticket_assignee === currentUserName);
     }
@@ -336,8 +336,28 @@ export function useActiveTimers(userTicketIds?: string[]) {
     setLoading(false);
   }, [isAdmin, user]);
 
+  // Initial fetch
   useEffect(() => { fetchActive(); }, [fetchActive]);
 
+  // Realtime subscription for instant updates
+  useEffect(() => {
+    const channel = supabase
+      .channel("active_timers_realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "timesheet_logs" },
+        () => {
+          fetchActive();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [fetchActive]);
+
+  // Tick elapsed every second
   useEffect(() => {
     if (activeTimers.length === 0) return;
     intervalRef.current = setInterval(() => {
