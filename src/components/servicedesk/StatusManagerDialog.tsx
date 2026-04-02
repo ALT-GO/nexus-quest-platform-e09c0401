@@ -36,6 +36,14 @@ const presetColors = [
   "221 83% 53%",
   "25 95% 53%",
   "173 80% 40%",
+  "330 81% 60%",
+  "262 83% 58%",
+  "47 96% 53%",
+  "16 85% 56%",
+  "187 72% 45%",
+  "349 89% 60%",
+  "152 69% 31%",
+  "210 40% 52%",
 ];
 
 const statusTypeLabels: Record<StatusType, string> = {
@@ -146,8 +154,8 @@ export function StatusManagerDialog({
                   </Select>
 
                   {/* Color picker */}
-                  <div className="flex gap-1 flex-shrink-0">
-                    {presetColors.slice(0, 4).map((color) => (
+                  <div className="flex gap-1 flex-wrap flex-shrink-0 max-w-[140px]">
+                    {presetColors.map((color) => (
                       <button
                         key={color}
                         onClick={() => onUpdate(status.id, { cor: color })}

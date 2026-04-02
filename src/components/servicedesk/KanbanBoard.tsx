@@ -67,10 +67,10 @@ const statusTypeIcons: Record<string, typeof Circle> = {
   done: CheckCircle2,
 };
 
-const statusTypeBadgeClass: Record<string, string> = {
-  todo: "bg-muted text-muted-foreground border-border",
-  in_progress: "bg-primary text-primary-foreground border-primary",
-  done: "bg-success text-success-foreground border-success",
+const statusTypeBadgeClassFallback: Record<string, string> = {
+  todo: "border-border",
+  in_progress: "border-primary",
+  done: "border-success",
 };
 
 export function KanbanBoard({
@@ -123,22 +123,25 @@ export function KanbanBoard({
           {statuses.map((status) => {
             const columnTickets = getColumnTickets(status.id);
             const StatusIcon = statusTypeIcons[status.statusType] || Circle;
-            const badgeClass = statusTypeBadgeClass[status.statusType] || statusTypeBadgeClass.todo;
 
             return (
-              <div key={status.id} className="w-[300px] shrink-0 flex flex-col h-full rounded-xl border bg-muted/30">
-                {/* Column Header — ClickUp pill badge style */}
-                <div className="flex items-center gap-2.5 px-3 py-3">
+              <div
+                key={status.id}
+                className="w-[300px] shrink-0 flex flex-col h-full rounded-xl border bg-muted/30"
+                style={{ borderTopColor: `hsl(${status.cor})`, borderTopWidth: 3 }}
+              >
+                {/* Column Header — colored background from status config */}
+                <div
+                  className="flex items-center gap-2.5 px-3 py-3 rounded-t-xl"
+                  style={{ backgroundColor: `hsl(${status.cor} / 0.1)` }}
+                >
                   <span
-                    className={cn(
-                      "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-wide border",
-                      badgeClass
-                    )}
-                    style={
-                      status.statusType !== "todo"
-                        ? { backgroundColor: `hsl(${status.cor})`, borderColor: `hsl(${status.cor})`, color: "white" }
-                        : undefined
-                    }
+                    className="inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-wide border"
+                    style={{
+                      backgroundColor: `hsl(${status.cor})`,
+                      borderColor: `hsl(${status.cor})`,
+                      color: "white",
+                    }}
                   >
                     <StatusIcon className="h-3.5 w-3.5" />
                     {status.nome}
