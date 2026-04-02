@@ -11,6 +11,7 @@ import { SlaIndicator } from "@/components/sla/SlaIndicator";
 import { AssetLinkerCompact } from "@/components/servicedesk/AssetLinker";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { useProfileAvatars } from "@/hooks/use-profile-avatars";
 import { SlaInfo } from "@/hooks/use-sla";
 import {
   GripVertical,
@@ -87,6 +88,7 @@ export function KanbanBoard({
   onDelete,
   onReorder,
 }: KanbanBoardProps) {
+  const { data: avatars } = useProfileAvatars();
   const getColumnTickets = useCallback(
     (statusId: string) =>
       tickets
@@ -205,7 +207,7 @@ export function KanbanBoard({
                                     <div className="flex items-center gap-2 text-xs">
                                       {ticket.assignee ? (
                                         <>
-                                          <UserAvatar name={ticket.assignee} className="h-5 w-5" fallbackClassName="text-[9px]" />
+                                          <UserAvatar name={ticket.assignee} avatarUrl={avatars?.byName[ticket.assignee.toLowerCase()]} className="h-5 w-5" fallbackClassName="text-[9px]" />
                                           <span className="text-foreground truncate">{ticket.assignee}</span>
                                         </>
                                       ) : (

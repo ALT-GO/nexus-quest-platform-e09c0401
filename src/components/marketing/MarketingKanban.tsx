@@ -44,6 +44,7 @@ import { notifyAdminsForApproval } from "@/lib/marketing-notifications";
 import { useAuth } from "@/hooks/use-auth";
 import { useAllTaskTags } from "@/hooks/use-marketing-tags";
 import { useTaskDependencies, isTaskBlocked } from "@/hooks/use-dependencies";
+import { useProfileAvatars } from "@/hooks/use-profile-avatars";
 import {
   Tooltip,
   TooltipContent,
@@ -83,6 +84,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
   const [timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
   const { data: allDeps } = useTaskDependencies();
   const { data: taskTypes } = useMarketingTaskTypes();
+  const { data: avatars } = useProfileAvatars();
 
   const [quickAddStageId, setQuickAddStageId] = useState<string | null>(null);
   const [quickAddTitle, setQuickAddTitle] = useState("");
@@ -360,7 +362,12 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                     <div className="flex items-center gap-2 text-xs">
                                       {task.assignee_name ? (
                                         <>
-                                          <UserAvatar name={task.assignee_name} className="h-5 w-5" fallbackClassName="text-[9px]" />
+                                          <UserAvatar
+                                            name={task.assignee_name}
+                                            avatarUrl={task.assignee_id ? avatars?.byId[task.assignee_id] : avatars?.byName[task.assignee_name.toLowerCase()]}
+                                            className="h-5 w-5"
+                                            fallbackClassName="text-[9px]"
+                                          />
                                           <span className="text-foreground truncate">{task.assignee_name}</span>
                                         </>
                                       ) : (
