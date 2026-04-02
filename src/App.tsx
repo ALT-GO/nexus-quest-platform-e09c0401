@@ -13,6 +13,7 @@ import ServiceDesk from "./pages/ti/ServiceDesk";
 import Colaboradores from "./pages/ti/Colaboradores";
 import CentralInteligencia from "./pages/CentralInteligencia";
 import ChamadoPublico from "./pages/ti/ChamadoPublico";
+import SolicitacaoPublica from "./pages/marketing/SolicitacaoPublica";
 import Configuracoes from "./pages/Configuracoes";
 import GestaoFaturas from "./pages/ti/GestaoFaturas";
 import CofreSenhas from "./pages/ti/CofreSenhas";
