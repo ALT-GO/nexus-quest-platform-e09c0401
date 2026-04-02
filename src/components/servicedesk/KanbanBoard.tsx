@@ -11,6 +11,7 @@ import { SlaIndicator } from "@/components/sla/SlaIndicator";
 import { AssetLinkerCompact } from "@/components/servicedesk/AssetLinker";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { useProfileAvatars } from "@/hooks/use-profile-avatars";
 import { SlaInfo } from "@/hooks/use-sla";
 import {
   GripVertical,
