@@ -22,6 +22,7 @@ import {
   LayoutList,
   Kanban,
   Loader2,
+  GanttChart as GanttChartIcon,
 } from "lucide-react";
 import { useSlaTimer, slaByCategory } from "@/hooks/use-sla";
 import { useCustomStatuses } from "@/hooks/use-custom-status";
@@ -32,6 +33,7 @@ import { KanbanBoard } from "@/components/servicedesk/KanbanBoard";
 import { TicketTable } from "@/components/servicedesk/TicketTable";
 import { TicketDetailSheet } from "@/components/servicedesk/TicketDetailSheet";
 import { toast } from "sonner";
+import { GanttChart, GanttItem } from "@/components/shared/GanttChart";
 
 const categories = [
   "Acesso e permissões",
@@ -49,7 +51,7 @@ const categories = [
   "Desligamento",
 ];
 
-type ViewMode = "list" | "kanban";
+type ViewMode = "list" | "kanban" | "gantt";
 
 export default function ServiceDesk() {
   const { tickets, loading, fetchTickets, updateTicket, deleteTicket } = useTickets();
@@ -384,6 +386,15 @@ export default function ServiceDesk() {
             <LayoutList className="h-4 w-4" />
             <span className="hidden sm:inline">Lista</span>
           </Button>
+          <Button
+            variant={viewMode === "gantt" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("gantt")}
+            className="gap-1.5"
+          >
+            <GanttChartIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Gantt</span>
+          </Button>
         </div>
       </div>
 
@@ -422,6 +433,28 @@ export default function ServiceDesk() {
             if (t) deleteTicket(t.id);
           }}
           onReorder={handleReorder}
+        />
+      ) : viewMode === "gantt" ? (
+        <GanttChart
+          items={filteredTickets.map((t): GanttItem => {
+            const statusObj = statuses.find(s => s.id === t.status_id);
+            return {
+              id: t.id,
+              title: `${t.ticket_number} - ${t.title}`,
+              group: t.category,
+              startDate: t.created_at,
+              endDate: t.completed_at || null,
+              progress: t.completed_at ? "Concluído" : "Em andamento",
+              priority: t.priority,
+              assigneeName: t.assignee || undefined,
+              assigneeAvatarUrl: t.assignee ? avatarMap[t.assignee] : undefined,
+              color: statusObj?.cor,
+            };
+          })}
+          onItemClick={(id) => {
+            const ticket = tickets.find(t => t.id === id);
+            if (ticket) handleTicketClick(ticket.id);
+          }}
         />
       ) : (
         <TicketTable

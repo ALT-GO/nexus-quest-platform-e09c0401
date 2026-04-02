@@ -10,7 +10,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, X, LayoutGrid, List, Search, FilterX, Diamond } from "lucide-react";
+import { Plus, X, LayoutGrid, List, Search, FilterX, Diamond, GanttChart as GanttChartIcon } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarketingStages, useMarketingTasks, MarketingTask } from "@/hooks/use-marketing";
 import { useMarketingTags } from "@/hooks/use-marketing-tags";
@@ -22,6 +22,8 @@ import { MarketingListView } from "@/components/marketing/MarketingListView";
 import { NewMarketingTaskDialog } from "@/components/marketing/NewMarketingTaskDialog";
 import { MarketingTaskDetailSheet } from "@/components/marketing/MarketingTaskDetailSheet";
 import { SprintSelector } from "@/components/marketing/SprintSelector";
+import { GanttChart, GanttItem } from "@/components/shared/GanttChart";
+import { useProfileAvatars } from "@/hooks/use-profile-avatars";
 import { SprintDashboard } from "@/components/marketing/SprintDashboard";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -33,14 +35,15 @@ export default function Solicitacoes() {
   const { data: tags } = useMarketingTags();
   const { data: sprints } = useMarketingSprints();
   const { data: taskTypes } = useMarketingTaskTypes();
+  const { data: avatars } = useProfileAvatars();
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<MarketingTask | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
   const [teamMembers, setTeamMembers] = useState<{ id: string; name: string }[]>([]);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
   const [selectedSprintId, setSelectedSprintId] = useState("all");
-  const [viewMode, setViewMode] = useState<"kanban" | "list">(() => {
-    return (localStorage.getItem(VIEW_KEY) as "kanban" | "list") || "kanban";
+  const [viewMode, setViewMode] = useState<"kanban" | "list" | "gantt">(() => {
+    return (localStorage.getItem(VIEW_KEY) as "kanban" | "list" | "gantt") || "kanban";
   });
 
   // Shared filters
@@ -57,7 +60,7 @@ export default function Solicitacoes() {
     });
   }, []);
 
-  const handleViewChange = (mode: "kanban" | "list") => {
+  const handleViewChange = (mode: "kanban" | "list" | "gantt") => {
     setViewMode(mode);
     localStorage.setItem(VIEW_KEY, mode);
   };
@@ -158,6 +161,15 @@ export default function Solicitacoes() {
             >
               <List className="h-3.5 w-3.5" />
               Lista
+            </Button>
+            <Button
+              variant={viewMode === "gantt" ? "default" : "ghost"}
+              size="sm"
+              className="h-7 px-2.5 gap-1.5 text-xs"
+              onClick={() => handleViewChange("gantt")}
+            >
+              <GanttChartIcon className="h-3.5 w-3.5" />
+              Gantt
             </Button>
           </div>
           <Button onClick={() => setDialogOpen(true)}>
@@ -291,6 +303,27 @@ export default function Solicitacoes() {
           tasks={filteredTasks}
           onTaskClick={handleTaskClick}
           filterTagIds={filterTagIds.length > 0 ? filterTagIds : undefined}
+        />
+      ) : viewMode === "gantt" ? (
+        <GanttChart
+          items={filteredTasks.map((t): GanttItem => {
+            const stage = (stages ?? []).find(s => s.id === t.stage_id);
+            return {
+              id: t.id,
+              title: t.title,
+              group: stage?.name || "Sem etapa",
+              startDate: t.start_date,
+              endDate: t.due_date,
+              progress: t.progress,
+              priority: t.priority,
+              assigneeName: t.assignee_name || undefined,
+              assigneeAvatarUrl: t.assignee_id ? avatars?.byId[t.assignee_id] || undefined : undefined,
+            };
+          })}
+          onItemClick={(id) => {
+            const task = filteredTasks.find(t => t.id === id);
+            if (task) handleTaskClick(task);
+          }}
         />
       ) : (
         <MarketingListView
