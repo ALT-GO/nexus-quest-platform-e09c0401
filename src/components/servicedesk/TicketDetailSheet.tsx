@@ -237,14 +237,6 @@ export function TicketDetailSheet({
       if (ticket.progress === "not_started") {
         await supabase.from("tickets").update({ progress: "in_progress", updated_at: new Date().toISOString() } as any).eq("id", ticket.id as any);
       }
-      const currentSt = statuses.find((s) => s.id === ticket.status_id);
-      if (currentSt?.statusType === "todo") {
-        const inProgressStatus = statuses.find((s) => s.statusType === "in_progress" && s.ativo);
-        if (inProgressStatus) {
-          onStatusChange(ticket.ticket_number, inProgressStatus.id);
-          await logHistory("status_change", `Status alterado automaticamente para ${inProgressStatus.nome} (cronômetro iniciado)`, "Admin");
-        }
-      }
       await logHistory("timesheet", "Cronômetro iniciado", "Admin");
     }
   };
