@@ -709,7 +709,7 @@ export default function GestaoFaturas() {
       <Dialog open={pdfOpen} onOpenChange={setPdfOpen}>
         <DialogContent className="max-w-[900px] max-h-[95vh] overflow-y-auto print:!block">
           <DialogHeader className="print:hidden">
-            <DialogTitle>Relatório de Rateio — {generatedOp}</DialogTitle>
+            <DialogTitle>Relatório de Rateio — {generatedOp} ({empresaLabel})</DialogTitle>
           </DialogHeader>
 
           <div
