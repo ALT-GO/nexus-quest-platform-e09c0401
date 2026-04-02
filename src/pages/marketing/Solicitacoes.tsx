@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -30,6 +31,7 @@ import { supabase } from "@/integrations/supabase/client";
 const VIEW_KEY = "marketing_view_preference";
 
 export default function Solicitacoes() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { data: stages, isLoading: stagesLoading } = useMarketingStages();
   const { data: tasks, isLoading: tasksLoading } = useMarketingTasks();
   const { data: tags } = useMarketingTags();
@@ -59,6 +61,19 @@ export default function Solicitacoes() {
       if (data) setTeamMembers(data.map(p => ({ id: p.id, name: p.full_name })));
     });
   }, []);
+
+  // Auto-open task from URL query param (e.g. from notification click)
+  useEffect(() => {
+    const taskId = searchParams.get("task");
+    if (taskId && tasks && tasks.length > 0 && !detailOpen) {
+      const found = tasks.find(t => t.id === taskId);
+      if (found) {
+        setSelectedTask(found);
+        setDetailOpen(true);
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [searchParams, tasks, detailOpen, setSearchParams]);
 
   const handleViewChange = (mode: "kanban" | "list" | "gantt") => {
     setViewMode(mode);

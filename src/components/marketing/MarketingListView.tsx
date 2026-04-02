@@ -21,6 +21,8 @@ import { ArrowUpDown, ArrowUp, ArrowDown, Pencil, Check, X, Diamond, Lock } from
 import { format, isBefore, isToday, startOfDay } from "date-fns";
 import { MarketingTask, MarketingStage, useUpdateMarketingTask } from "@/hooks/use-marketing";
 import { useTaskDependencies, isTaskBlocked } from "@/hooks/use-dependencies";
+import { notifyAdminsForApproval } from "@/lib/marketing-notifications";
+import { useAuth } from "@/hooks/use-auth";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { useMarketingTaskTypes } from "@/hooks/use-task-types";
 import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
@@ -68,6 +70,7 @@ export function MarketingListView({
   const updateTask = useUpdateMarketingTask();
   const { data: allDeps } = useTaskDependencies();
   const { data: taskTypes } = useMarketingTaskTypes();
+  const { user } = useAuth();
   const [sortKey, setSortKey] = useState<SortKey>("due_date");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
@@ -151,6 +154,11 @@ export function MarketingListView({
   const handleInlineSelect = (taskId: string, field: string, value: string) => {
     if (field === "stage_id") {
       updateTask.mutate({ id: taskId, stage_id: value });
+      const newStage = stages.find(s => s.id === value);
+      if (newStage?.meta_status === "pending_approval") {
+        const task = tasks.find(t => t.id === taskId);
+        if (task) notifyAdminsForApproval({ taskTitle: task.title, taskId, excludeUserId: user?.id });
+      }
     } else if (field === "priority") {
       updateTask.mutate({ id: taskId, priority: value });
     } else if (field === "progress") {
