@@ -154,8 +154,8 @@ export function StatusManagerDialog({
                   </Select>
 
                   {/* Color picker */}
-                  <div className="flex gap-1 flex-shrink-0">
-                    {presetColors.slice(0, 4).map((color) => (
+                  <div className="flex gap-1 flex-wrap flex-shrink-0 max-w-[140px]">
+                    {presetColors.map((color) => (
                       <button
                         key={color}
                         onClick={() => onUpdate(status.id, { cor: color })}
