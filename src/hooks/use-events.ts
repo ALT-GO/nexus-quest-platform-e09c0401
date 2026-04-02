@@ -10,6 +10,7 @@ export interface MarketingEvent {
   start_date: string;
   end_date: string;
   budget: number;
+  actual_cost: number | null;
   notes: string;
   priority: string;
   status: string;

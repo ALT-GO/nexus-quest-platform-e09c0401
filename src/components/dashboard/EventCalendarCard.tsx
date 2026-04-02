@@ -136,13 +136,29 @@ export function EventCalendarCard({ events }: Props) {
                             <span className="truncate max-w-[120px]">{event.location}</span>
                           </div>
                         )}
-                        {event.budget > 0 && (
-                          <div className="flex items-center gap-1">
-                            <DollarSign className="h-3 w-3" />
-                            <span>{event.budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
-                          </div>
-                        )}
                       </div>
+                      {(event.budget > 0 || event.actual_cost != null) && (
+                        <div className="flex items-center gap-4 text-xs mt-1">
+                          {event.budget > 0 && (
+                            <div className="flex flex-col">
+                              <span className="text-[10px] text-muted-foreground font-medium">Orçamento</span>
+                              <span className="flex items-center gap-1 text-muted-foreground">
+                                <DollarSign className="h-3 w-3" />
+                                {event.budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                              </span>
+                            </div>
+                          )}
+                          <div className="flex flex-col">
+                            <span className="text-[10px] text-muted-foreground font-medium">Valor Real</span>
+                            <span className={cn("flex items-center gap-1", event.actual_cost != null ? "text-foreground font-medium" : "text-muted-foreground")}>
+                              <DollarSign className="h-3 w-3" />
+                              {event.actual_cost != null
+                                ? event.actual_cost.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                                : "—"}
+                            </span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   );
                 })}
