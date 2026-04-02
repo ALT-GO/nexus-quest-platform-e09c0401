@@ -83,6 +83,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
   const [timesheetTotals, setTimesheetTotals] = useState<Record<string, number>>({});
   const { data: allDeps } = useTaskDependencies();
   const { data: taskTypes } = useMarketingTaskTypes();
+  const { data: avatars } = useProfileAvatars();
 
   const [quickAddStageId, setQuickAddStageId] = useState<string | null>(null);
   const [quickAddTitle, setQuickAddTitle] = useState("");
