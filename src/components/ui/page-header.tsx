@@ -1,5 +1,6 @@
 import { cn } from "@/lib/utils";
 import { GlobalTimerBadge } from "@/components/layout/GlobalTimerBadge";
+import { NotificationCenter } from "@/components/layout/NotificationCenter";
 
 interface PageHeaderProps {
   title: string;
@@ -30,6 +31,7 @@ export function PageHeader({
       <div className="flex items-center gap-3">
         <GlobalTimerBadge />
         {children}
+        <NotificationCenter />
       </div>
     </div>
   );
