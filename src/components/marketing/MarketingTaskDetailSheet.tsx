@@ -732,7 +732,7 @@ export function MarketingTaskDetailSheet({
                 </PropRow>
 
                 {/* Recurrence */}
-                <PropRow icon={Repeat} label="Recorrência">
+                <PropRow icon={Repeat} label="Recorrência" tooltip="Ative para que esta tarefa se repita automaticamente (diária, semanal ou mensal)">
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={task.is_recurring}
