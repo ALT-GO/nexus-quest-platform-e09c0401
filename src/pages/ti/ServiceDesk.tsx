@@ -33,6 +33,7 @@ import { KanbanBoard } from "@/components/servicedesk/KanbanBoard";
 import { TicketTable } from "@/components/servicedesk/TicketTable";
 import { TicketDetailSheet } from "@/components/servicedesk/TicketDetailSheet";
 import { toast } from "sonner";
+import { GanttChart, GanttItem } from "@/components/shared/GanttChart";
 
 const categories = [
   "Acesso e permissões",
