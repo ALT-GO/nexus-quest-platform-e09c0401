@@ -22,6 +22,7 @@ import {
   LayoutList,
   Kanban,
   Loader2,
+  GanttChart as GanttChartIcon,
 } from "lucide-react";
 import { useSlaTimer, slaByCategory } from "@/hooks/use-sla";
 import { useCustomStatuses } from "@/hooks/use-custom-status";
