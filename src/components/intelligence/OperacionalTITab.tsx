@@ -81,6 +81,7 @@ const categoryColorClasses: Record<string, string> = {
 const dayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProps) {
+  const navigate = useNavigate();
   const { tickets: allTickets, loading } = useTickets();
   const [techFilter, setTechFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
