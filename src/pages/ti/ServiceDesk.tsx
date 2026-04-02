@@ -29,7 +29,7 @@ import { useSlaTimer, slaByCategory } from "@/hooks/use-sla";
 import { useCustomStatuses } from "@/hooks/use-custom-status";
 import { useAssets, assetRequestCategories } from "@/hooks/use-assets";
 import { useTickets } from "@/hooks/use-tickets";
-import { StatusManagerDialog } from "@/components/servicedesk/StatusManagerDialog";
+
 import { KanbanBoard } from "@/components/servicedesk/KanbanBoard";
 import { TicketTable } from "@/components/servicedesk/TicketTable";
 import { TicketDetailSheet } from "@/components/servicedesk/TicketDetailSheet";
@@ -319,12 +319,6 @@ export default function ServiceDesk() {
         title="Service Desk"
         description="Central de atendimento e suporte de TI"
       >
-        <StatusManagerDialog
-          statuses={statuses}
-          onAdd={addStatus}
-          onUpdate={updateStatus}
-          onReorder={reorderStatuses}
-        />
         <NewTicketDialog />
         
         <Button variant="outline" asChild>
