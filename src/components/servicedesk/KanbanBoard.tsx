@@ -67,10 +67,10 @@ const statusTypeIcons: Record<string, typeof Circle> = {
   done: CheckCircle2,
 };
 
-const statusTypeBadgeClass: Record<string, string> = {
-  todo: "bg-muted text-muted-foreground border-border",
-  in_progress: "bg-primary text-primary-foreground border-primary",
-  done: "bg-success text-success-foreground border-success",
+const statusTypeBadgeClassFallback: Record<string, string> = {
+  todo: "border-border",
+  in_progress: "border-primary",
+  done: "border-success",
 };
 
 export function KanbanBoard({
