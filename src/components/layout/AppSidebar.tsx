@@ -21,6 +21,7 @@ import {
   Receipt,
   KeyRound,
   Headphones,
+  CalendarDays,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
