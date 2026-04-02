@@ -624,7 +624,7 @@ export function MarketingTaskDetailSheet({
                 )}
 
                 {/* Timer / Time tracked */}
-                <PropRow icon={Timer} label="Tempo rastreado">
+                <PropRow icon={Timer} label="Tempo rastreado" tooltip="Tempo real registrado via cronômetro enquanto trabalha na tarefa">
                   <MarketingTimerButton taskId={task.id} size="detail" />
                 </PropRow>
 
