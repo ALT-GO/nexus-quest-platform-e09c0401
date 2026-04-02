@@ -1,0 +1,1 @@
+ALTER TABLE public.marketing_events ADD COLUMN leads_gerados integer NULL DEFAULT NULL;
