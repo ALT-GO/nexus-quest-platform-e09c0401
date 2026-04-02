@@ -60,7 +60,7 @@ export default function Solicitacoes() {
     });
   }, []);
 
-  const handleViewChange = (mode: "kanban" | "list") => {
+  const handleViewChange = (mode: "kanban" | "list" | "gantt") => {
     setViewMode(mode);
     localStorage.setItem(VIEW_KEY, mode);
   };
