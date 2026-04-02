@@ -18,10 +18,9 @@ import {
   Circle,
   Flag,
   CalendarIcon,
-  Plus,
-  Trash2,
+  User,
+  Loader2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -60,6 +59,18 @@ const priorityConfig: Record<string, { label: string; color: string }> = {
   high: { label: "Alta", color: "text-destructive" },
   medium: { label: "Média", color: "text-warning" },
   low: { label: "Baixa", color: "text-muted-foreground" },
+};
+
+const statusTypeIcons: Record<string, typeof Circle> = {
+  todo: Circle,
+  in_progress: Loader2,
+  done: CheckCircle2,
+};
+
+const statusTypeBadgeClass: Record<string, string> = {
+  todo: "bg-muted text-muted-foreground border-border",
+  in_progress: "bg-primary text-primary-foreground border-primary",
+  done: "bg-success text-success-foreground border-success",
 };
 
 export function KanbanBoard({
@@ -108,27 +119,33 @@ export function KanbanBoard({
         className="overflow-x-auto pb-4 -mx-2 px-2 h-[calc(100vh-220px)]"
         style={{ scrollbarGutter: "stable" }}
       >
-        <div className="flex gap-3 min-w-max h-full">
+        <div className="flex gap-4 min-w-max h-full">
           {statuses.map((status) => {
             const columnTickets = getColumnTickets(status.id);
-            const statusColor = `hsl(${status.cor})`;
+            const StatusIcon = statusTypeIcons[status.statusType] || Circle;
+            const badgeClass = statusTypeBadgeClass[status.statusType] || statusTypeBadgeClass.todo;
 
             return (
-              <div key={status.id} className="w-[280px] shrink-0 flex flex-col h-full">
-                {/* Column Header — ClickUp style with colored background */}
-                <div
-                  className="flex items-center gap-2 px-3 py-2.5 mb-1 rounded-lg"
-                  style={{ backgroundColor: `hsl(${status.cor} / 0.12)` }}
-                >
-                  <div
-                    className="h-2.5 w-2.5 rounded-full shrink-0"
-                    style={{ backgroundColor: statusColor }}
-                  />
-                  <h3 className="text-sm font-semibold truncate">{status.nome}</h3>
-                  <span className="text-xs text-muted-foreground font-medium tabular-nums">
+              <div key={status.id} className="w-[300px] shrink-0 flex flex-col h-full rounded-xl border bg-muted/30">
+                {/* Column Header — ClickUp pill badge style */}
+                <div className="flex items-center gap-2.5 px-3 py-3">
+                  <span
+                    className={cn(
+                      "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-wide border",
+                      badgeClass
+                    )}
+                    style={
+                      status.statusType !== "todo"
+                        ? { backgroundColor: `hsl(${status.cor})`, borderColor: `hsl(${status.cor})`, color: "white" }
+                        : undefined
+                    }
+                  >
+                    <StatusIcon className="h-3.5 w-3.5" />
+                    {status.nome}
+                  </span>
+                  <span className="text-sm text-muted-foreground font-medium tabular-nums">
                     {columnTickets.length}
                   </span>
-                  <div className="flex-1" />
                 </div>
 
                 {/* Droppable Column */}
@@ -138,8 +155,8 @@ export function KanbanBoard({
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={cn(
-                        "flex-1 overflow-y-auto space-y-2 rounded-lg p-1.5 transition-colors min-h-[80px]",
-                        snapshot.isDraggingOver ? "bg-accent/40" : ""
+                        "flex-1 overflow-y-auto space-y-2.5 px-2.5 pb-2.5 transition-colors min-h-[80px]",
+                        snapshot.isDraggingOver ? "bg-accent/30" : ""
                       )}
                     >
                       {columnTickets.map((ticket, index) => {
@@ -162,7 +179,7 @@ export function KanbanBoard({
                                 )}
                                 onClick={() => onTicketClick?.(ticket.id)}
                               >
-                                <div className="p-3 space-y-2.5">
+                                <div className="p-3.5 space-y-3">
                                   {/* Title row */}
                                   <div className="flex items-start gap-1.5">
                                     <div
@@ -172,48 +189,48 @@ export function KanbanBoard({
                                     >
                                       <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50" />
                                     </div>
-                                    <button
-                                      onClick={(e) => {
-                                        e.stopPropagation();
-                                        if (!isCompleted) onQuickComplete(ticket.id);
-                                      }}
-                                      className={cn(
-                                        "mt-0.5 shrink-0 transition-colors",
-                                        isCompleted
-                                          ? "text-success"
-                                          : "text-muted-foreground/30 hover:text-success"
-                                      )}
-                                    >
-                                      {isCompleted ? (
-                                        <CheckCircle2 className="h-4 w-4" />
-                                      ) : (
-                                        <Circle className="h-4 w-4" />
-                                      )}
-                                    </button>
                                     <div className="flex-1 min-w-0">
                                       <p className={cn(
-                                        "text-sm font-medium leading-snug break-words line-clamp-2",
+                                        "text-sm font-semibold leading-snug break-words line-clamp-2",
                                         isCompleted && "line-through text-muted-foreground"
                                       )}>
                                         {ticket.title}
                                       </p>
+                                      <p className="text-xs text-muted-foreground mt-0.5">{ticket.category}</p>
                                     </div>
                                   </div>
 
-                                  {/* Status + Category tags */}
-                                  <div className="flex items-center gap-1.5 flex-wrap">
-                                    <span className={cn(
-                                      "text-[10px] font-medium rounded px-1.5 py-0.5 leading-none",
-                                      isCompleted
-                                        ? "bg-success/15 text-success"
-                                        : "bg-primary/15 text-primary"
-                                    )}>
-                                      {status.nome}
-                                    </span>
-                                    <span className="inline-block rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground">
-                                      {ticket.category}
-                                    </span>
+                                  {/* Property rows — ClickUp style */}
+                                  <div className="space-y-1.5 text-muted-foreground">
+                                    {/* Assignee row */}
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <User className="h-3.5 w-3.5 shrink-0" />
+                                      {ticket.assignee ? (
+                                        <span className="text-foreground truncate">{ticket.assignee}</span>
+                                      ) : (
+                                        <span>-</span>
+                                      )}
+                                    </div>
+
+                                    {/* Date row */}
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <CalendarIcon className="h-3.5 w-3.5 shrink-0" />
+                                      <span className="text-foreground">{format(new Date(ticket.createdAt), "dd/MM/yyyy")}</span>
+                                    </div>
+
+                                    {/* Priority row */}
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <Flag className={cn("h-3.5 w-3.5 shrink-0", priority.color)} />
+                                      <span className={priority.color}>{priority.label || "-"}</span>
+                                    </div>
                                   </div>
+
+                                  {/* SLA */}
+                                  {!isCompleted && (
+                                    <div className="py-0.5">
+                                      <SlaIndicator sla={sla} />
+                                    </div>
+                                  )}
 
                                   {/* Asset linker */}
                                   <div onClick={(e) => e.stopPropagation()}>
@@ -237,47 +254,12 @@ export function KanbanBoard({
                                       ))}
                                     </div>
                                   )}
-
-                                  {/* SLA */}
-                                  {!isCompleted && (
-                                    <div className="py-0.5">
-                                      <SlaIndicator sla={sla} />
-                                    </div>
-                                  )}
-
-                                  {/* Bottom icon bar — ClickUp style */}
-                                  <div className="flex items-center gap-2 flex-wrap text-muted-foreground">
-                                    {/* Priority flag */}
-                                    <Flag className={cn("h-3 w-3", priority.color)} />
-
-                                    {/* Opened date */}
-                                    <span className="flex items-center gap-0.5 text-[11px]">
-                                      <CalendarIcon className="h-3 w-3" />
-                                      {format(new Date(ticket.createdAt), "dd/MM")}
-                                    </span>
-
-                                    <div className="flex-1" />
-
-                                    {/* Assignee */}
-                                    {ticket.assignee ? (
-                                      <UserAvatar
-                                        name={ticket.assignee}
-                                        avatarUrl={ticket.assigneeAvatarUrl}
-                                        className="h-5 w-5"
-                                        fallbackClassName="text-[9px]"
-                                      />
-                                    ) : (
-                                      <span className="text-[10px] italic text-muted-foreground/50">
-                                        Sem resp.
-                                      </span>
-                                    )}
-                                  </div>
                                 </div>
 
-                                {/* Card actions — visible on hover */}
+                                {/* Delete — hover */}
                                 {onDelete && (
                                   <div
-                                    className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 flex gap-0.5"
+                                    className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100"
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <ConfirmDeleteDialog onConfirm={() => onDelete(ticket.id)} />

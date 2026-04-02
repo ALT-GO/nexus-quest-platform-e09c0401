@@ -14,7 +14,10 @@ import {
   Flag,
   ChevronDown,
   ChevronRight,
-  MessageSquare,
+  User,
+  Circle,
+  Loader2,
+  CheckCircle2,
 } from "lucide-react";
 import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
 import { useMarketingTaskTypes } from "@/hooks/use-task-types";
@@ -57,12 +60,11 @@ interface Props {
   filterTagIds?: string[];
 }
 
-// ClickUp-style meta status colors
-const metaStatusDot: Record<string, string> = {
-  unstarted: "bg-muted-foreground/50",
-  in_progress: "bg-primary",
-  pending_approval: "bg-warning",
-  completed: "bg-success",
+const metaStatusConfig: Record<string, { icon: typeof Circle; badgeClass: string }> = {
+  unstarted: { icon: Circle, badgeClass: "bg-muted text-muted-foreground border-border" },
+  in_progress: { icon: Loader2, badgeClass: "bg-primary text-primary-foreground border-primary" },
+  pending_approval: { icon: Loader2, badgeClass: "bg-warning text-warning-foreground border-warning" },
+  completed: { icon: CheckCircle2, badgeClass: "bg-success text-success-foreground border-success" },
 };
 
 const priorityConfig: Record<string, { label: string; color: string }> = {
@@ -82,11 +84,8 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
   const { data: allDeps } = useTaskDependencies();
   const { data: taskTypes } = useMarketingTaskTypes();
 
-  // Quick-add state per column
   const [quickAddStageId, setQuickAddStageId] = useState<string | null>(null);
   const [quickAddTitle, setQuickAddTitle] = useState("");
-
-  // Expanded subtask cards
   const [expandedSubtasks, setExpandedSubtasks] = useState<Set<string>>(new Set());
 
   const progressMap = useMemo(() => {
@@ -204,7 +203,6 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
     setQuickAddStageId(null);
   };
 
-  // Count checklist items (supports grouped and flat)
   const getChecklistCount = (raw: any): { total: number; done: number } => {
     const arr = Array.isArray(raw) ? raw : [];
     if (arr.length === 0) return { total: 0, done: 0 };
@@ -226,20 +224,25 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       <div className="overflow-x-auto pb-4 -mx-2 px-2 h-[calc(100vh-280px)]">
-        <div className="flex gap-3 min-w-max h-full">
+        <div className="flex gap-4 min-w-max h-full">
           {stages.map((stage) => {
             const columnTasks = tasksByStage[stage.id] ?? [];
             const isAdding = quickAddStageId === stage.id;
+            const cfg = metaStatusConfig[stage.meta_status] || metaStatusConfig.unstarted;
+            const StatusIcon = cfg.icon;
 
             return (
-              <div key={stage.id} className="w-[280px] shrink-0 flex flex-col h-full">
-                {/* Column Header — ClickUp style */}
-                <div className="flex items-center gap-2 px-2 py-2.5 mb-1">
-                  <div
-                    className={cn("h-2.5 w-2.5 rounded-full shrink-0", metaStatusDot[stage.meta_status] || "bg-muted-foreground")}
-                  />
-                  <h3 className="text-sm font-semibold truncate">{stage.name}</h3>
-                  <span className="text-xs text-muted-foreground font-medium tabular-nums">
+              <div key={stage.id} className="w-[300px] shrink-0 flex flex-col h-full rounded-xl border bg-muted/30">
+                {/* Column Header — ClickUp pill badge style */}
+                <div className="flex items-center gap-2.5 px-3 py-3">
+                  <span className={cn(
+                    "inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-bold uppercase tracking-wide border",
+                    cfg.badgeClass
+                  )}>
+                    <StatusIcon className="h-3.5 w-3.5" />
+                    {stage.name}
+                  </span>
+                  <span className="text-sm text-muted-foreground font-medium tabular-nums">
                     {columnTasks.length}
                   </span>
                   <div className="flex-1" />
@@ -249,7 +252,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                     className="h-6 w-6 text-muted-foreground hover:text-foreground"
                     onClick={() => { setQuickAddStageId(stage.id); setQuickAddTitle(""); }}
                   >
-                    <Plus className="h-3.5 w-3.5" />
+                    <Plus className="h-4 w-4" />
                   </Button>
                 </div>
 
@@ -260,8 +263,8 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                       ref={provided.innerRef}
                       {...provided.droppableProps}
                       className={cn(
-                        "flex-1 overflow-y-auto space-y-2 rounded-lg p-1.5 transition-colors min-h-[80px]",
-                        snapshot.isDraggingOver ? "bg-accent/40" : ""
+                        "flex-1 overflow-y-auto space-y-2.5 px-2.5 pb-2.5 transition-colors min-h-[80px]",
+                        snapshot.isDraggingOver ? "bg-accent/30" : ""
                       )}
                     >
                       {columnTasks.map((task, index) => (
@@ -290,8 +293,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                 )}
                                 onClick={() => onTaskClick?.(task)}
                               >
-                                {/* Card Content */}
-                                <div className="p-3 space-y-2.5">
+                                <div className="p-3.5 space-y-3">
                                   {/* Title row */}
                                   <div className="flex items-start gap-1.5">
                                     <div
@@ -304,7 +306,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                     <div className="flex-1 min-w-0">
                                       <p className={cn(
                                         "text-sm leading-snug break-words line-clamp-2",
-                                        task.is_milestone ? "font-bold" : "font-medium"
+                                        task.is_milestone ? "font-bold" : "font-semibold"
                                       )}>
                                         {task.is_milestone && <Diamond className="inline h-3 w-3 text-warning fill-warning mr-1 -mt-0.5" />}
                                         {blocked && (
@@ -340,84 +342,57 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                     </div>
                                   )}
 
-                                  {/* Bottom row — ClickUp style icon bar */}
-                                  <div className="flex items-center gap-2 flex-wrap text-muted-foreground">
-                                    {/* Task type icon */}
-                                    {taskType && (
-                                      <DynamicLucideIcon
-                                        name={taskType.icon}
-                                        className="h-3.5 w-3.5 shrink-0"
-                                        style={{ color: `hsl(${taskType.color})` }}
-                                      />
-                                    )}
+                                  {/* Status badge */}
+                                  <span className={cn(
+                                    "inline-block text-[10px] font-semibold rounded px-2 py-0.5 leading-none",
+                                    task.progress === "Concluído"
+                                      ? "bg-success/15 text-success"
+                                      : task.progress === "Em andamento"
+                                      ? "bg-primary/15 text-primary"
+                                      : "bg-muted text-muted-foreground"
+                                  )}>
+                                    {task.progress}
+                                  </span>
 
-                                    {/* Status badge */}
-                                    <span className={cn(
-                                      "text-[10px] font-medium rounded px-1.5 py-0.5 leading-none",
-                                      task.progress === "Concluído"
-                                        ? "bg-success/15 text-success"
-                                        : task.progress === "Em andamento"
-                                        ? "bg-primary/15 text-primary"
-                                        : "bg-muted text-muted-foreground"
-                                    )}>
-                                      {task.progress}
-                                    </span>
+                                  {/* Property rows — ClickUp style */}
+                                  <div className="space-y-1.5 text-muted-foreground">
+                                    {/* Assignee row */}
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <User className="h-3.5 w-3.5 shrink-0" />
+                                      {task.assignee_name ? (
+                                        <span className="text-foreground truncate">{task.assignee_name}</span>
+                                      ) : (
+                                        <span>-</span>
+                                      )}
+                                    </div>
 
-                                    {/* Assignee avatars */}
-                                    {task.assignee_name && (
-                                      <UserAvatar
-                                        name={task.assignee_name}
-                                        className="h-5 w-5"
-                                        fallbackClassName="text-[9px]"
-                                      />
-                                    )}
+                                    {/* Due date row */}
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <CalendarIcon className="h-3.5 w-3.5 shrink-0" />
+                                      {task.due_date ? (() => {
+                                        const due = new Date(task.due_date);
+                                        const overdue = task.progress !== "Concluído" && isBefore(due, startOfDay(new Date()));
+                                        const dueToday = task.progress !== "Concluído" && isToday(due);
+                                        return (
+                                          <span className={cn(
+                                            overdue ? "text-destructive font-medium" : dueToday ? "text-warning font-medium" : "text-foreground"
+                                          )}>
+                                            {format(due, "dd/MM/yyyy")}
+                                          </span>
+                                        );
+                                      })() : (
+                                        <span>-</span>
+                                      )}
+                                    </div>
 
-                                    {/* Due date */}
-                                    {task.due_date && (() => {
-                                      const due = new Date(task.due_date);
-                                      const overdue = task.progress !== "Concluído" && isBefore(due, startOfDay(new Date()));
-                                      const dueToday = task.progress !== "Concluído" && isToday(due);
-                                      return (
-                                        <span className={cn(
-                                          "flex items-center gap-0.5 text-[11px]",
-                                          overdue ? "text-destructive font-medium" : dueToday ? "text-warning font-medium" : ""
-                                        )}>
-                                          <CalendarIcon className="h-3 w-3" />
-                                          {format(due, "dd/MM")}
-                                        </span>
-                                      );
-                                    })()}
-
-                                    {/* Priority flag */}
-                                    <Flag className={cn("h-3 w-3", priority.color)} />
-
-                                    {/* Story points */}
-                                    {(task as any).story_points > 0 && (
-                                      <span className="text-[10px] font-medium bg-secondary rounded px-1 py-0.5">
-                                        {(task as any).story_points}pt
-                                      </span>
-                                    )}
-
-                                    {/* Timer */}
-                                    {task.time_estimate_minutes && task.time_estimate_minutes > 0 && (() => {
-                                      const estimateSec = task.time_estimate_minutes * 60;
-                                      const actualSec = timesheetTotals[task.id] || 0;
-                                      const overBudget = actualSec > estimateSec;
-                                      const fmtMin = (sec: number) => {
-                                        const h = Math.floor(sec / 3600);
-                                        const m = Math.floor((sec % 3600) / 60);
-                                        return h > 0 ? `${h}h${m > 0 ? m + "m" : ""}` : `${m}m`;
-                                      };
-                                      return (
-                                        <span className={cn("flex items-center gap-0.5 text-[11px]", overBudget && "text-destructive font-medium")}>
-                                          <Timer className="h-3 w-3" />
-                                          {fmtMin(actualSec)}/{fmtMin(estimateSec)}
-                                        </span>
-                                      );
-                                    })()}
+                                    {/* Priority row */}
+                                    <div className="flex items-center gap-2 text-xs">
+                                      <Flag className={cn("h-3.5 w-3.5 shrink-0", priority.color)} />
+                                      <span className={priority.color}>{priority.label || "-"}</span>
+                                    </div>
                                   </div>
 
-                                  {/* Subtasks count — ClickUp expandable style */}
+                                  {/* Subtasks count */}
                                   {clTotal > 0 && (
                                     <button
                                       className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors"
@@ -462,7 +437,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                       ))}
                       {provided.placeholder}
 
-                      {/* Quick Add Task — ClickUp style */}
+                      {/* Quick Add Task */}
                       {isAdding ? (
                         <div className="rounded-lg border bg-card p-2.5 space-y-2" onClick={(e) => e.stopPropagation()}>
                           <Input
@@ -487,11 +462,11 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                         </div>
                       ) : (
                         <button
-                          className="w-full text-left px-3 py-2 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors flex items-center gap-1.5"
+                          className="w-full text-left px-3 py-2.5 text-sm text-muted-foreground hover:text-foreground hover:bg-accent/50 rounded-lg transition-colors flex items-center gap-2"
                           onClick={() => { setQuickAddStageId(stage.id); setQuickAddTitle(""); }}
                         >
-                          <Plus className="h-3.5 w-3.5" />
-                          Adicionar tarefa
+                          <Plus className="h-4 w-4" />
+                          Adicionar Tarefa
                         </button>
                       )}
                     </div>
