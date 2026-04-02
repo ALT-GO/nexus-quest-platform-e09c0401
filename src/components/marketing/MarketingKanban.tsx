@@ -22,7 +22,7 @@ import {
 import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
 import { useMarketingTaskTypes } from "@/hooks/use-task-types";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { fetchMarketingTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
+import { fetchMarketingTimesheetTotals, formatDuration, useActiveTimerIds } from "@/hooks/use-timesheet";
 import { format, isToday, isBefore, startOfDay } from "date-fns";
 import {
   MarketingStage,
@@ -85,6 +85,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
   const { data: allDeps } = useTaskDependencies();
   const { data: taskTypes } = useMarketingTaskTypes();
   const { data: avatars } = useProfileAvatars();
+  const activeTimerMap = useActiveTimerIds();
 
   const [quickAddStageId, setQuickAddStageId] = useState<string | null>(null);
   const [quickAddTitle, setQuickAddTitle] = useState("");

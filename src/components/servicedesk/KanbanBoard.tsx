@@ -24,6 +24,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { Timer } from "lucide-react";
+import { useActiveTimerIds, formatDuration } from "@/hooks/use-timesheet";
 
 interface KanbanTicket {
   id: string;
@@ -89,6 +91,7 @@ export function KanbanBoard({
   onReorder,
 }: KanbanBoardProps) {
   const { data: avatars } = useProfileAvatars();
+  const activeTimerMap = useActiveTimerIds();
   const getColumnTickets = useCallback(
     (statusId: string) =>
       tickets
