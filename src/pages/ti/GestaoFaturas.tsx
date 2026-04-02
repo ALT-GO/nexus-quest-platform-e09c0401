@@ -334,17 +334,21 @@ function MensalidadeTab({ category }: { category: "linhas" | "licencas" }) {
 
 // ─── Main Page ───
 export default function GestaoFaturas() {
+  type EmpresaFilter = "eng" | "man" | "ambas";
+
   // Report generator modal
   const [reportModalOpen, setReportModalOpen] = useState(false);
   const [reportOp, setReportOp] = useState<Operadora | "">("");
   const [reportMes, setReportMes] = useState(String(new Date().getMonth())); // 0-indexed
   const [reportAno, setReportAno] = useState(String(new Date().getFullYear()));
+  const [reportEmpresa, setReportEmpresa] = useState<EmpresaFilter>("ambas");
   const [ajusteGlobal, setAjusteGlobal] = useState("");
 
   // Report data state (generated after clicking "Gerar")
   const [generated, setGenerated] = useState(false);
   const [generatedOp, setGeneratedOp] = useState<Operadora>("Claro");
   const [generatedMesAno, setGeneratedMesAno] = useState("");
+  const [generatedEmpresa, setGeneratedEmpresa] = useState<EmpresaFilter>("ambas");
   const [reportItems, setReportItems] = useState<any[]>([]);
   const [reportLoading, setReportLoading] = useState(false);
 
