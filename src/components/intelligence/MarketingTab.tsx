@@ -215,6 +215,31 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
     })).filter((e) => e.tasks > 0 || e.budget > 0);
   }, [events, allTasks, activeEvents]);
 
+  // ── 16. Total de Leads Gerados ──
+  const totalLeads = useMemo(() => {
+    if (!events) return 0;
+    return events.reduce((sum, e) => sum + ((e as any).leads_gerados || 0), 0);
+  }, [events]);
+
+  // ── 17. Custo por Lead Total ──
+  const costPerLeadTotal = totalLeads > 0 ? totalBudget / totalLeads : 0;
+
+  // ── 18. Leads e Custo por Evento (chart data) ──
+  const leadsPerEvent = useMemo(() => {
+    if (!events) return [];
+    return events
+      .filter((e) => (e as any).leads_gerados != null && (e as any).leads_gerados > 0)
+      .map((e) => ({
+        name: e.name.length > 18 ? e.name.substring(0, 18) + "…" : e.name,
+        leads: (e as any).leads_gerados || 0,
+        custoLead: (e as any).leads_gerados > 0 && e.budget > 0
+          ? Math.round((e.budget / (e as any).leads_gerados) * 100) / 100
+          : 0,
+        budget: e.budget || 0,
+      }))
+      .sort((a, b) => b.leads - a.leads);
+  }, [events]);
+
   // ── Priority distribution ──
   const byPriority = useMemo(() => {
     const map: Record<string, number> = { high: 0, medium: 0, low: 0 };
@@ -288,6 +313,22 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
           value={activeSprint ? `${sprintPointsDone}/${sprintPointsTotal} pts` : "—"}
           icon={Zap}
           description={activeSprint?.name ?? "Nenhum sprint ativo"}
+        />
+      </div>
+
+      {/* Row 2.5: Leads indicators */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          title="Total de Leads"
+          value={totalLeads}
+          icon={TrendingUp}
+          description={`${events?.filter((e) => (e as any).leads_gerados != null).length ?? 0} eventos com dados`}
+        />
+        <StatCard
+          title="Custo por Lead (Geral)"
+          value={costPerLeadTotal > 0 ? costPerLeadTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+          icon={DollarSign}
+          description={totalBudget > 0 ? `Budget total: ${totalBudget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}` : "sem budget"}
         />
       </div>
 
@@ -586,6 +627,55 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* Row 8: Leads por Evento + Custo por Lead por Evento */}
+      {leadsPerEvent.length > 0 && (
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                Leads por Evento
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={leadsPerEvent}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                    <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
+                    <Tooltip contentStyle={tooltipStyle} />
+                    <Bar dataKey="leads" name="Leads" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <DollarSign className="h-4 w-4 text-muted-foreground" />
+                Custo por Lead por Evento
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[280px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={leadsPerEvent.filter((e) => e.custoLead > 0)}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                    <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                    <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`R$ ${v.toFixed(2)}`, "Custo/Lead"]} />
+                    <Bar dataKey="custoLead" name="R$/Lead" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       )}
     </div>
   );

@@ -32,6 +32,7 @@ export function EventDialog({ open, onOpenChange, event }: Props) {
   const [priority, setPriority] = useState("medium");
   const [status, setStatus] = useState("planning");
   const [notes, setNotes] = useState("");
+  const [leadsGerados, setLeadsGerados] = useState("");
 
   useEffect(() => {
     if (event) {
@@ -43,9 +44,10 @@ export function EventDialog({ open, onOpenChange, event }: Props) {
       setPriority(event.priority);
       setStatus(event.status);
       setNotes(event.notes || "");
+      setLeadsGerados(event.leads_gerados != null ? String(event.leads_gerados) : "");
     } else {
       setName(""); setLocation(""); setStartDate(undefined); setEndDate(undefined);
-      setBudget(""); setPriority("medium"); setStatus("planning"); setNotes("");
+      setBudget(""); setPriority("medium"); setStatus("planning"); setNotes(""); setLeadsGerados("");
     }
   }, [event, open]);
 
@@ -61,6 +63,7 @@ export function EventDialog({ open, onOpenChange, event }: Props) {
       priority,
       status,
       notes,
+      leads_gerados: leadsGerados.trim() !== "" ? parseInt(leadsGerados) : null,
       checklist: event?.checklist ?? [],
     };
 
@@ -120,10 +123,14 @@ export function EventDialog({ open, onOpenChange, event }: Props) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Budget (R$)</Label>
               <Input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="0,00" min="0" step="0.01" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Leads Gerados</Label>
+              <Input type="number" value={leadsGerados} onChange={(e) => setLeadsGerados(e.target.value)} placeholder="0" min="0" step="1" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Prioridade</Label>

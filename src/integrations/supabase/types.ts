@@ -320,6 +320,7 @@ export type Database = {
           created_at: string
           end_date: string
           id: string
+          leads_gerados: number | null
           location: string | null
           name: string
           notes: string | null
@@ -334,6 +335,7 @@ export type Database = {
           created_at?: string
           end_date: string
           id?: string
+          leads_gerados?: number | null
           location?: string | null
           name: string
           notes?: string | null
@@ -348,6 +350,7 @@ export type Database = {
           created_at?: string
           end_date?: string
           id?: string
+          leads_gerados?: number | null
           location?: string | null
           name?: string
           notes?: string | null

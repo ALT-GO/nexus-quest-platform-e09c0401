@@ -27,14 +27,7 @@ Deno.serve(async (req) => {
 
     if (error) throw error;
 
-    if (!overdueTasks || overdueTasks.length === 0) {
-      return new Response(JSON.stringify({ message: 'No overdue tasks' }), {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      });
-    }
-
     // Check which tasks already have a recent overdue notification (last 24h)
-    const taskIds = overdueTasks.map((t: any) => t.id);
     const oneDayAgo = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
 
     const { data: recentNotifs } = await supabase
@@ -49,7 +42,20 @@ Deno.serve(async (req) => {
 
     const notifications: any[] = [];
 
-    for (const task of overdueTasks) {
+    // Get marketing user ids
+    const { data: marketingUserIds } = await supabase.rpc('get_ti_admin_user_ids');
+    // Also get marketing role users
+    const { data: marketingRoles } = await supabase
+      .from('user_roles')
+      .select('user_id')
+      .eq('role', 'marketing');
+    
+    const allMarketingIds = new Set<string>([
+      ...(marketingUserIds || []),
+      ...(marketingRoles || []).map((r: any) => r.user_id),
+    ]);
+
+    for (const task of (overdueTasks || [])) {
       const msgKey = `A tarefa "${task.title}" está com o prazo vencido.`;
       if (alreadyNotified.has(msgKey)) continue;
 
@@ -77,6 +83,39 @@ Deno.serve(async (req) => {
             link: '/marketing/solicitacoes',
           });
         }
+      }
+    }
+
+    // ── Check events that ended with empty leads_gerados ──
+    const { data: endedEvents } = await supabase
+      .from('marketing_events')
+      .select('id, name, end_date, leads_gerados')
+      .lt('end_date', now)
+      .is('leads_gerados', null)
+      .in('status', ['active', 'completed']);
+
+    const { data: recentLeadNotifs } = await supabase
+      .from('notifications')
+      .select('message')
+      .gte('created_at', oneDayAgo)
+      .like('title', 'Leads pendente:%');
+
+    const alreadyNotifiedLeads = new Set(
+      (recentLeadNotifs || []).map((n: any) => n.message)
+    );
+
+    for (const evt of (endedEvents || [])) {
+      const msgKey = `O evento "${evt.name}" já terminou e o campo de Leads Gerados está vazio. Por favor, preencha.`;
+      if (alreadyNotifiedLeads.has(msgKey)) continue;
+
+      for (const userId of allMarketingIds) {
+        notifications.push({
+          user_id: userId,
+          title: `Leads pendente: ${evt.name}`,
+          message: msgKey,
+          type: 'warning',
+          link: '/marketing/eventos',
+        });
       }
     }
 

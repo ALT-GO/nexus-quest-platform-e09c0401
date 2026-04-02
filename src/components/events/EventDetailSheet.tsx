@@ -167,6 +167,28 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
               </div>
             )}
 
+            {/* Leads Gerados */}
+            <div className="space-y-2 p-3 rounded-lg border bg-muted/20">
+              <div className="flex items-center justify-between text-sm">
+                <div className="flex items-center gap-2 font-medium">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  Leads Gerados
+                </div>
+                {event.leads_gerados != null ? (
+                  <span className="font-semibold">{event.leads_gerados}</span>
+                ) : (
+                  <Badge variant="outline" className="text-xs text-warning">Não preenchido</Badge>
+                )}
+              </div>
+              {event.leads_gerados != null && event.budget > 0 && (
+                <div className="text-xs text-muted-foreground">
+                  Custo por Lead: {event.leads_gerados > 0
+                    ? (event.budget / event.leads_gerados).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                    : "—"}
+                </div>
+              )}
+            </div>
+
             {/* Notes */}
             {event.notes && (
               <div className="space-y-1.5">
