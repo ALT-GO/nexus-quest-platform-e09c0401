@@ -229,6 +229,11 @@ export function MarketingTaskDetailSheet({
   const { data: allDeps } = useTaskDependencies();
   const { data: allTasks } = useMarketingTasks();
   const { data: taskTypes } = useMarketingTaskTypes();
+  const { data: taskLinks } = useTaskLinks(task?.id ?? null);
+  const addTaskLink = useAddTaskLink();
+  const removeTaskLink = useRemoveTaskLink();
+  const { data: allEvents } = useMarketingEvents();
+  const [linkPopoverOpen, setLinkPopoverOpen] = useState(false);
 
   if (!task) return null;
 
