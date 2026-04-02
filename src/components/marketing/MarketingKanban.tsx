@@ -43,7 +43,7 @@ import { MarketingTimerButton } from "./MarketingTimerButton";
 import { notifyAdminsForApproval } from "@/lib/marketing-notifications";
 import { useAuth } from "@/hooks/use-auth";
 import { useAllTaskTags } from "@/hooks/use-marketing-tags";
-import { useTaskDependencies, isTaskBlocked } from "@/hooks/use-dependencies";
+import { useProfileAvatars } from "@/hooks/use-profile-avatars";
 import {
   Tooltip,
   TooltipContent,
