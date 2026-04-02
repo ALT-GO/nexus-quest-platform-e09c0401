@@ -26,6 +26,7 @@ export async function notifyAdminsForApproval(params: {
       message: `A tarefa "${params.taskTitle}" está aguardando aprovação.`,
       type: "warning",
       link: `/marketing/solicitacoes`,
+      scope: "marketing",
     }));
 
     await supabase.from("notifications" as any).insert(notifications);
