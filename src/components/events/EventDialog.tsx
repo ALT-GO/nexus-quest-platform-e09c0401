@@ -123,10 +123,14 @@ export function EventDialog({ open, onOpenChange, event }: Props) {
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-3 gap-3">
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Budget (R$)</Label>
               <Input type="number" value={budget} onChange={(e) => setBudget(e.target.value)} placeholder="0,00" min="0" step="0.01" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Leads Gerados</Label>
+              <Input type="number" value={leadsGerados} onChange={(e) => setLeadsGerados(e.target.value)} placeholder="0" min="0" step="1" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-xs font-medium">Prioridade</Label>
