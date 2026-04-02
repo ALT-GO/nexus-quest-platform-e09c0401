@@ -383,7 +383,7 @@ export default function GestaoFaturas() {
   };
 
   // Compute cost center rows from reportItems
-  const rows = useMemo<CostCenterRow[]>(() => {
+  const allRows = useMemo<CostCenterRow[]>(() => {
     if (!reportItems.length) return [];
     const map = new Map<string, { sum: number; items: number; type: "eng" | "man" | "none" }>();
 
@@ -422,6 +422,13 @@ export default function GestaoFaturas() {
       items: val.items,
     }));
   }, [reportItems]);
+
+  // Filter rows by selected empresa
+  const rows = useMemo(() => {
+    if (generatedEmpresa === "eng") return allRows.filter((r) => r.type === "eng" || r.type === "none");
+    if (generatedEmpresa === "man") return allRows.filter((r) => r.type === "man" || r.type === "none");
+    return allRows;
+  }, [allRows, generatedEmpresa]);
 
   const totalBase = rows.reduce((acc, r) => acc + r.sum, 0);
   const ajusteNum = parseFloat((ajusteGlobal || "0").replace(/[^\d.,-]/g, "").replace(",", ".")) || 0;
