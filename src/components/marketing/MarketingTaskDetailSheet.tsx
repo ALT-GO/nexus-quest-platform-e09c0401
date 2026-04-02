@@ -48,6 +48,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { ChecklistEditor } from "./ChecklistEditor";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
@@ -169,18 +170,34 @@ function TimeEstimateField({ taskId, currentMinutes, updateTask }: {
 }
 
 /* ─── Property Row ─── */
-function PropRow({ icon: Icon, label, children, isEmpty }: {
+function PropRow({ icon: Icon, label, children, isEmpty, tooltip }: {
   icon: React.ElementType;
   label: string;
   children: React.ReactNode;
   isEmpty?: boolean;
+  tooltip?: string;
 }) {
+  const labelContent = (
+    <div className="flex items-center gap-2 w-[160px] shrink-0">
+      <Icon className="h-4 w-4 text-muted-foreground" />
+      <span className="text-sm text-muted-foreground font-medium">{label}</span>
+    </div>
+  );
+
   return (
     <div className="flex items-center py-2 min-h-[36px] group">
-      <div className="flex items-center gap-2 w-[160px] shrink-0">
-        <Icon className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground font-medium">{label}</span>
-      </div>
+      {tooltip ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="cursor-help">{labelContent}</div>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="max-w-[220px] text-xs">
+            {tooltip}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        labelContent
+      )}
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   );
@@ -377,6 +394,7 @@ export function MarketingTaskDetailSheet({
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="w-full sm:max-w-[900px] p-0 flex flex-row gap-0 overflow-hidden" side="right">
+         <TooltipProvider delayDuration={300}>
           {/* ─── LEFT: Main Content ─── */}
           <ScrollArea className="flex-1 min-w-0">
             <div className="p-6 space-y-1">
@@ -465,7 +483,7 @@ export function MarketingTaskDetailSheet({
               {/* ─── Properties Grid ─── */}
               <div className="mt-4 space-y-0 divide-y divide-border/50">
                 {/* Status */}
-                <PropRow icon={Target} label="Status">
+                <PropRow icon={Target} label="Status" tooltip="Estado atual da tarefa: não iniciado, em progresso ou concluído">
                   <Select value={task.progress} onValueChange={handleProgressChange}>
                     <SelectTrigger className="w-auto h-7 border-none shadow-none gap-1.5 px-0">
                       <span className={cn(
@@ -489,7 +507,7 @@ export function MarketingTaskDetailSheet({
                 </PropRow>
 
                 {/* Stage */}
-                <PropRow icon={Hash} label="Etapa">
+                <PropRow icon={Hash} label="Etapa" tooltip="Coluna do Kanban onde a tarefa se encontra no fluxo de trabalho">
                   <Select value={task.stage_id || ""} onValueChange={handleStageChange}>
                     <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
                       <SelectValue />
@@ -502,7 +520,7 @@ export function MarketingTaskDetailSheet({
 
                 {/* Assignee */}
                 {(!hideEmpty || hasAssignee) && (
-                  <PropRow icon={User} label="Responsáveis" isEmpty={!hasAssignee}>
+                  <PropRow icon={User} label="Responsáveis" isEmpty={!hasAssignee} tooltip="Membro da equipe responsável por executar esta tarefa">
                     <Select value={task.assignee_id || ""} onValueChange={handleAssigneeChange}>
                       <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
                         {task.assignee_name ? (
@@ -523,7 +541,7 @@ export function MarketingTaskDetailSheet({
 
                 {/* Dates */}
                 {(!hideEmpty || hasDates) && (
-                  <PropRow icon={CalendarIcon} label="Datas" isEmpty={!hasDates}>
+                  <PropRow icon={CalendarIcon} label="Datas" isEmpty={!hasDates} tooltip="Data de início e data de vencimento da tarefa">
                     <div className="flex items-center gap-2 text-sm">
                       <Popover>
                         <PopoverTrigger asChild>
@@ -583,7 +601,7 @@ export function MarketingTaskDetailSheet({
                 )}
 
                 {/* Priority */}
-                <PropRow icon={Flag} label="Prioridade">
+                <PropRow icon={Flag} label="Prioridade" tooltip="Nível de urgência: baixa, média ou alta">
                   <Select value={task.priority} onValueChange={handlePriorityChange}>
                     <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
                       <span className={cn("flex items-center gap-1.5", priorityColors[task.priority])}>
@@ -601,30 +619,30 @@ export function MarketingTaskDetailSheet({
 
                 {/* Time estimate */}
                 {(!hideEmpty || hasTimeEstimate) && (
-                  <PropRow icon={Clock} label="Tempo estimado" isEmpty={!hasTimeEstimate}>
+                  <PropRow icon={Clock} label="Tempo estimado" isEmpty={!hasTimeEstimate} tooltip="Tempo previsto para conclusão da tarefa">
                     <TimeEstimateField taskId={task.id} currentMinutes={task.time_estimate_minutes} updateTask={updateTask} />
                   </PropRow>
                 )}
 
                 {/* Timer / Time tracked */}
-                <PropRow icon={Timer} label="Tempo rastreado">
+                <PropRow icon={Timer} label="Tempo rastreado" tooltip="Tempo real registrado via cronômetro enquanto trabalha na tarefa">
                   <MarketingTimerButton taskId={task.id} size="detail" />
                 </PropRow>
 
                 {/* Tags */}
-                <PropRow icon={Tag} label="Etiquetas">
+                <PropRow icon={Tag} label="Etiquetas" tooltip="Tags de categorização para filtrar e organizar tarefas">
                   <MarketingTagSelector taskId={task.id} />
                 </PropRow>
 
                 {/* Dependencies / Relationships */}
                 {allDeps && allTasks && (
-                  <PropRow icon={Link2} label="Relacionamentos">
+                  <PropRow icon={Link2} label="Relacionamentos" tooltip="Dependências entre tarefas: bloquear ou aguardar outra tarefa">
                     <DependencySection task={task} allTasks={allTasks} dependencies={allDeps} />
                   </PropRow>
                 )}
 
                 {/* Links (tasks + events) */}
-                <PropRow icon={Link2} label="Links">
+                <PropRow icon={Link2} label="Links" tooltip="Vincule esta tarefa a outras tarefas ou eventos relacionados">
                   <div className="space-y-1.5">
                     {(taskLinks || []).map((link) => {
                       const isOutgoing = link.task_id === task.id;
@@ -689,7 +707,7 @@ export function MarketingTaskDetailSheet({
                 </PropRow>
 
                 {/* Story Points */}
-                <PropRow icon={Target} label="Story Points">
+                <PropRow icon={Target} label="Story Points" tooltip="Pontos de esforço estimado para planejamento de sprints (método ágil)">
                   <Input
                     type="number"
                     min={0}
@@ -704,7 +722,7 @@ export function MarketingTaskDetailSheet({
                 </PropRow>
 
                 {/* Milestone */}
-                <PropRow icon={Diamond} label="Milestone">
+                <PropRow icon={Diamond} label="Milestone" tooltip="Marque como marco importante para destacar entregas-chave do projeto">
                   <Switch
                     checked={task.is_milestone ?? false}
                     onCheckedChange={(checked) => {
@@ -715,7 +733,7 @@ export function MarketingTaskDetailSheet({
                 </PropRow>
 
                 {/* Recurrence */}
-                <PropRow icon={Repeat} label="Recorrência">
+                <PropRow icon={Repeat} label="Recorrência" tooltip="Ative para que esta tarefa se repita automaticamente (diária, semanal ou mensal)">
                   <div className="flex items-center gap-2">
                     <Switch
                       checked={task.is_recurring}
@@ -906,6 +924,7 @@ export function MarketingTaskDetailSheet({
               </div>
             </div>
           </div>
+         </TooltipProvider>
         </SheetContent>
       </Sheet>
 
