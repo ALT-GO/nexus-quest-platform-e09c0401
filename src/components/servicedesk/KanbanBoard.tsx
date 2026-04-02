@@ -88,6 +88,7 @@ export function KanbanBoard({
   onDelete,
   onReorder,
 }: KanbanBoardProps) {
+  const { data: avatars } = useProfileAvatars();
   const getColumnTickets = useCallback(
     (statusId: string) =>
       tickets
