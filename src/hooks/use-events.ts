@@ -12,6 +12,7 @@ export interface MarketingEvent {
   budget: number;
   actual_cost: number | null;
   notes: string;
+  notes_participants: string;
   priority: string;
   status: string;
   checklist: any[];

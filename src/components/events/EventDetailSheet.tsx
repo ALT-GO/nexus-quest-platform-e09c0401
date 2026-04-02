@@ -14,7 +14,7 @@ import {
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
-import { MarketingEvent, useUpdateEvent, useEventParticipants, useManageEventParticipants } from "@/hooks/use-events";
+import { MarketingEvent, useUpdateEvent } from "@/hooks/use-events";
 import { useMarketingTasks, useCreateMarketingTask, MarketingTask, useMarketingStages } from "@/hooks/use-marketing";
 import { MarketingTaskDetailSheet } from "@/components/marketing/MarketingTaskDetailSheet";
 import { NewMarketingTaskDialog } from "@/components/marketing/NewMarketingTaskDialog";
@@ -41,8 +41,6 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
   const { data: allTasks } = useMarketingTasks();
   const { data: stages } = useMarketingStages();
   const { data: sprints } = useMarketingSprints();
-  const { data: participants } = useEventParticipants(event?.id ?? null);
-  const participantsMgr = useManageEventParticipants();
   const { data: avatars } = useProfileAvatars();
   const [teamMembers, setTeamMembers] = useState<{ id: string; name: string }[]>([]);
   const [newTaskDialogOpen, setNewTaskDialogOpen] = useState(false);
@@ -94,19 +92,6 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
     ? Math.round((checklist.filter(c => c.checked).length / checklist.length) * 100)
     : 0;
 
-  // Participant profiles
-  const participantProfiles = useMemo(() => {
-    if (!participants) return [];
-    return participants.map(p => {
-      const member = teamMembers.find(m => m.id === p.profile_id);
-      return { ...p, name: member?.name ?? "Desconhecido", avatarUrl: avatars?.byId[p.profile_id] ?? null };
-    });
-  }, [participants, teamMembers, avatars]);
-
-  const nonParticipantMembers = useMemo(() => {
-    const participantIds = new Set(participants?.map(p => p.profile_id) ?? []);
-    return teamMembers.filter(m => !participantIds.has(m.id));
-  }, [teamMembers, participants]);
 
   if (!event) return null;
   const st = statusLabels[event.status] || statusLabels.planning;
@@ -195,22 +180,24 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
 
             {/* Leads Gerados */}
             <div className="space-y-2 p-3 rounded-lg border bg-muted/20">
-              <div className="flex items-center justify-between text-sm">
-                <div className="flex items-center gap-2 font-medium">
-                  <Users className="h-4 w-4 text-muted-foreground" />
-                  Leads Gerados
-                </div>
-                {event.leads_gerados != null ? (
-                  <span className="font-semibold">{event.leads_gerados}</span>
-                ) : (
-                  <Badge variant="outline" className="text-xs text-warning">Não preenchido</Badge>
-                )}
+              <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                <Users className="h-3.5 w-3.5" />
+                Leads Gerados
               </div>
-              {event.leads_gerados != null && event.budget > 0 && (
+              <Input
+                type="number"
+                min={0}
+                placeholder="Quantidade de leads"
+                value={event.leads_gerados ?? ""}
+                onChange={(e) => {
+                  const val = e.target.value ? parseInt(e.target.value) : null;
+                  updateEvent.mutate({ id: event.id, leads_gerados: val } as any);
+                }}
+                className="h-8 w-full text-sm"
+              />
+              {event.leads_gerados != null && event.leads_gerados > 0 && event.budget > 0 && (
                 <div className="text-xs text-muted-foreground">
-                  Custo por Lead: {event.leads_gerados > 0
-                    ? (event.budget / event.leads_gerados).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
-                    : "—"}
+                  Custo por Lead: {(event.budget / event.leads_gerados).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
                 </div>
               )}
             </div>
@@ -225,42 +212,20 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
 
             <Separator />
 
-            {/* Participants */}
+            {/* Participants (free text) */}
             <div className="space-y-3">
-              <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium flex items-center gap-2">
-                  <Users className="h-4 w-4" />
-                  Participantes ({participantProfiles.length})
-                </h4>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                {participantProfiles.map((p) => (
-                  <div key={p.id} className="flex items-center gap-1.5 rounded-full border px-2 py-1 text-xs group">
-                    <UserAvatar name={p.name} avatarUrl={p.avatarUrl} className="h-5 w-5" fallbackClassName="text-[8px]" />
-                    <span>{p.name}</span>
-                    <button
-                      onClick={() => participantsMgr.remove(event.id, p.profile_id)}
-                      className="opacity-0 group-hover:opacity-100 text-destructive ml-1"
-                    >
-                      ×
-                    </button>
-                  </div>
-                ))}
-                {nonParticipantMembers.length > 0 && (
-                  <select
-                    className="text-xs border rounded px-2 py-1 bg-background"
-                    value=""
-                    onChange={(e) => {
-                      if (e.target.value) participantsMgr.add(event.id, e.target.value);
-                    }}
-                  >
-                    <option value="">+ Adicionar</option>
-                    {nonParticipantMembers.map(m => (
-                      <option key={m.id} value={m.id}>{m.name}</option>
-                    ))}
-                  </select>
-                )}
-              </div>
+              <h4 className="text-sm font-medium flex items-center gap-2">
+                <Users className="h-4 w-4" />
+                Participantes
+              </h4>
+              <Textarea
+                placeholder="Digite os nomes dos participantes (ex: João Silva, Maria Souza, Carlos Lima)"
+                value={event.notes_participants ?? ""}
+                onChange={(e) => {
+                  updateEvent.mutate({ id: event.id, notes_participants: e.target.value } as any);
+                }}
+                className="text-sm min-h-[60px]"
+              />
             </div>
 
             <Separator />

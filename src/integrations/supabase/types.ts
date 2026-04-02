@@ -325,6 +325,7 @@ export type Database = {
           location: string | null
           name: string
           notes: string | null
+          notes_participants: string | null
           priority: string
           start_date: string
           status: string
@@ -341,6 +342,7 @@ export type Database = {
           location?: string | null
           name: string
           notes?: string | null
+          notes_participants?: string | null
           priority?: string
           start_date: string
           status?: string
@@ -357,6 +359,7 @@ export type Database = {
           location?: string | null
           name?: string
           notes?: string | null
+          notes_participants?: string | null
           priority?: string
           start_date?: string
           status?: string
