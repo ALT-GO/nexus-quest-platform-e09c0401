@@ -41,10 +41,6 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
   const { data: allTasks } = useMarketingTasks();
   const { data: stages } = useMarketingStages();
   const { data: sprints } = useMarketingSprints();
-  const { data: participants } = useEventParticipants(event?.id ?? null);
-  const participantsMgr = useManageEventParticipants();
-  const { data: avatars } = useProfileAvatars();
-  const [teamMembers, setTeamMembers] = useState<{ id: string; name: string }[]>([]);
   const [newTaskDialogOpen, setNewTaskDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<MarketingTask | null>(null);
   const [taskDetailOpen, setTaskDetailOpen] = useState(false);
