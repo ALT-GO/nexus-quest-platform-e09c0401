@@ -97,6 +97,7 @@ const columnsByCategory: Record<string, ColDef[]> = {
     { key: "cost_center_eng", label: "Centro de custo - Eng" },
     { key: "cost_center_man", label: "Centro de custo - Man" },
     { key: "valor_mensal", label: "Valor Mensal (R$)", type: "currency" },
+    { key: "notes", label: "Notas" },
   ],
   tablets: [
     { key: "asset_code", label: "Id", mono: true },
