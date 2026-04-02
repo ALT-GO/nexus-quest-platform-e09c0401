@@ -706,7 +706,7 @@ export function MarketingTaskDetailSheet({
                 </PropRow>
 
                 {/* Story Points */}
-                <PropRow icon={Target} label="Story Points">
+                <PropRow icon={Target} label="Story Points" tooltip="Pontos de esforço estimado para planejamento de sprints (método ágil)">
                   <Input
                     type="number"
                     min={0}
