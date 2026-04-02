@@ -193,6 +193,16 @@ export default function Solicitacoes() {
               Gantt
             </Button>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setHideCompleted(!hideCompleted)}
+            className="gap-1.5"
+            title={hideCompleted ? "Mostrar tarefas concluídas" : "Ocultar tarefas concluídas"}
+          >
+            {hideCompleted ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {hideCompleted ? "Concluídas ocultas" : "Concluídas visíveis"}
+          </Button>
           <Button onClick={() => setDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" /> Nova Tarefa
           </Button>
