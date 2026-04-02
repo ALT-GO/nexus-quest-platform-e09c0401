@@ -677,5 +677,6 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
           </Card>
         </div>
       )}
+    </div>
   );
 }
