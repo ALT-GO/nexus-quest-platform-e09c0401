@@ -315,6 +315,7 @@ export type Database = {
       }
       marketing_events: {
         Row: {
+          actual_cost: number | null
           budget: number | null
           checklist: Json | null
           created_at: string
@@ -330,6 +331,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
+          actual_cost?: number | null
           budget?: number | null
           checklist?: Json | null
           created_at?: string
@@ -345,6 +347,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
+          actual_cost?: number | null
           budget?: number | null
           checklist?: Json | null
           created_at?: string
@@ -628,6 +631,55 @@ export type Database = {
         Relationships: [
           {
             foreignKeyName: "marketing_task_history_task_id_fkey"
+            columns: ["task_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_tasks"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_task_links: {
+        Row: {
+          created_at: string
+          id: string
+          link_type: string
+          linked_event_id: string | null
+          linked_task_id: string | null
+          task_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          link_type?: string
+          linked_event_id?: string | null
+          linked_task_id?: string | null
+          task_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          link_type?: string
+          linked_event_id?: string | null
+          linked_task_id?: string | null
+          task_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_task_links_linked_event_id_fkey"
+            columns: ["linked_event_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_task_links_linked_task_id_fkey"
+            columns: ["linked_task_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_tasks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_task_links_task_id_fkey"
             columns: ["task_id"]
             isOneToOne: false
             referencedRelation: "marketing_tasks"
