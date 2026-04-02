@@ -22,6 +22,7 @@ import ResetPassword from "./pages/auth/ResetPassword";
 import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 
+
 const queryClient = new QueryClient();
 
 function LoadingScreen() {
