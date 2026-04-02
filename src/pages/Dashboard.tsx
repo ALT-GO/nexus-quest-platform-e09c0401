@@ -5,11 +5,11 @@ import { useAuth } from "@/hooks/use-auth";
 import { CollaboratorDashboard } from "@/components/dashboard/CollaboratorDashboard";
 
 export default function Dashboard() {
-  const { isAdmin, roles } = useAuth();
+  const { isAdmin, roles, hasPermission } = useAuth();
   const isPrivileged = isAdmin || roles.includes("ti") || roles.includes("marketing");
 
-  // Redirect privileged users (gestores) to Torre de Controle
-  if (isPrivileged) {
+  // Only redirect if user actually has permission to see central-inteligencia
+  if (isPrivileged && hasPermission("ver_central_inteligencia")) {
     return <Navigate to="/central-inteligencia" replace />;
   }
 
