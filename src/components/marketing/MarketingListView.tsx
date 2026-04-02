@@ -70,6 +70,7 @@ export function MarketingListView({
   const updateTask = useUpdateMarketingTask();
   const { data: allDeps } = useTaskDependencies();
   const { data: taskTypes } = useMarketingTaskTypes();
+  const { user } = useAuth();
   const [sortKey, setSortKey] = useState<SortKey>("due_date");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [editingCell, setEditingCell] = useState<{ id: string; field: string } | null>(null);
