@@ -1,1 +1,4 @@
 project_id = "fxpvvcdtpvalamutozzn"
+
+[functions.create-marketing-request]
+verify_jwt = false
