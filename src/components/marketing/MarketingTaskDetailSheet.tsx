@@ -635,7 +635,7 @@ export function MarketingTaskDetailSheet({
 
                 {/* Dependencies / Relationships */}
                 {allDeps && allTasks && (
-                  <PropRow icon={Link2} label="Relacionamentos">
+                  <PropRow icon={Link2} label="Relacionamentos" tooltip="Dependências entre tarefas: bloquear ou aguardar outra tarefa">
                     <DependencySection task={task} allTasks={allTasks} dependencies={allDeps} />
                   </PropRow>
                 )}
