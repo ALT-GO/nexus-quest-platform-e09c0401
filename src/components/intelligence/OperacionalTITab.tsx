@@ -60,6 +60,8 @@ interface InventoryItem {
 const categoryLabels: Record<string, string> = {
   notebooks: "Notebooks",
   celulares: "Celulares",
+  tablets: "Tablets",
+  perifericos: "Periféricos",
   linhas: "Linhas",
   licencas: "Licenças",
 };
@@ -67,6 +69,8 @@ const categoryLabels: Record<string, string> = {
 const categoryIcons: Record<string, React.ElementType> = {
   notebooks: Laptop,
   celulares: Smartphone,
+  tablets: Monitor,
+  perifericos: Wrench,
   linhas: Phone,
   licencas: KeyRound,
 };
@@ -74,8 +78,10 @@ const categoryIcons: Record<string, React.ElementType> = {
 const categoryColorClasses: Record<string, string> = {
   notebooks: "text-primary",
   celulares: "text-info",
-  linhas: "text-warning",
-  licencas: "text-chart-4",
+  tablets: "text-success",
+  perifericos: "text-warning",
+  linhas: "text-chart-4",
+  licencas: "text-destructive",
 };
 
 const dayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
