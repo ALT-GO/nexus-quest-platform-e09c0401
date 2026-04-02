@@ -78,6 +78,9 @@ import { useMarketingTasks } from "@/hooks/use-marketing";
 import { DependencySection } from "./DependencySection";
 import { useMarketingTaskTypes } from "@/hooks/use-task-types";
 import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
+import { useTaskLinks, useAddTaskLink, useRemoveTaskLink } from "@/hooks/use-task-links";
+import { useMarketingEvents } from "@/hooks/use-events";
+import { CalendarIcon as CalendarEventIcon } from "lucide-react";
 
 interface Props {
   task: MarketingTask | null;
