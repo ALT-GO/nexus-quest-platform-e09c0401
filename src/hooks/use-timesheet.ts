@@ -246,12 +246,9 @@ export function useActiveTimers(userTicketIds?: string[]) {
   const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
   const [loading, setLoading] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, user, hasRole } = useAuth();
   const hasRoleRef = useRef<(role: string) => boolean>(() => false);
-
-  // Keep hasRole in a ref to avoid dependency issues
-  const { hasRole } = useAuth();
-  hasRoleRef.current = hasRole;
+  hasRoleRef.current = hasRole as (role: string) => boolean;
 
   const fetchActive = useCallback(async () => {
     setLoading(true);
