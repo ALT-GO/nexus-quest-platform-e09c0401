@@ -924,6 +924,7 @@ export function MarketingTaskDetailSheet({
               </div>
             </div>
           </div>
+         </TooltipProvider>
         </SheetContent>
       </Sheet>
 
