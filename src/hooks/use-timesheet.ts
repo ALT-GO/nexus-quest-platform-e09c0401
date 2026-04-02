@@ -392,10 +392,15 @@ export function useActiveTimers(userTicketIds?: string[]) {
     intervalRef.current = setInterval(() => {
       const now = Date.now();
       setActiveTimers((prev) =>
-        prev.map((t) => ({
-          ...t,
-          elapsed_seconds: Math.floor((now - new Date(t.start_time).getTime()) / 1000),
-        }))
+        prev.map((t) => {
+          const currentSession = Math.floor((now - new Date(t.start_time).getTime()) / 1000);
+          const baseAccumulated = t.total_accumulated_seconds - t.elapsed_seconds;
+          return {
+            ...t,
+            elapsed_seconds: currentSession,
+            total_accumulated_seconds: baseAccumulated + currentSession,
+          };
+        })
       );
     }, 1000);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
