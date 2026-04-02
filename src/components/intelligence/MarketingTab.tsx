@@ -847,6 +847,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             value={activeSprint ? `${sprintPointsDone}/${sprintPointsTotal} pts` : "—"}
             icon={Zap}
             description={activeSprint?.name ?? "Nenhum sprint ativo"}
+            onClick={() => navigate("/marketing/solicitacoes")}
           />
         </div>
       </div>
