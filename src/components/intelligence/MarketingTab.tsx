@@ -1,5 +1,6 @@
 import { useMemo, useEffect, useState } from "react";
 import { ActiveTimersCard } from "@/components/dashboard/ActiveTimersCard";
+import { EventCalendarCard } from "@/components/dashboard/EventCalendarCard";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchMarketingTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
 import { useMarketingTasks, MarketingTask, useMarketingStages } from "@/hooks/use-marketing";
@@ -20,7 +21,7 @@ import {
   PieChart, Pie, Cell, Legend,
 } from "recharts";
 import { cn } from "@/lib/utils";
-import { format, differenceInDays } from "date-fns";
+import { format, differenceInDays, isSameDay, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
 interface MarketingTabProps {
@@ -259,6 +260,9 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   return (
     <div className="space-y-6">
       <ActiveTimersCard />
+
+      {/* Event Calendar */}
+      <EventCalendarCard events={events ?? []} />
 
       {/* Row 1: Key stat cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
