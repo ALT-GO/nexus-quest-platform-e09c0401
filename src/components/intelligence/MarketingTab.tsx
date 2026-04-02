@@ -793,6 +793,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             value={`${avgGoalProgress}%`}
             icon={Target}
             description={`${activeGoals.length} metas ativas`}
+            onClick={() => navigate("/marketing/metas")}
           />
         </div>
 
