@@ -221,6 +221,7 @@ Deno.serve(async (req) => {
               message: msgKey,
               type: threshold.days <= 1 ? 'warning' : 'info',
               link: '/marketing/eventos',
+              scope: 'marketing',
             });
           }
           break;
