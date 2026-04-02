@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState, useEffect, useCallback } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import { format, addDays, differenceInDays, startOfDay, startOfWeek, endOfWeek, isToday, isWeekend } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
@@ -55,17 +55,14 @@ function isCompleted(item: GanttItem): boolean {
   return p === "concluído" || p === "completed" || p === "done";
 }
 
-const SIDEBAR_WIDTH = 320;
-const ROW_HEIGHT = 40;
-const HEADER_HEIGHT = 56;
-
 export function GanttChart({ items, onItemClick }: GanttChartProps) {
-  const timelineScrollRef = useRef<HTMLDivElement>(null);
-  const bodyScrollRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState<ZoomLevel>("week");
   const dayWidth = zoomConfig[zoom].dayWidth;
+  const SIDEBAR_WIDTH = 320;
+  const ROW_HEIGHT = 40;
+  const HEADER_HEIGHT = 56;
 
-  // Calculate date range
   const { rangeStart, rangeEnd, totalDays } = useMemo(() => {
     const today = startOfDay(new Date());
     let minDate = today;
@@ -91,41 +88,18 @@ export function GanttChart({ items, onItemClick }: GanttChartProps) {
     };
   }, [items]);
 
-  // Scroll to today on mount
   useEffect(() => {
-    if (timelineScrollRef.current) {
+    if (scrollRef.current) {
       const todayOffset = differenceInDays(startOfDay(new Date()), rangeStart);
       const scrollTo = todayOffset * dayWidth - 300;
-      timelineScrollRef.current.scrollLeft = Math.max(0, scrollTo);
+      scrollRef.current.scrollLeft = Math.max(0, scrollTo);
     }
   }, [rangeStart, dayWidth]);
 
-  // Sync horizontal scroll from the timeline header to the body and vice-versa
-  const syncingRef = useRef(false);
-  const handleTimelineHeaderScroll = useCallback(() => {
-    if (syncingRef.current) return;
-    syncingRef.current = true;
-    if (timelineScrollRef.current && bodyScrollRef.current) {
-      bodyScrollRef.current.scrollLeft = timelineScrollRef.current.scrollLeft;
-    }
-    syncingRef.current = false;
-  }, []);
-
-  const handleBodyScroll = useCallback(() => {
-    if (syncingRef.current) return;
-    syncingRef.current = true;
-    if (bodyScrollRef.current && timelineScrollRef.current) {
-      timelineScrollRef.current.scrollLeft = bodyScrollRef.current.scrollLeft;
-    }
-    syncingRef.current = false;
-  }, []);
-
-  // Generate day columns
   const days = useMemo(() => {
     return Array.from({ length: totalDays }, (_, i) => addDays(rangeStart, i));
   }, [rangeStart, totalDays]);
 
-  // Group items
   const groups = useMemo(() => {
     const map = new Map<string, GanttItem[]>();
     items.forEach((item) => {
@@ -136,7 +110,6 @@ export function GanttChart({ items, onItemClick }: GanttChartProps) {
     return Array.from(map.entries());
   }, [items]);
 
-  // Flatten for rendering
   const rows = useMemo(() => {
     const flat: Array<{ type: "group"; label: string; count: number } | { type: "item"; item: GanttItem }> = [];
     groups.forEach(([label, groupItems]) => {
@@ -161,6 +134,7 @@ export function GanttChart({ items, onItemClick }: GanttChartProps) {
   };
 
   const todayOffset = differenceInDays(startOfDay(new Date()), rangeStart);
+  const timelineWidth = totalDays * dayWidth;
 
   const cycleZoom = (dir: "in" | "out") => {
     const levels: ZoomLevel[] = ["month", "week", "day"];
@@ -170,21 +144,15 @@ export function GanttChart({ items, onItemClick }: GanttChartProps) {
   };
 
   const scrollToToday = () => {
-    const scrollTo = todayOffset * dayWidth - 300;
-    if (timelineScrollRef.current) {
-      timelineScrollRef.current.scrollTo({ left: Math.max(0, scrollTo), behavior: "smooth" });
-    }
-    if (bodyScrollRef.current) {
-      bodyScrollRef.current.scrollTo({ left: Math.max(0, scrollTo), behavior: "smooth" });
+    if (scrollRef.current) {
+      const scrollTo = todayOffset * dayWidth - 300;
+      scrollRef.current.scrollTo({ left: Math.max(0, scrollTo), behavior: "smooth" });
     }
   };
-
-  const timelineWidth = totalDays * dayWidth;
 
   return (
     <TooltipProvider>
       <div className="flex flex-col border rounded-xl bg-card overflow-hidden h-[calc(100vh-280px)]">
-        {/* Toolbar */}
         <div className="flex items-center gap-2 px-3 py-2 border-b bg-muted/30">
           <Button variant="outline" size="sm" className="h-7 text-xs" onClick={scrollToToday}>
             Hoje
@@ -203,194 +171,182 @@ export function GanttChart({ items, onItemClick }: GanttChartProps) {
           </span>
         </div>
 
-        {/* Sticky header row */}
-        <div className="flex shrink-0 border-b" style={{ height: HEADER_HEIGHT }}>
-          {/* Sidebar header */}
+        <div ref={scrollRef} className="flex-1 overflow-auto">
           <div
-            className="shrink-0 flex items-center px-3 bg-muted/50 font-medium text-xs text-muted-foreground border-r"
-            style={{ width: SIDEBAR_WIDTH }}
+            className="relative"
+            style={{
+              width: SIDEBAR_WIDTH + timelineWidth,
+              minHeight: HEADER_HEIGHT + rows.length * ROW_HEIGHT,
+            }}
           >
-            Nome
-          </div>
-          {/* Timeline header - horizontal scroll only */}
-          <div
-            ref={timelineScrollRef}
-            className="flex-1 overflow-x-auto overflow-y-hidden"
-            onScroll={handleTimelineHeaderScroll}
-            style={{ scrollbarWidth: "none" }}
-          >
-            <div className="flex bg-muted/50" style={{ width: timelineWidth }}>
-              {days.map((day, i) => {
-                const isWeekStart = day.getDay() === 1;
-                const isMonthStart = day.getDate() === 1;
-                const today = isToday(day);
+            <div className="sticky top-0 z-30 flex border-b bg-card" style={{ height: HEADER_HEIGHT }}>
+              <div
+                className="sticky left-0 z-40 flex items-center px-3 border-r bg-muted/50 font-medium text-xs text-muted-foreground"
+                style={{ width: SIDEBAR_WIDTH }}
+              >
+                Nome
+              </div>
+              <div className="flex bg-muted/50" style={{ width: timelineWidth }}>
+                {days.map((day, i) => {
+                  const isWeekStart = day.getDay() === 1;
+                  const isMonthStart = day.getDate() === 1;
+                  const today = isToday(day);
+                  return (
+                    <div
+                      key={i}
+                      className={cn(
+                        "shrink-0 flex flex-col items-center justify-center border-r text-[10px]",
+                        isWeekend(day) && "bg-muted/40",
+                        today && "bg-primary/5"
+                      )}
+                      style={{ width: dayWidth }}
+                    >
+                      {(zoom === "day" || isWeekStart || isMonthStart) && (
+                        <>
+                          <span className="text-muted-foreground font-medium uppercase">
+                            {format(day, "EEE", { locale: ptBR })}
+                          </span>
+                          <span
+                            className={cn(
+                              "font-bold",
+                              today
+                                ? "bg-destructive text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]"
+                                : "text-foreground"
+                            )}
+                          >
+                            {format(day, "d")}
+                          </span>
+                        </>
+                      )}
+                      {zoom !== "day" && !isWeekStart && !isMonthStart && (
+                        <span className="text-muted-foreground/50">{format(day, "d")}</span>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="relative">
+              {rows.map((row, rowIndex) => {
+                if (row.type === "group") {
+                  return (
+                    <div key={`g-${rowIndex}`} className="flex border-b" style={{ height: ROW_HEIGHT }}>
+                      <div
+                        className="sticky left-0 z-20 flex items-center gap-2 px-3 bg-muted/20 border-r font-semibold text-sm"
+                        style={{ width: SIDEBAR_WIDTH }}
+                      >
+                        <span className="text-foreground">{row.label}</span>
+                        <span className="text-xs text-muted-foreground font-normal">{row.count}</span>
+                      </div>
+                      <div className="bg-muted/20" style={{ width: timelineWidth }} />
+                    </div>
+                  );
+                }
+
+                const item = row.item;
+                const bar = getBarPosition(item);
+                const color = getBarColor(item);
+                const completed = isCompleted(item);
+
                 return (
-                  <div
-                    key={i}
-                    className={cn(
-                      "shrink-0 flex flex-col items-center justify-center border-r text-[10px]",
-                      isWeekend(day) && "bg-muted/40",
-                      today && "bg-primary/5"
-                    )}
-                    style={{ width: dayWidth, height: HEADER_HEIGHT }}
-                  >
-                    {(zoom === "day" || isWeekStart || isMonthStart) && (
-                      <>
-                        <span className="text-muted-foreground font-medium uppercase">
-                          {format(day, "EEE", { locale: ptBR })}
-                        </span>
-                        <span className={cn(
-                          "font-bold",
-                          today ? "bg-destructive text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]" : "text-foreground"
-                        )}>
-                          {format(day, "d")}
-                        </span>
-                      </>
-                    )}
-                    {zoom !== "day" && !isWeekStart && !isMonthStart && (
-                      <span className="text-muted-foreground/50">{format(day, "d")}</span>
-                    )}
+                  <div key={item.id} className="flex border-b" style={{ height: ROW_HEIGHT }}>
+                    <div
+                      className="sticky left-0 z-20 flex items-center gap-2 px-3 border-r bg-card hover:bg-muted/30 cursor-pointer transition-colors"
+                      style={{ width: SIDEBAR_WIDTH }}
+                      onClick={() => onItemClick?.(item.id)}
+                    >
+                      <div
+                        className="h-2 w-2 rounded-full shrink-0"
+                        style={{ backgroundColor: `hsl(${color})` }}
+                      />
+                      {item.assigneeName && (
+                        <UserAvatar
+                          name={item.assigneeName}
+                          avatarUrl={item.assigneeAvatarUrl}
+                          className="h-5 w-5 shrink-0"
+                          fallbackClassName="text-[8px]"
+                        />
+                      )}
+                      <span
+                        className={cn(
+                          "text-sm truncate flex-1",
+                          completed && "line-through text-muted-foreground"
+                        )}
+                      >
+                        {item.title}
+                      </span>
+                    </div>
+
+                    <div className="relative" style={{ width: timelineWidth, height: ROW_HEIGHT }}>
+                      {days.map((day, di) =>
+                        isWeekend(day) ? (
+                          <div
+                            key={di}
+                            className="absolute top-0 bottom-0 bg-muted/20"
+                            style={{ left: di * dayWidth, width: dayWidth }}
+                          />
+                        ) : null
+                      )}
+
+                      {bar && (
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div
+                              className={cn(
+                                "absolute top-[8px] rounded-md cursor-pointer transition-all hover:brightness-110 hover:shadow-md",
+                                completed && "opacity-50"
+                              )}
+                              style={{
+                                left: bar.left + 2,
+                                width: Math.max(bar.width, 8),
+                                height: ROW_HEIGHT - 16,
+                                backgroundColor: `hsl(${color})`,
+                              }}
+                              onClick={() => onItemClick?.(item.id)}
+                            />
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="text-xs">
+                            <p className="font-semibold">{item.title}</p>
+                            {item.startDate && (
+                              <p className="text-muted-foreground">
+                                {format(new Date(item.startDate), "dd/MM")}
+                                {item.endDate && ` → ${format(new Date(item.endDate), "dd/MM")}`}
+                              </p>
+                            )}
+                            {item.assigneeName && <p>{item.assigneeName}</p>}
+                          </TooltipContent>
+                        </Tooltip>
+                      )}
+
+                      {!bar && (
+                        <div
+                          className="absolute top-[14px] rounded-full"
+                          style={{
+                            left: todayOffset * dayWidth + dayWidth / 2 - 4,
+                            width: 8,
+                            height: 8,
+                            backgroundColor: `hsl(${color} / 0.4)`,
+                          }}
+                        />
+                      )}
+                    </div>
                   </div>
                 );
               })}
-            </div>
-          </div>
-        </div>
 
-        {/* Body: single scroll container for both sidebar rows and timeline bars */}
-        <div
-          ref={bodyScrollRef}
-          className="flex-1 overflow-auto"
-          onScroll={handleBodyScroll}
-        >
-          <div style={{ width: SIDEBAR_WIDTH + timelineWidth, minHeight: rows.length * ROW_HEIGHT }}>
-            {rows.map((row, rowIndex) => {
-              const top = rowIndex * ROW_HEIGHT;
-
-              if (row.type === "group") {
-                return (
-                  <div
-                    key={`row-${rowIndex}`}
-                    className="flex border-b"
-                    style={{ height: ROW_HEIGHT }}
-                  >
-                    {/* Sidebar group */}
-                    <div
-                      className="shrink-0 flex items-center gap-2 px-3 bg-muted/20 font-semibold text-sm sticky left-0 z-10 border-r"
-                      style={{ width: SIDEBAR_WIDTH }}
-                    >
-                      <span className="text-foreground">{row.label}</span>
-                      <span className="text-xs text-muted-foreground font-normal">{row.count}</span>
-                    </div>
-                    {/* Timeline group row */}
-                    <div className="bg-muted/20" style={{ width: timelineWidth, height: ROW_HEIGHT }} />
-                  </div>
-                );
-              }
-
-              const item = row.item;
-              const bar = getBarPosition(item);
-              const color = getBarColor(item);
-              const completed = isCompleted(item);
-
-              return (
-                <div
-                  key={item.id}
-                  className="flex border-b"
-                  style={{ height: ROW_HEIGHT }}
-                >
-                  {/* Sidebar item - sticky left */}
-                  <div
-                    className="shrink-0 flex items-center gap-2 px-3 hover:bg-muted/30 cursor-pointer transition-colors sticky left-0 z-10 bg-card border-r"
-                    style={{ width: SIDEBAR_WIDTH }}
-                    onClick={() => onItemClick?.(item.id)}
-                  >
-                    <div
-                      className="h-2 w-2 rounded-full shrink-0"
-                      style={{ backgroundColor: `hsl(${color})` }}
-                    />
-                    {item.assigneeName && (
-                      <UserAvatar
-                        name={item.assigneeName}
-                        avatarUrl={item.assigneeAvatarUrl}
-                        className="h-5 w-5 shrink-0"
-                        fallbackClassName="text-[8px]"
-                      />
-                    )}
-                    <span className={cn(
-                      "text-sm truncate flex-1",
-                      completed && "line-through text-muted-foreground"
-                    )}>
-                      {item.title}
-                    </span>
-                  </div>
-
-                  {/* Timeline bar area */}
-                  <div className="relative" style={{ width: timelineWidth, height: ROW_HEIGHT }}>
-                    {/* Weekend striping */}
-                    {days.map((day, di) =>
-                      isWeekend(day) ? (
-                        <div
-                          key={di}
-                          className="absolute top-0 bottom-0 bg-muted/20"
-                          style={{ left: di * dayWidth, width: dayWidth }}
-                        />
-                      ) : null
-                    )}
-
-                    {/* Bar */}
-                    {bar && (
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <div
-                            className={cn(
-                              "absolute top-[8px] rounded-md cursor-pointer transition-all hover:brightness-110 hover:shadow-md",
-                              completed && "opacity-50"
-                            )}
-                            style={{
-                              left: bar.left + 2,
-                              width: Math.max(bar.width, 8),
-                              height: ROW_HEIGHT - 16,
-                              backgroundColor: `hsl(${color})`,
-                            }}
-                            onClick={() => onItemClick?.(item.id)}
-                          />
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="text-xs">
-                          <p className="font-semibold">{item.title}</p>
-                          {item.startDate && (
-                            <p className="text-muted-foreground">
-                              {format(new Date(item.startDate), "dd/MM")}
-                              {item.endDate && ` → ${format(new Date(item.endDate), "dd/MM")}`}
-                            </p>
-                          )}
-                          {item.assigneeName && <p>{item.assigneeName}</p>}
-                        </TooltipContent>
-                      </Tooltip>
-                    )}
-
-                    {/* No-date dot */}
-                    {!bar && (
-                      <div
-                        className="absolute top-[14px] rounded-full"
-                        style={{
-                          left: todayOffset * dayWidth + dayWidth / 2 - 4,
-                          width: 8,
-                          height: 8,
-                          backgroundColor: `hsl(${color} / 0.4)`,
-                        }}
-                      />
-                    )}
-
-                    {/* Today line */}
-                    <div
-                      className="absolute top-0 bottom-0 w-px bg-destructive z-20 pointer-events-none"
-                      style={{ left: todayOffset * dayWidth + dayWidth / 2 }}
-                    />
-                  </div>
+              <div
+                className="absolute bottom-0 w-px bg-destructive z-20 pointer-events-none"
+                style={{
+                  top: 0,
+                  left: SIDEBAR_WIDTH + todayOffset * dayWidth + dayWidth / 2,
+                }}
+              >
+                <div className="absolute top-0 -translate-x-1/2 bg-destructive text-white text-[9px] font-bold px-1 rounded-b">
+                  Hoje
                 </div>
-              );
-            })}
+              </div>
+            </div>
           </div>
         </div>
       </div>
