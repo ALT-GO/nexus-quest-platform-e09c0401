@@ -145,10 +145,15 @@ export default function Solicitacoes() {
     if (filterTaskType !== "all") {
       result = result.filter((t) => t.task_type_id === filterTaskType);
     }
-    // Hide completed tasks (stage meta_status === "completed")
-    if (hideCompleted && stages) {
-      const completedStageIds = stages.filter(s => s.meta_status === "completed").map(s => s.id);
-      result = result.filter(t => !t.stage_id || !completedStageIds.includes(t.stage_id));
+    // Hide completed tasks (stage meta_status === "completed" OR progress === "Concluído")
+    if (hideCompleted) {
+      const completedStageIds = (stages ?? []).filter(s => s.meta_status === "completed").map(s => s.id);
+      result = result.filter(t => {
+        const isCompletedByStage = t.stage_id && completedStageIds.includes(t.stage_id);
+        const isCompletedByProgress = t.progress === "Concluído";
+        const isCompletedByTimestamp = !!t.completed_at;
+        return !isCompletedByStage && !isCompletedByProgress && !isCompletedByTimestamp;
+      });
     }
     return result;
   }, [tasks, stages, selectedSprintId, searchQuery, filterPriority, filterAssignee, filterProgress, filterMilestoneOnly, filterTaskType, hideCompleted]);
