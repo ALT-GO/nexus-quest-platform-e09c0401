@@ -77,6 +77,7 @@ const navGroups: NavGroup[] = [
     items: [
       { id: "import-assets", label: "Importar Ativos", icon: Upload, roles: ["admin", "ti"] },
       { id: "import-tickets", label: "Importar Chamados", icon: Upload, roles: ["admin", "ti"] },
+      { id: "import-marketing", label: "Importar Tarefas MKT", icon: FileSpreadsheet, roles: ["admin", "marketing"] },
     ],
   },
   {
@@ -173,6 +174,7 @@ export default function Configuracoes() {
           {currentSection === "mkt-types" && <TaskTypesManagerTab />}
           {currentSection === "import-assets" && <CsvImportTab />}
           {currentSection === "import-tickets" && <TicketImportTab />}
+          {currentSection === "import-marketing" && <MarketingImportTab />}
           {currentSection === "audit-log" && <AuditLogSection />}
           {currentSection === "integrity" && <IntegrityAuditorTab />}
           {currentSection === "danger" && <DangerZoneTab />}
