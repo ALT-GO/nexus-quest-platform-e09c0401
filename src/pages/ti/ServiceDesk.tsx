@@ -319,12 +319,6 @@ export default function ServiceDesk() {
         title="Service Desk"
         description="Central de atendimento e suporte de TI"
       >
-        <StatusManagerDialog
-          statuses={statuses}
-          onAdd={addStatus}
-          onUpdate={updateStatus}
-          onReorder={reorderStatuses}
-        />
         <NewTicketDialog />
         
         <Button variant="outline" asChild>
