@@ -606,6 +606,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           icon={Phone}
           description={`${filteredInv.filter((a) => a.category === "linhas" && a.valor_mensal && a.valor_mensal > 0).length} linhas ativas`}
           className="border-l-4 border-l-primary"
+          onClick={() => navigate("/ti/gestao-faturas")}
         />
         <StatCard
           title="Depreciação Acumulada"
@@ -613,6 +614,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           icon={TrendingDown}
           description={`${depreciationTotal.assetCount} ativos · Original: ${formatBRL(depreciationTotal.totalOriginal)}`}
           className="border-l-4 border-l-destructive"
+          onClick={() => navigate("/ti/gestao-ativos")}
         />
         <StatCard
           title="Total de Ativos"
@@ -620,6 +622,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           icon={Monitor}
           description={`${assetsEmUso + assetsAtivo} ativos · ${assetsInativo} inativos`}
           className="border-l-4 border-l-success"
+          onClick={() => navigate("/ti/gestao-ativos")}
         />
       </div>
 
