@@ -151,6 +151,7 @@ Deno.serve(async (req) => {
               message: notifMsg,
               type: 'info',
               link: '/marketing/solicitacoes',
+              scope: 'marketing',
             });
           }
         }
