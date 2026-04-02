@@ -22,6 +22,9 @@ import {
 } from "recharts";
 import { useTickets } from "@/hooks/use-tickets";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
 
 import type { CostCenterFilter } from "@/pages/CentralInteligencia";
 
