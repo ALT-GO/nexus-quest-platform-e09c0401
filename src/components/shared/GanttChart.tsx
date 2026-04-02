@@ -1,9 +1,9 @@
-import { useMemo, useRef, useState, useEffect } from "react";
-import { format, addDays, differenceInDays, startOfDay, startOfWeek, endOfWeek, isToday, isSameDay, isWeekend } from "date-fns";
+import { useMemo, useRef, useState, useEffect, useCallback } from "react";
+import { format, addDays, differenceInDays, startOfDay, startOfWeek, endOfWeek, isToday, isWeekend } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { ChevronLeft, ChevronRight, ZoomIn, ZoomOut } from "lucide-react";
+import { ZoomIn, ZoomOut } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -18,11 +18,11 @@ export interface GanttItem {
   group?: string;
   startDate: string | null;
   endDate: string | null;
-  progress?: string; // "Concluído", "Em andamento", etc.
+  progress?: string;
   priority?: string;
   assigneeName?: string;
   assigneeAvatarUrl?: string;
-  color?: string; // HSL string
+  color?: string;
 }
 
 interface GanttChartProps {
@@ -55,13 +55,15 @@ function isCompleted(item: GanttItem): boolean {
   return p === "concluído" || p === "completed" || p === "done";
 }
 
+const SIDEBAR_WIDTH = 320;
+const ROW_HEIGHT = 40;
+const HEADER_HEIGHT = 56;
+
 export function GanttChart({ items, onItemClick }: GanttChartProps) {
-  const scrollRef = useRef<HTMLDivElement>(null);
+  const timelineScrollRef = useRef<HTMLDivElement>(null);
+  const bodyScrollRef = useRef<HTMLDivElement>(null);
   const [zoom, setZoom] = useState<ZoomLevel>("week");
   const dayWidth = zoomConfig[zoom].dayWidth;
-  const SIDEBAR_WIDTH = 320;
-  const ROW_HEIGHT = 40;
-  const HEADER_HEIGHT = 56;
 
   // Calculate date range
   const { rangeStart, rangeEnd, totalDays } = useMemo(() => {
@@ -80,7 +82,6 @@ export function GanttChart({ items, onItemClick }: GanttChartProps) {
       }
     });
 
-    // Add padding
     const start = addDays(startOfWeek(minDate, { locale: ptBR }), -7);
     const end = addDays(endOfWeek(maxDate, { locale: ptBR }), 14);
     return {
@@ -92,12 +93,32 @@ export function GanttChart({ items, onItemClick }: GanttChartProps) {
 
   // Scroll to today on mount
   useEffect(() => {
-    if (scrollRef.current) {
+    if (timelineScrollRef.current) {
       const todayOffset = differenceInDays(startOfDay(new Date()), rangeStart);
       const scrollTo = todayOffset * dayWidth - 300;
-      scrollRef.current.scrollLeft = Math.max(0, scrollTo);
+      timelineScrollRef.current.scrollLeft = Math.max(0, scrollTo);
     }
   }, [rangeStart, dayWidth]);
+
+  // Sync horizontal scroll from the timeline header to the body and vice-versa
+  const syncingRef = useRef(false);
+  const handleTimelineHeaderScroll = useCallback(() => {
+    if (syncingRef.current) return;
+    syncingRef.current = true;
+    if (timelineScrollRef.current && bodyScrollRef.current) {
+      bodyScrollRef.current.scrollLeft = timelineScrollRef.current.scrollLeft;
+    }
+    syncingRef.current = false;
+  }, []);
+
+  const handleBodyScroll = useCallback(() => {
+    if (syncingRef.current) return;
+    syncingRef.current = true;
+    if (bodyScrollRef.current && timelineScrollRef.current) {
+      timelineScrollRef.current.scrollLeft = bodyScrollRef.current.scrollLeft;
+    }
+    syncingRef.current = false;
+  }, []);
 
   // Generate day columns
   const days = useMemo(() => {
@@ -117,7 +138,6 @@ export function GanttChart({ items, onItemClick }: GanttChartProps) {
 
   // Flatten for rendering
   const rows = useMemo(() => {
-    const result: { type: "group"; label: string; count: number }[] | { type: "item"; item: GanttItem }[] = [];
     const flat: Array<{ type: "group"; label: string; count: number } | { type: "item"; item: GanttItem }> = [];
     groups.forEach(([label, groupItems]) => {
       if (groups.length > 1 || label !== "Sem grupo") {
@@ -150,11 +170,16 @@ export function GanttChart({ items, onItemClick }: GanttChartProps) {
   };
 
   const scrollToToday = () => {
-    if (scrollRef.current) {
-      const scrollTo = todayOffset * dayWidth - 300;
-      scrollRef.current.scrollTo({ left: Math.max(0, scrollTo), behavior: "smooth" });
+    const scrollTo = todayOffset * dayWidth - 300;
+    if (timelineScrollRef.current) {
+      timelineScrollRef.current.scrollTo({ left: Math.max(0, scrollTo), behavior: "smooth" });
+    }
+    if (bodyScrollRef.current) {
+      bodyScrollRef.current.scrollTo({ left: Math.max(0, scrollTo), behavior: "smooth" });
     }
   };
+
+  const timelineWidth = totalDays * dayWidth;
 
   return (
     <TooltipProvider>
@@ -178,123 +203,130 @@ export function GanttChart({ items, onItemClick }: GanttChartProps) {
           </span>
         </div>
 
-        <div className="flex flex-1 overflow-hidden">
-          {/* Sidebar */}
-          <div className="shrink-0 border-r bg-card overflow-y-auto" style={{ width: SIDEBAR_WIDTH }}>
-            {/* Sidebar header */}
-            <div className="sticky top-0 z-10 flex items-center px-3 border-b bg-muted/50 font-medium text-xs text-muted-foreground" style={{ height: HEADER_HEIGHT }}>
-              Nome
+        {/* Sticky header row */}
+        <div className="flex shrink-0 border-b" style={{ height: HEADER_HEIGHT }}>
+          {/* Sidebar header */}
+          <div
+            className="shrink-0 flex items-center px-3 bg-muted/50 font-medium text-xs text-muted-foreground border-r"
+            style={{ width: SIDEBAR_WIDTH }}
+          >
+            Nome
+          </div>
+          {/* Timeline header - horizontal scroll only */}
+          <div
+            ref={timelineScrollRef}
+            className="flex-1 overflow-x-auto overflow-y-hidden"
+            onScroll={handleTimelineHeaderScroll}
+            style={{ scrollbarWidth: "none" }}
+          >
+            <div className="flex bg-muted/50" style={{ width: timelineWidth }}>
+              {days.map((day, i) => {
+                const isWeekStart = day.getDay() === 1;
+                const isMonthStart = day.getDate() === 1;
+                const today = isToday(day);
+                return (
+                  <div
+                    key={i}
+                    className={cn(
+                      "shrink-0 flex flex-col items-center justify-center border-r text-[10px]",
+                      isWeekend(day) && "bg-muted/40",
+                      today && "bg-primary/5"
+                    )}
+                    style={{ width: dayWidth, height: HEADER_HEIGHT }}
+                  >
+                    {(zoom === "day" || isWeekStart || isMonthStart) && (
+                      <>
+                        <span className="text-muted-foreground font-medium uppercase">
+                          {format(day, "EEE", { locale: ptBR })}
+                        </span>
+                        <span className={cn(
+                          "font-bold",
+                          today ? "bg-destructive text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]" : "text-foreground"
+                        )}>
+                          {format(day, "d")}
+                        </span>
+                      </>
+                    )}
+                    {zoom !== "day" && !isWeekStart && !isMonthStart && (
+                      <span className="text-muted-foreground/50">{format(day, "d")}</span>
+                    )}
+                  </div>
+                );
+              })}
             </div>
-            {/* Sidebar rows */}
-            {rows.map((row, i) => {
+          </div>
+        </div>
+
+        {/* Body: single scroll container for both sidebar rows and timeline bars */}
+        <div
+          ref={bodyScrollRef}
+          className="flex-1 overflow-auto"
+          onScroll={handleBodyScroll}
+        >
+          <div style={{ width: SIDEBAR_WIDTH + timelineWidth, minHeight: rows.length * ROW_HEIGHT }}>
+            {rows.map((row, rowIndex) => {
+              const top = rowIndex * ROW_HEIGHT;
+
               if (row.type === "group") {
                 return (
                   <div
-                    key={`g-${i}`}
-                    className="flex items-center gap-2 px-3 bg-muted/20 border-b font-semibold text-sm"
+                    key={`row-${rowIndex}`}
+                    className="flex border-b"
                     style={{ height: ROW_HEIGHT }}
                   >
-                    <span className="text-foreground">{row.label}</span>
-                    <span className="text-xs text-muted-foreground font-normal">{row.count}</span>
+                    {/* Sidebar group */}
+                    <div
+                      className="shrink-0 flex items-center gap-2 px-3 bg-muted/20 font-semibold text-sm sticky left-0 z-10 border-r"
+                      style={{ width: SIDEBAR_WIDTH }}
+                    >
+                      <span className="text-foreground">{row.label}</span>
+                      <span className="text-xs text-muted-foreground font-normal">{row.count}</span>
+                    </div>
+                    {/* Timeline group row */}
+                    <div className="bg-muted/20" style={{ width: timelineWidth, height: ROW_HEIGHT }} />
                   </div>
                 );
               }
+
               const item = row.item;
+              const bar = getBarPosition(item);
+              const color = getBarColor(item);
+              const completed = isCompleted(item);
+
               return (
                 <div
                   key={item.id}
-                  className="flex items-center gap-2 px-3 border-b hover:bg-muted/30 cursor-pointer transition-colors"
+                  className="flex border-b"
                   style={{ height: ROW_HEIGHT }}
-                  onClick={() => onItemClick?.(item.id)}
                 >
+                  {/* Sidebar item - sticky left */}
                   <div
-                    className="h-2 w-2 rounded-full shrink-0"
-                    style={{ backgroundColor: `hsl(${getBarColor(item)})` }}
-                  />
-                  {item.assigneeName && (
-                    <UserAvatar
-                      name={item.assigneeName}
-                      avatarUrl={item.assigneeAvatarUrl}
-                      className="h-5 w-5 shrink-0"
-                      fallbackClassName="text-[8px]"
-                    />
-                  )}
-                  <span className={cn(
-                    "text-sm truncate flex-1",
-                    isCompleted(item) && "line-through text-muted-foreground"
-                  )}>
-                    {item.title}
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-
-          {/* Timeline area */}
-          <div className="flex-1 overflow-auto" ref={scrollRef}>
-            <div className="relative" style={{ width: totalDays * dayWidth, minHeight: "100%" }}>
-              {/* Header: date labels */}
-              <div className="sticky top-0 z-10 flex border-b bg-muted/50" style={{ height: HEADER_HEIGHT }}>
-                {days.map((day, i) => {
-                  const isWeekStart = day.getDay() === 1; // Monday
-                  const isMonthStart = day.getDate() === 1;
-                  const today = isToday(day);
-                  return (
-                    <div
-                      key={i}
-                      className={cn(
-                        "shrink-0 flex flex-col items-center justify-center border-r text-[10px]",
-                        isWeekend(day) && "bg-muted/40",
-                        today && "bg-primary/5"
-                      )}
-                      style={{ width: dayWidth }}
-                    >
-                      {(zoom === "day" || isWeekStart || isMonthStart) && (
-                        <>
-                          <span className="text-muted-foreground font-medium uppercase">
-                            {format(day, zoom === "day" ? "EEE" : "EEE", { locale: ptBR })}
-                          </span>
-                          <span className={cn(
-                            "font-bold",
-                            today ? "bg-destructive text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]" : "text-foreground"
-                          )}>
-                            {format(day, "d")}
-                          </span>
-                        </>
-                      )}
-                      {zoom !== "day" && !isWeekStart && !isMonthStart && (
-                        <span className="text-muted-foreground/50">{format(day, "d")}</span>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-
-              {/* Grid rows + bars */}
-              {rows.map((row, rowIndex) => {
-                const top = HEADER_HEIGHT + rowIndex * ROW_HEIGHT;
-
-                if (row.type === "group") {
-                  return (
-                    <div
-                      key={`gr-${rowIndex}`}
-                      className="absolute left-0 right-0 bg-muted/20 border-b"
-                      style={{ top, height: ROW_HEIGHT, width: totalDays * dayWidth }}
-                    />
-                  );
-                }
-
-                const item = row.item;
-                const bar = getBarPosition(item);
-                const color = getBarColor(item);
-                const completed = isCompleted(item);
-
-                return (
-                  <div
-                    key={item.id}
-                    className="absolute left-0 border-b"
-                    style={{ top, height: ROW_HEIGHT, width: totalDays * dayWidth }}
+                    className="shrink-0 flex items-center gap-2 px-3 hover:bg-muted/30 cursor-pointer transition-colors sticky left-0 z-10 bg-card border-r"
+                    style={{ width: SIDEBAR_WIDTH }}
+                    onClick={() => onItemClick?.(item.id)}
                   >
+                    <div
+                      className="h-2 w-2 rounded-full shrink-0"
+                      style={{ backgroundColor: `hsl(${color})` }}
+                    />
+                    {item.assigneeName && (
+                      <UserAvatar
+                        name={item.assigneeName}
+                        avatarUrl={item.assigneeAvatarUrl}
+                        className="h-5 w-5 shrink-0"
+                        fallbackClassName="text-[8px]"
+                      />
+                    )}
+                    <span className={cn(
+                      "text-sm truncate flex-1",
+                      completed && "line-through text-muted-foreground"
+                    )}>
+                      {item.title}
+                    </span>
+                  </div>
+
+                  {/* Timeline bar area */}
+                  <div className="relative" style={{ width: timelineWidth, height: ROW_HEIGHT }}>
                     {/* Weekend striping */}
                     {days.map((day, di) =>
                       isWeekend(day) ? (
@@ -349,20 +381,16 @@ export function GanttChart({ items, onItemClick }: GanttChartProps) {
                         }}
                       />
                     )}
-                  </div>
-                );
-              })}
 
-              {/* Today line */}
-              <div
-                className="absolute top-0 bottom-0 w-px bg-destructive z-20 pointer-events-none"
-                style={{ left: todayOffset * dayWidth + dayWidth / 2 }}
-              >
-                <div className="absolute -top-0 -translate-x-1/2 bg-destructive text-white text-[9px] font-bold px-1 rounded-b">
-                  Hoje
+                    {/* Today line */}
+                    <div
+                      className="absolute top-0 bottom-0 w-px bg-destructive z-20 pointer-events-none"
+                      style={{ left: todayOffset * dayWidth + dayWidth / 2 }}
+                    />
+                  </div>
                 </div>
-              </div>
-            </div>
+              );
+            })}
           </div>
         </div>
       </div>
