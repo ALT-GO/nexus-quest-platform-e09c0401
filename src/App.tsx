@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 
 import Solicitacoes from "./pages/marketing/Solicitacoes";
 import Metas from "./pages/marketing/Metas";
+import Eventos from "./pages/marketing/Eventos";
 import ServiceDesk from "./pages/ti/ServiceDesk";
 import Colaboradores from "./pages/ti/Colaboradores";
 import CentralInteligencia from "./pages/CentralInteligencia";
