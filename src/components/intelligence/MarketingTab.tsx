@@ -16,6 +16,7 @@ import {
   CheckCircle2, Clock, ListTodo, AlertTriangle, Target, TrendingUp,
   Timer, Users, CalendarIcon, DollarSign, Flag, Zap, BarChart3, Milestone,
 } from "lucide-react";
+import { Separator } from "@/components/ui/separator";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   PieChart, Pie, Cell, Legend,
@@ -258,277 +259,423 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   }).length;
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <ActiveTimersCard />
 
-      {/* Event Calendar */}
-      <EventCalendarCard events={events ?? []} />
+      {/* ═══════════ SEÇÃO: EVENTOS ═══════════ */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <CalendarIcon className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Eventos</h2>
+        </div>
+        <Separator />
 
-      {/* Row 1: Key stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          title="Total de Tarefas"
-          value={totalTasks}
-          icon={ListTodo}
-          description={`${completedTasks} concluídas`}
-        />
-        <StatCard
-          title="Taxa de Conclusão"
-          value={`${completionRate}%`}
-          icon={CheckCircle2}
-          description={`${completedTasks}/${totalTasks}`}
-        />
-        <StatCard
-          title="No Prazo"
-          value={`${onTimeRate}%`}
-          icon={Clock}
-          description="concluídas antes do prazo"
-        />
-        <StatCard
-          title="Tempo Trabalhado"
-          value={formatDuration(totalWorkedSeconds)}
-          icon={Timer}
-          description={`média ${avgCompletionDays}d por tarefa`}
-        />
+        {/* Calendário de Eventos */}
+        <EventCalendarCard events={events ?? []} />
+
+        {/* Stat cards de eventos */}
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            title="Eventos Ativos"
+            value={activeEvents.length}
+            icon={CalendarIcon}
+            description={totalBudget > 0 ? `Budget: ${totalBudget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}` : "sem budget definido"}
+          />
+          <StatCard
+            title="Total de Leads"
+            value={totalLeads}
+            icon={TrendingUp}
+            description={`${events?.filter((e) => (e as any).leads_gerados != null).length ?? 0} eventos com dados`}
+          />
+          <StatCard
+            title="Custo por Lead (Geral)"
+            value={costPerLeadTotal > 0 ? costPerLeadTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+            icon={DollarSign}
+            description={totalBudget > 0 ? `Budget total: ${totalBudget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}` : "sem budget"}
+          />
+        </div>
+
+        {/* Eventos ativos + Tarefas por evento */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <CalendarIcon className="h-4 w-4 text-muted-foreground" />
+                Eventos ({activeEvents.length} ativos)
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {activeEvents.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-8">Nenhum evento ativo</p>
+              ) : (
+                <div className="space-y-3">
+                  {activeEvents.slice(0, 5).map((e) => {
+                    const eventTasks = (allTasks ?? []).filter((t: any) => t.event_id === e.id);
+                    const completedEvTasks = eventTasks.filter((t) => t.progress === "Concluído").length;
+                    return (
+                      <div key={e.id} className="p-3 rounded-lg border space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium truncate">{e.name}</span>
+                          <Badge variant="outline" className="text-[10px]">
+                            {e.status === "active" ? "Ativo" : "Planejamento"}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center justify-between text-xs text-muted-foreground">
+                          <span>
+                            {format(new Date(e.start_date), "dd MMM", { locale: ptBR })} — {format(new Date(e.end_date), "dd MMM", { locale: ptBR })}
+                          </span>
+                          <span>{completedEvTasks}/{eventTasks.length} tarefas</span>
+                        </div>
+                        {e.budget > 0 && (
+                          <div className="flex items-center gap-2 text-xs">
+                            <DollarSign className="h-3 w-3 text-muted-foreground" />
+                            <span>Budget: {e.budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                          </div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          {tasksByEvent.length > 0 && (
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <Milestone className="h-4 w-4 text-muted-foreground" />
+                  Tarefas por Evento
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[260px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={tasksByEvent}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Bar dataKey="tasks" name="Tarefas" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+
+        {/* Leads charts */}
+        {leadsPerEvent.length > 0 && (
+          <div className="grid gap-6 lg:grid-cols-2">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <TrendingUp className="h-4 w-4 text-muted-foreground" />
+                  Leads por Evento
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={leadsPerEvent}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Bar dataKey="leads" name="Leads" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <DollarSign className="h-4 w-4 text-muted-foreground" />
+                  Custo por Lead por Evento
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={leadsPerEvent.filter((e) => e.custoLead > 0)}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} />
+                      <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`R$ ${v.toFixed(2)}`, "Custo/Lead"]} />
+                      <Bar dataKey="custoLead" name="R$/Lead" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
       </div>
 
-      {/* Row 2: 4 more stat cards */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          title="Tarefas Atrasadas"
-          value={overdueCount}
-          icon={AlertTriangle}
-          description="vencidas sem conclusão"
-        />
-        <StatCard
-          title="Progresso das Metas"
-          value={`${avgGoalProgress}%`}
-          icon={Target}
-          description={`${activeGoals.length} metas ativas`}
-        />
-        <StatCard
-          title="Eventos Ativos"
-          value={activeEvents.length}
-          icon={CalendarIcon}
-          description={totalBudget > 0 ? `Budget: ${totalBudget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}` : "sem budget definido"}
-        />
-        <StatCard
-          title="Sprint Ativo"
-          value={activeSprint ? `${sprintPointsDone}/${sprintPointsTotal} pts` : "—"}
-          icon={Zap}
-          description={activeSprint?.name ?? "Nenhum sprint ativo"}
-        />
-      </div>
+      {/* ═══════════ SEÇÃO: TAREFAS ═══════════ */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <ListTodo className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Tarefas</h2>
+        </div>
+        <Separator />
 
-      {/* Row 2.5: Leads indicators */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard
-          title="Total de Leads"
-          value={totalLeads}
-          icon={TrendingUp}
-          description={`${events?.filter((e) => (e as any).leads_gerados != null).length ?? 0} eventos com dados`}
-        />
-        <StatCard
-          title="Custo por Lead (Geral)"
-          value={costPerLeadTotal > 0 ? costPerLeadTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
-          icon={DollarSign}
-          description={totalBudget > 0 ? `Budget total: ${totalBudget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}` : "sem budget"}
-        />
-      </div>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            title="Total de Tarefas"
+            value={totalTasks}
+            icon={ListTodo}
+            description={`${completedTasks} concluídas`}
+          />
+          <StatCard
+            title="Taxa de Conclusão"
+            value={`${completionRate}%`}
+            icon={CheckCircle2}
+            description={`${completedTasks}/${totalTasks}`}
+          />
+          <StatCard
+            title="No Prazo"
+            value={`${onTimeRate}%`}
+            icon={Clock}
+            description="concluídas antes do prazo"
+          />
+          <StatCard
+            title="Tarefas Atrasadas"
+            value={overdueCount}
+            icon={AlertTriangle}
+            description="vencidas sem conclusão"
+          />
+        </div>
 
-      {/* Row 3: Completion pie + Tasks by Stage */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
-              Concluídas vs Pendentes
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[260px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={completionPieData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={60}
-                    outerRadius={100}
-                    paddingAngle={4}
-                    dataKey="value"
-                    label={({ name, value }) => `${name}: ${value}`}
-                  >
-                    <Cell fill="hsl(var(--success))" />
-                    <Cell fill="hsl(var(--muted))" />
-                  </Pie>
-                  <Legend />
-                  <Tooltip contentStyle={tooltipStyle} />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />
-              Tarefas por Etapa
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {tasksByStage.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-12">Nenhuma tarefa no período</p>
-            ) : (
-              <div className="h-[260px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={tasksByStage}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                    <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
-                    <Tooltip contentStyle={tooltipStyle} />
-                    <Bar dataKey="count" name="Tarefas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Row 4: Priority + Assignee */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Flag className="h-4 w-4 text-muted-foreground" />
-              Distribuição por Prioridade
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {byPriority.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-12">Sem dados</p>
-            ) : (
+        {/* Concluídas vs Pendentes + Tarefas por Etapa */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <CheckCircle2 className="h-4 w-4 text-muted-foreground" />
+                Concluídas vs Pendentes
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="h-[260px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
                     <Pie
-                      data={byPriority}
+                      data={completionPieData}
                       cx="50%"
                       cy="50%"
-                      innerRadius={50}
-                      outerRadius={90}
+                      innerRadius={60}
+                      outerRadius={100}
                       paddingAngle={4}
                       dataKey="value"
                       label={({ name, value }) => `${name}: ${value}`}
                     >
-                      {byPriority.map((entry, i) => (
-                        <Cell key={i} fill={entry.fill} />
-                      ))}
+                      <Cell fill="hsl(var(--success))" />
+                      <Cell fill="hsl(var(--muted))" />
                     </Pie>
                     <Legend />
                     <Tooltip contentStyle={tooltipStyle} />
                   </PieChart>
                 </ResponsiveContainer>
               </div>
-            )}
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Users className="h-4 w-4 text-muted-foreground" />
-              Tarefas por Responsável
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {tasksByAssignee.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-12">Sem dados</p>
-            ) : (
-              <div className="space-y-3">
-                {tasksByAssignee.map((a) => (
-                  <div key={a.name} className="flex items-center gap-3">
-                    <UserAvatar
-                      name={a.name}
-                      avatarUrl={a.id ? avatars?.byId[a.id] : null}
-                      className="h-7 w-7 shrink-0"
-                      fallbackClassName="text-[10px]"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="truncate font-medium">{a.name}</span>
-                        <span className="text-muted-foreground text-xs ml-2">{a.completed}/{a.total}</span>
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                Tarefas por Etapa
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {tasksByStage.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-12">Nenhuma tarefa no período</p>
+              ) : (
+                <div className="h-[260px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={tasksByStage}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
+                      <Tooltip contentStyle={tooltipStyle} />
+                      <Bar dataKey="count" name="Tarefas" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* Prioridade + Responsável */}
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <Flag className="h-4 w-4 text-muted-foreground" />
+                Distribuição por Prioridade
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {byPriority.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-12">Sem dados</p>
+              ) : (
+                <div className="h-[260px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie
+                        data={byPriority}
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={50}
+                        outerRadius={90}
+                        paddingAngle={4}
+                        dataKey="value"
+                        label={({ name, value }) => `${name}: ${value}`}
+                      >
+                        {byPriority.map((entry, i) => (
+                          <Cell key={i} fill={entry.fill} />
+                        ))}
+                      </Pie>
+                      <Legend />
+                      <Tooltip contentStyle={tooltipStyle} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <Users className="h-4 w-4 text-muted-foreground" />
+                Tarefas por Responsável
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {tasksByAssignee.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-12">Sem dados</p>
+              ) : (
+                <div className="space-y-3">
+                  {tasksByAssignee.map((a) => (
+                    <div key={a.name} className="flex items-center gap-3">
+                      <UserAvatar
+                        name={a.name}
+                        avatarUrl={a.id ? avatars?.byId[a.id] : null}
+                        className="h-7 w-7 shrink-0"
+                        fallbackClassName="text-[10px]"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="truncate font-medium">{a.name}</span>
+                          <span className="text-muted-foreground text-xs ml-2">{a.completed}/{a.total}</span>
+                        </div>
+                        <Progress value={a.total > 0 ? (a.completed / a.total) * 100 : 0} className="h-1.5 mt-1" />
                       </div>
-                      <Progress value={a.total > 0 ? (a.completed / a.total) * 100 : 0} className="h-1.5 mt-1" />
                     </div>
-                  </div>
-                ))}
-              </div>
-            )}
-          </CardContent>
-        </Card>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      {/* Row 5: Estimate vs Actual + Velocity */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Target className="h-4 w-4 text-muted-foreground" />
-              Estimativa vs Tempo Real
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {estimateVsActualData.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-12">Sem tarefas com estimativa</p>
-            ) : (
-              <div className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={estimateVsActualData} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))" }} unit="h" />
-                    <YAxis dataKey="name" type="category" width={140} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                    <Tooltip contentStyle={tooltipStyle} formatter={(v: number, n: string) => [`${v}h`, n === "estimativa" ? "Estimativa" : "Real"]} />
-                    <Bar dataKey="estimativa" name="Estimativa" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} opacity={0.4} />
-                    <Bar dataKey="real" name="Real" fill="hsl(var(--chart-4))" radius={[0, 4, 4, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+      {/* ═══════════ SEÇÃO: PRODUTIVIDADE & TEMPO ═══════════ */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Timer className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Produtividade & Tempo</h2>
+        </div>
+        <Separator />
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Zap className="h-4 w-4 text-muted-foreground" />
-              Velocity por Sprint
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {velocityData.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-12">Sem sprints concluídos</p>
-            ) : (
-              <div className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={velocityData}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                    <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
-                    <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v} pts`, "Story Points"]} />
-                    <Bar dataKey="pontos" name="Story Points" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            title="Tempo Trabalhado"
+            value={formatDuration(totalWorkedSeconds)}
+            icon={Timer}
+            description={`média ${avgCompletionDays}d por tarefa`}
+          />
+        </div>
+
+        <div className="grid gap-6 lg:grid-cols-2">
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <Target className="h-4 w-4 text-muted-foreground" />
+                Estimativa vs Tempo Real
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {estimateVsActualData.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-12">Sem tarefas com estimativa</p>
+              ) : (
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={estimateVsActualData} layout="vertical">
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))" }} unit="h" />
+                      <YAxis dataKey="name" type="category" width={140} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                      <Tooltip contentStyle={tooltipStyle} formatter={(v: number, n: string) => [`${v}h`, n === "estimativa" ? "Estimativa" : "Real"]} />
+                      <Bar dataKey="estimativa" name="Estimativa" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} opacity={0.4} />
+                      <Bar dataKey="real" name="Real" fill="hsl(var(--chart-4))" radius={[0, 4, 4, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <Zap className="h-4 w-4 text-muted-foreground" />
+                Velocity por Sprint
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {velocityData.length === 0 ? (
+                <p className="text-sm text-muted-foreground text-center py-12">Sem sprints concluídos</p>
+              ) : (
+                <div className="h-[280px]">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={velocityData}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                      <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                      <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
+                      <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`${v} pts`, "Story Points"]} />
+                      <Bar dataKey="pontos" name="Story Points" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
       </div>
 
-      {/* Row 6: Goals at Risk + Events */}
-      <div className="grid gap-6 lg:grid-cols-2">
+      {/* ═══════════ SEÇÃO: METAS (OKRs) ═══════════ */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Target className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Metas (OKRs)</h2>
+        </div>
+        <Separator />
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            title="Progresso das Metas"
+            value={`${avgGoalProgress}%`}
+            icon={Target}
+            description={`${activeGoals.length} metas ativas`}
+          />
+        </div>
+
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -563,124 +710,25 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             )}
           </CardContent>
         </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <CalendarIcon className="h-4 w-4 text-muted-foreground" />
-              Eventos ({activeEvents.length} ativos)
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {activeEvents.length === 0 ? (
-              <p className="text-sm text-muted-foreground text-center py-8">Nenhum evento ativo</p>
-            ) : (
-              <div className="space-y-3">
-                {activeEvents.slice(0, 5).map((e) => {
-                  const eventTasks = (allTasks ?? []).filter((t: any) => t.event_id === e.id);
-                  const completedEvTasks = eventTasks.filter((t) => t.progress === "Concluído").length;
-                  return (
-                    <div key={e.id} className="p-3 rounded-lg border space-y-2">
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium truncate">{e.name}</span>
-                        <Badge variant="outline" className="text-[10px]">
-                          {e.status === "active" ? "Ativo" : "Planejamento"}
-                        </Badge>
-                      </div>
-                      <div className="flex items-center justify-between text-xs text-muted-foreground">
-                        <span>
-                          {format(new Date(e.start_date), "dd MMM", { locale: ptBR })} — {format(new Date(e.end_date), "dd MMM", { locale: ptBR })}
-                        </span>
-                        <span>{completedEvTasks}/{eventTasks.length} tarefas</span>
-                      </div>
-                      {e.budget > 0 && (
-                        <div className="flex items-center gap-2 text-xs">
-                          <DollarSign className="h-3 w-3 text-muted-foreground" />
-                          <span>Budget: {e.budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
-                        </div>
-                      )}
-                    </div>
-                  );
-                })}
-              </div>
-            )}
-          </CardContent>
-        </Card>
       </div>
 
-      {/* Row 7: Tasks by Event */}
-      {tasksByEvent.length > 0 && (
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Milestone className="h-4 w-4 text-muted-foreground" />
-              Tarefas por Evento
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[260px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={tasksByEvent}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                  <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Bar dataKey="tasks" name="Tarefas" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-      )}
-
-      {/* Row 8: Leads por Evento + Custo por Lead por Evento */}
-      {leadsPerEvent.length > 0 && (
-        <div className="grid gap-6 lg:grid-cols-2">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />
-                Leads por Evento
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={leadsPerEvent}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                    <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
-                    <Tooltip contentStyle={tooltipStyle} />
-                    <Bar dataKey="leads" name="Leads" fill="hsl(var(--chart-3))" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <DollarSign className="h-4 w-4 text-muted-foreground" />
-                Custo por Lead por Evento
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="h-[280px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={leadsPerEvent.filter((e) => e.custoLead > 0)}>
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
-                    <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                    <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`R$ ${v.toFixed(2)}`, "Custo/Lead"]} />
-                    <Bar dataKey="custoLead" name="R$/Lead" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            </CardContent>
-          </Card>
+      {/* ═══════════ SEÇÃO: SPRINTS ═══════════ */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <Zap className="h-5 w-5 text-primary" />
+          <h2 className="text-lg font-semibold">Sprints</h2>
         </div>
-      )}
+        <Separator />
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+          <StatCard
+            title="Sprint Ativo"
+            value={activeSprint ? `${sprintPointsDone}/${sprintPointsTotal} pts` : "—"}
+            icon={Zap}
+            description={activeSprint?.name ?? "Nenhum sprint ativo"}
+          />
+        </div>
+      </div>
     </div>
   );
 }
