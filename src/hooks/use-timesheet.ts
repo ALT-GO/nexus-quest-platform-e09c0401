@@ -246,7 +246,9 @@ export function useActiveTimers(userTicketIds?: string[]) {
   const [activeTimers, setActiveTimers] = useState<ActiveTimer[]>([]);
   const [loading, setLoading] = useState(false);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
-  const { isAdmin, user } = useAuth();
+  const { isAdmin, user, hasRole } = useAuth();
+  const hasRoleRef = useRef<(role: string) => boolean>(() => false);
+  hasRoleRef.current = hasRole as (role: string) => boolean;
 
   const fetchActive = useCallback(async () => {
     setLoading(true);
@@ -280,19 +282,20 @@ export function useActiveTimers(userTicketIds?: string[]) {
       ticketMap = new Map(((tickets as any[]) || []).map((t: any) => [t.id, t]));
     }
 
-    // Fetch marketing task info
+    // Fetch marketing task info (include assignee_id for filtering)
     const mktIds = [...new Set(mktLogs.map((l) => l.marketing_task_id!))];
     let mktMap = new Map<string, any>();
     if (mktIds.length > 0) {
       const { data: mktTasks } = await supabase
         .from("marketing_tasks")
-        .select("id, title, assignee_name")
+        .select("id, title, assignee_name, assignee_id")
         .in("id", mktIds as any);
       mktMap = new Map(((mktTasks as any[]) || []).map((t: any) => [t.id, t]));
     }
 
-    // Get current user name for filtering
+    // Get current user info for filtering
     let currentUserName = "";
+    const currentUserId = user?.id || "";
     if (user && !isAdmin) {
       const { data: profile } = await supabase
         .from("profiles")
@@ -311,6 +314,7 @@ export function useActiveTimers(userTicketIds?: string[]) {
           ticket_title: ticket?.title || "",
           ticket_number: ticket?.ticket_number || "",
           ticket_assignee: ticket?.assignee || "",
+          _assignee_id: null as string | null,
           source: "ti" as const,
           elapsed_seconds: Math.floor((now - new Date(l.start_time).getTime()) / 1000),
         };
@@ -321,18 +325,38 @@ export function useActiveTimers(userTicketIds?: string[]) {
           ticket_title: mkt?.title || "",
           ticket_number: "MKT",
           ticket_assignee: mkt?.assignee_name || "",
+          _assignee_id: (mkt?.assignee_id as string) || null,
           source: "marketing" as const,
           elapsed_seconds: Math.floor((now - new Date(l.start_time).getTime()) / 1000),
         };
       }
     });
 
-    // Admin sees all; non-admin sees only their own timers
-    if (!isAdmin && currentUserName) {
-      timers = timers.filter((t) => t.ticket_assignee === currentUserName);
+    // Admin sees all timers
+    if (!isAdmin && currentUserId) {
+      const isTi = hasRoleRef.current("ti" as any);
+      const isMkt = hasRoleRef.current("marketing" as any);
+
+      timers = timers.filter((t) => {
+        if (t.source === "ti") {
+          // TI users see TI timers assigned to them
+          return isTi && t.ticket_assignee === currentUserName;
+        } else {
+          // Marketing users see all marketing timers (their team)
+          // OR if they are the assignee by ID or name
+          if (isMkt) return true;
+          return (
+            (t as any)._assignee_id === currentUserId ||
+            t.ticket_assignee === currentUserName
+          );
+        }
+      });
     }
 
-    setActiveTimers(timers);
+    // Clean up internal field
+    const cleanTimers: ActiveTimer[] = timers.map(({ _assignee_id, ...rest }: any) => rest);
+
+    setActiveTimers(cleanTimers);
     setLoading(false);
   }, [isAdmin, user]);
 
