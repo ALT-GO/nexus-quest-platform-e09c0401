@@ -41,6 +41,7 @@ export async function notifyAdminsForApproval(params: {
 export async function notifyTaskCreator(params: {
   creatorId: string;
   taskTitle: string;
+  taskId: string;
   approved: boolean;
   reason?: string;
 }) {
@@ -54,7 +55,7 @@ export async function notifyTaskCreator(params: {
         ? `A tarefa "${params.taskTitle}" foi aprovada e movida para a próxima etapa.`
         : `A tarefa "${params.taskTitle}" foi reprovada. Motivo: ${params.reason || "Não informado"}`,
       type: params.approved ? "success" : "warning",
-      link: `/marketing/solicitacoes`,
+      link: `/marketing/solicitacoes?task=${params.taskId}`,
       scope: "marketing",
     });
   } catch {
