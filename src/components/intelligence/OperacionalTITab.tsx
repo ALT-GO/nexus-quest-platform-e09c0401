@@ -60,6 +60,8 @@ interface InventoryItem {
 const categoryLabels: Record<string, string> = {
   notebooks: "Notebooks",
   celulares: "Celulares",
+  tablets: "Tablets",
+  perifericos: "Periféricos",
   linhas: "Linhas",
   licencas: "Licenças",
 };
@@ -67,6 +69,8 @@ const categoryLabels: Record<string, string> = {
 const categoryIcons: Record<string, React.ElementType> = {
   notebooks: Laptop,
   celulares: Smartphone,
+  tablets: Monitor,
+  perifericos: Wrench,
   linhas: Phone,
   licencas: KeyRound,
 };
@@ -74,8 +78,10 @@ const categoryIcons: Record<string, React.ElementType> = {
 const categoryColorClasses: Record<string, string> = {
   notebooks: "text-primary",
   celulares: "text-info",
-  linhas: "text-warning",
-  licencas: "text-chart-4",
+  tablets: "text-success",
+  perifericos: "text-warning",
+  linhas: "text-chart-4",
+  licencas: "text-destructive",
 };
 
 const dayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
@@ -245,24 +251,23 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     return dayLabels.map((label, i) => ({ name: label, chamados: counts[i] }));
   }, [filtered]);
 
-  // Filter inventory by cost center AND date range
+  // Filter inventory by cost center only (inventory = current state, not period-bound)
   const filteredInv = useMemo(() => {
-    let items = inventoryItems.filter((i) => {
-      const created = new Date(i.created_at);
-      return created >= dateRange.start && created <= dateRange.end;
-    });
+    let items = inventoryItems;
     if (costCenter === "eng") items = items.filter((i) => i.cost_center_eng && i.cost_center_eng.trim() !== "");
     else if (costCenter === "man") items = items.filter((i) => i.cost_center_man && i.cost_center_man.trim() !== "");
     return items;
-  }, [inventoryItems, costCenter, dateRange]);
+  }, [inventoryItems, costCenter]);
 
-  const assetsDisponivel = filteredInv.filter((a) => a.status === "Disponível").length;
-  const assetsManutencao = filteredInv.filter((a) => a.status === "Manutenção").length;
+  const assetsEmUso = filteredInv.filter((a) => a.status === "Em uso").length;
+  const assetsAtivo = filteredInv.filter((a) => a.status === "Ativo").length;
+  const assetsInativo = filteredInv.filter((a) => a.status === "Inativo").length;
   const inventoryByCategory = useMemo(() => {
-    const cats = ["notebooks", "celulares", "linhas", "licencas"];
+    const cats = ["notebooks", "celulares", "tablets", "perifericos", "linhas", "licencas"];
     return cats.map((cat) => ({
       category: cat,
-      available: filteredInv.filter((i) => i.category === cat && i.status === "Disponível").length,
+      emUso: filteredInv.filter((i) => i.category === cat && i.status === "Em uso").length,
+      ativo: filteredInv.filter((i) => i.category === cat && i.status === "Ativo").length,
       total: filteredInv.filter((i) => i.category === cat).length,
     }));
   }, [filteredInv]);
@@ -547,26 +552,31 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4 py-4 mb-4">
+            <div className="grid grid-cols-3 gap-4 py-4 mb-4">
               <div className="flex flex-col items-center gap-2 rounded-lg border p-4">
                 <Monitor className="h-8 w-8 text-primary" />
-                <span className="text-2xl font-bold">{assetsDisponivel}</span>
-                <span className="text-sm text-muted-foreground">Disponíveis</span>
+                <span className="text-2xl font-bold">{assetsEmUso}</span>
+                <span className="text-sm text-muted-foreground">Em uso</span>
               </div>
               <div className="flex flex-col items-center gap-2 rounded-lg border p-4">
-                <Wrench className="h-8 w-8 text-warning" />
-                <span className="text-2xl font-bold">{assetsManutencao}</span>
-                <span className="text-sm text-muted-foreground">Em manutenção</span>
+                <CheckCircle2 className="h-8 w-8 text-success" />
+                <span className="text-2xl font-bold">{assetsAtivo}</span>
+                <span className="text-sm text-muted-foreground">Ativos</span>
+              </div>
+              <div className="flex flex-col items-center gap-2 rounded-lg border p-4">
+                <AlertTriangle className="h-8 w-8 text-warning" />
+                <span className="text-2xl font-bold">{assetsInativo}</span>
+                <span className="text-sm text-muted-foreground">Inativos</span>
               </div>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
               {inventoryByCategory.map((item) => {
                 const Icon = categoryIcons[item.category] || Monitor;
                 return (
                   <div key={item.category} className="flex flex-col items-center gap-1 rounded-lg border p-3">
                     <Icon className={`h-6 w-6 ${categoryColorClasses[item.category] || "text-muted-foreground"}`} />
-                    <span className="text-lg font-bold">{item.available}</span>
-                    <span className="text-xs text-muted-foreground">{categoryLabels[item.category]} disp.</span>
+                    <span className="text-lg font-bold">{item.emUso + item.ativo}</span>
+                    <span className="text-xs text-muted-foreground">{categoryLabels[item.category]} ativos</span>
                     <span className="text-[10px] text-muted-foreground/60">{item.total} total</span>
                   </div>
                 );
@@ -603,7 +613,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           title="Total de Ativos"
           value={filteredInv.length}
           icon={Monitor}
-          description={`${assetsDisponivel} disponíveis · ${assetsManutencao} em manutenção`}
+          description={`${assetsEmUso + assetsAtivo} ativos · ${assetsInativo} inativos`}
           className="border-l-4 border-l-success"
         />
       </div>
