@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, X, LayoutGrid, List, Search, FilterX, Diamond, GanttChart as GanttChartIcon } from "lucide-react";
+import { Plus, X, LayoutGrid, List, Search, FilterX, Diamond, GanttChart as GanttChartIcon, Eye, EyeOff } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarketingStages, useMarketingTasks, MarketingTask } from "@/hooks/use-marketing";
 import { useMarketingTags } from "@/hooks/use-marketing-tags";
