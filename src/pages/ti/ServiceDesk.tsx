@@ -1,4 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
+import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -54,6 +55,7 @@ const categories = [
 type ViewMode = "list" | "kanban" | "gantt";
 
 export default function ServiceDesk() {
+  const [searchParams, setSearchParams] = useSearchParams();
   const { tickets, loading, fetchTickets, updateTicket, deleteTicket } = useTickets();
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
@@ -63,6 +65,19 @@ export default function ServiceDesk() {
   const [hideCompleted, setHideCompleted] = useState(true);
   const [detailOpen, setDetailOpen] = useState(false);
   const [avatarMap, setAvatarMap] = useState<Record<string, string>>({});
+
+  // Open ticket from query param (e.g. ?ticket=uuid)
+  useEffect(() => {
+    const ticketParam = searchParams.get("ticket");
+    if (ticketParam && tickets.length > 0) {
+      const exists = tickets.find((t) => t.id === ticketParam);
+      if (exists) {
+        setSelectedTicketId(ticketParam);
+        setDetailOpen(true);
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [searchParams, tickets]);
 
   // Fetch avatar URLs for all profiles
   useEffect(() => {

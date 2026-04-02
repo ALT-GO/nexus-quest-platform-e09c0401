@@ -509,7 +509,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
                      <TableCell>{task.assignee}</TableCell>
                      <TableCell className="text-right font-mono font-semibold">{formatDuration(task.totalSeconds)}</TableCell>
                      <TableCell className="text-right">
-                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/ti/servicedesk?ticket=${task.id}`)}>
+                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/ti/service-desk?ticket=${task.id}`)}>
                          <ExternalLink className="h-3.5 w-3.5" />
                        </Button>
                      </TableCell>
