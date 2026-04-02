@@ -467,7 +467,7 @@ export function TicketDetailSheet({
                   await supabase.from("tickets").update({ progress: v, updated_at: new Date().toISOString() } as any).eq("id", ticket.id as any);
                 }} disabled={isCompleted}>
                   <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
-                    <span className={cn("inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white", currentProgress.color)}>
+                    <span className={cn("inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold tracking-wide text-white", currentProgress.color)}>
                       {currentProgress.label}
                     </span>
                   </SelectTrigger>
