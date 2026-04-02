@@ -467,3 +467,67 @@ export async function fetchTimesheetByDateRange(
 
   return (data as unknown as { ticket_id: string; start_time: string; end_time: string | null; duration_seconds: number }[]) || [];
 }
+
+/**
+ * Hook that returns a Set of entity IDs (ticket or marketing_task) with active timers,
+ * plus their elapsed seconds. Subscribes to realtime updates.
+ */
+export function useActiveTimerIds() {
+  const [timerMap, setTimerMap] = useState<Record<string, { elapsed: number; startTime: string }>>({});
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchActiveIds = useCallback(async () => {
+    const { data } = await supabase
+      .from("timesheet_logs")
+      .select("ticket_id, marketing_task_id, start_time")
+      .is("end_time", null);
+
+    const map: Record<string, { elapsed: number; startTime: string }> = {};
+    const now = Date.now();
+    ((data as any[]) || []).forEach((l: any) => {
+      const key = l.ticket_id || l.marketing_task_id;
+      if (key) {
+        const elapsed = Math.floor((now - new Date(l.start_time).getTime()) / 1000);
+        // Keep the longest running one per entity
+        if (!map[key] || elapsed > map[key].elapsed) {
+          map[key] = { elapsed, startTime: l.start_time };
+        }
+      }
+    });
+    setTimerMap(map);
+  }, []);
+
+  useEffect(() => { fetchActiveIds(); }, [fetchActiveIds]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("active_timer_ids_realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "timesheet_logs" }, () => {
+        fetchActiveIds();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchActiveIds]);
+
+  // Tick every second
+  useEffect(() => {
+    const keys = Object.keys(timerMap);
+    if (keys.length === 0) return;
+    intervalRef.current = setInterval(() => {
+      const now = Date.now();
+      setTimerMap((prev) => {
+        const next = { ...prev };
+        for (const key of Object.keys(next)) {
+          next[key] = {
+            ...next[key],
+            elapsed: Math.floor((now - new Date(next[key].startTime).getTime()) / 1000),
+          };
+        }
+        return next;
+      });
+    }, 1000);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [Object.keys(timerMap).length]);
+
+  return timerMap;
+}
