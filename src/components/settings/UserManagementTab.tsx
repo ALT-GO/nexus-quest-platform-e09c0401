@@ -338,7 +338,10 @@ export function UserManagementTab() {
     const { error: permError } = await supabase
       .from("profiles")
       .update({ permissions: editPerms as any, updated_at: new Date().toISOString() })
-      .eq("id", editingUser.id);
+      .eq("id", editingUser.id)
+      .select();
+    
+    console.log("Permission update result:", { permError, userId: editingUser.id });
 
     if (permError) { toast.error("Erro ao salvar permissões."); setSavingPerms(false); return; }
 
