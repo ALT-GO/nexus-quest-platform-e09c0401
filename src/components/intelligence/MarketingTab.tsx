@@ -261,6 +261,9 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
     <div className="space-y-6">
       <ActiveTimersCard />
 
+      {/* Event Calendar */}
+      <EventCalendarCard events={events ?? []} />
+
       {/* Row 1: Key stat cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard
