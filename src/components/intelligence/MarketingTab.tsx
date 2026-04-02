@@ -215,6 +215,31 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
     })).filter((e) => e.tasks > 0 || e.budget > 0);
   }, [events, allTasks, activeEvents]);
 
+  // ── 16. Total de Leads Gerados ──
+  const totalLeads = useMemo(() => {
+    if (!events) return 0;
+    return events.reduce((sum, e) => sum + ((e as any).leads_gerados || 0), 0);
+  }, [events]);
+
+  // ── 17. Custo por Lead Total ──
+  const costPerLeadTotal = totalLeads > 0 ? totalBudget / totalLeads : 0;
+
+  // ── 18. Leads e Custo por Evento (chart data) ──
+  const leadsPerEvent = useMemo(() => {
+    if (!events) return [];
+    return events
+      .filter((e) => (e as any).leads_gerados != null && (e as any).leads_gerados > 0)
+      .map((e) => ({
+        name: e.name.length > 18 ? e.name.substring(0, 18) + "…" : e.name,
+        leads: (e as any).leads_gerados || 0,
+        custoLead: (e as any).leads_gerados > 0 && e.budget > 0
+          ? Math.round((e.budget / (e as any).leads_gerados) * 100) / 100
+          : 0,
+        budget: e.budget || 0,
+      }))
+      .sort((a, b) => b.leads - a.leads);
+  }, [events]);
+
   // ── Priority distribution ──
   const byPriority = useMemo(() => {
     const map: Record<string, number> = { high: 0, medium: 0, low: 0 };
