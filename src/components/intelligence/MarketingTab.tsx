@@ -813,7 +813,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
                   const progress = Math.round(Math.min((g.current_value / g.target_value) * 100, 100));
                   const daysLeft = differenceInDays(new Date(g.due_date), new Date());
                   return (
-                    <div key={g.id} className="p-3 rounded-lg border space-y-2">
+                    <div key={g.id} className="p-3 rounded-lg border space-y-2 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all" onClick={() => navigate("/marketing/metas")}>
                       <div className="flex items-center justify-between text-sm">
                         <span className="font-medium truncate">{g.title}</span>
                         <Badge variant="outline" className="text-destructive text-[10px]">
