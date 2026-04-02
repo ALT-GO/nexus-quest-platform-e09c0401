@@ -48,6 +48,7 @@ const PIE_COLORS = [
 ];
 
 export function MarketingTab({ dateRange }: MarketingTabProps) {
+  const navigate = useNavigate();
   const { data: allTasks } = useMarketingTasks();
   const { data: stages } = useMarketingStages();
   const { data: events } = useMarketingEvents();
