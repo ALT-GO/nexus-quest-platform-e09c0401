@@ -376,6 +376,7 @@ export default function GestaoFaturas() {
     setReportItems(data || []);
     setGeneratedOp(reportOp);
     setGeneratedMesAno(`${MESES[parseInt(reportMes)]} de ${reportAno}`);
+    setGeneratedEmpresa(reportEmpresa);
     setGenerated(true);
     setAjusteGlobal("");
     setReportModalOpen(false);
