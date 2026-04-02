@@ -22,6 +22,9 @@ import {
 } from "recharts";
 import { useTickets } from "@/hooks/use-tickets";
 import { format } from "date-fns";
+import { useNavigate } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ExternalLink } from "lucide-react";
 
 import type { CostCenterFilter } from "@/pages/CentralInteligencia";
 
@@ -78,6 +81,7 @@ const categoryColorClasses: Record<string, string> = {
 const dayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProps) {
+  const navigate = useNavigate();
   const { tickets: allTickets, loading } = useTickets();
   const [techFilter, setTechFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
@@ -484,19 +488,25 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
                   <TableHead className="w-[100px]">Chamado</TableHead>
                   <TableHead>Título</TableHead>
                   <TableHead>Responsável</TableHead>
-                  <TableHead className="text-right">Tempo Total</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {top5SlowTasks.map((task, i) => (
-                  <TableRow key={task.id}>
-                    <TableCell className="font-mono text-xs text-muted-foreground">{task.ticketNumber}</TableCell>
-                    <TableCell className="font-medium max-w-[250px] truncate">{task.title}</TableCell>
-                    <TableCell>{task.assignee}</TableCell>
-                    <TableCell className="text-right font-mono font-semibold">{formatDuration(task.totalSeconds)}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
+                   <TableHead className="text-right">Tempo Total</TableHead>
+                   <TableHead className="w-[50px]" />
+                 </TableRow>
+               </TableHeader>
+               <TableBody>
+                 {top5SlowTasks.map((task, i) => (
+                   <TableRow key={task.id}>
+                     <TableCell className="font-mono text-xs text-muted-foreground">{task.ticketNumber}</TableCell>
+                     <TableCell className="font-medium max-w-[250px] truncate">{task.title}</TableCell>
+                     <TableCell>{task.assignee}</TableCell>
+                     <TableCell className="text-right font-mono font-semibold">{formatDuration(task.totalSeconds)}</TableCell>
+                     <TableCell className="text-right">
+                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/ti/servicedesk?ticket=${task.id}`)}>
+                         <ExternalLink className="h-3.5 w-3.5" />
+                       </Button>
+                     </TableCell>
+                   </TableRow>
+                 ))}
+               </TableBody>
             </Table>
           )}
         </CardContent>
