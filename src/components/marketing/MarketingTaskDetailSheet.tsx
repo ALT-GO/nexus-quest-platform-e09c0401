@@ -332,7 +332,7 @@ export function MarketingTaskDetailSheet({
       .update({ stage_id: completedStage.id, progress: "Concluído", updated_at: new Date().toISOString() } as any)
       .eq("id", task.id);
     logHistory("Aprovação", `Tarefa aprovada por ${authorName}`);
-    if (task.requester_id) notifyTaskCreator({ creatorId: task.requester_id, taskTitle: task.title, approved: true });
+    if (task.requester_id) notifyTaskCreator({ creatorId: task.requester_id, taskTitle: task.title, taskId: task.id, approved: true });
     qc.invalidateQueries({ queryKey: ["marketing_tasks"] });
     toast.success("Tarefa aprovada e movida para Concluído");
     onOpenChange(false);
@@ -346,7 +346,7 @@ export function MarketingTaskDetailSheet({
       .update({ stage_id: inProgressStage.id, progress: "Em andamento", updated_at: new Date().toISOString() } as any)
       .eq("id", task.id);
     logHistory("Reprovação", `Tarefa reprovada por ${authorName}. Motivo: ${rejectReason}`);
-    if (task.requester_id) notifyTaskCreator({ creatorId: task.requester_id, taskTitle: task.title, approved: false, reason: rejectReason });
+    if (task.requester_id) notifyTaskCreator({ creatorId: task.requester_id, taskTitle: task.title, taskId: task.id, approved: false, reason: rejectReason });
     qc.invalidateQueries({ queryKey: ["marketing_tasks"] });
     toast.success("Tarefa reprovada e devolvida para ajustes");
     setRejectDialogOpen(false);
