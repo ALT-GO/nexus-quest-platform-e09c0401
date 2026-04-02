@@ -44,9 +44,10 @@ export function EventDialog({ open, onOpenChange, event }: Props) {
       setPriority(event.priority);
       setStatus(event.status);
       setNotes(event.notes || "");
+      setLeadsGerados(event.leads_gerados != null ? String(event.leads_gerados) : "");
     } else {
       setName(""); setLocation(""); setStartDate(undefined); setEndDate(undefined);
-      setBudget(""); setPriority("medium"); setStatus("planning"); setNotes("");
+      setBudget(""); setPriority("medium"); setStatus("planning"); setNotes(""); setLeadsGerados("");
     }
   }, [event, open]);
 
