@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth, UserPermissions } from "@/hooks/use-auth";
 import Dashboard from "./pages/Dashboard";
-import Projetos from "./pages/marketing/Projetos";
+
 import Solicitacoes from "./pages/marketing/Solicitacoes";
 import Metas from "./pages/marketing/Metas";
 import ServiceDesk from "./pages/ti/ServiceDesk";
@@ -81,11 +81,6 @@ function AppRoutes() {
           <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
           <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
 
-          <Route path="/marketing/projetos" element={
-            <PermissionRoute permission="acessar_kanban_marketing" fallbackRoles={["admin", "marketing"]}>
-              <Projetos />
-            </PermissionRoute>
-          } />
           <Route path="/marketing/solicitacoes" element={
             <PermissionRoute permission="acessar_kanban_marketing" fallbackRoles={["admin", "marketing"]}>
               <Solicitacoes />
