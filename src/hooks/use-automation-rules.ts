@@ -2,35 +2,134 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export type TriggerType = "ticket_created" | "status_changed" | "priority_changed" | "sla_near";
-export type ActionType = "move_to_status" | "assign_to" | "change_priority" | "send_notification";
+// ── Scope ──
+export type AutomationScope = "ti" | "marketing";
+
+// ── TI Triggers & Actions ──
+export type TiTriggerType =
+  | "ticket_created"
+  | "status_changed"
+  | "priority_changed"
+  | "sla_near"
+  | "sla_expired"
+  | "ticket_assigned"
+  | "ticket_completed";
+
+export type TiActionType =
+  | "move_to_status"
+  | "assign_to"
+  | "change_priority"
+  | "send_notification"
+  | "set_sla_hours";
+
+// ── Marketing Triggers & Actions ──
+export type MktTriggerType =
+  | "task_created"
+  | "task_stage_changed"
+  | "task_completed"
+  | "task_overdue"
+  | "event_upcoming"
+  | "sprint_started";
+
+export type MktActionType =
+  | "move_to_stage"
+  | "assign_task"
+  | "change_task_priority"
+  | "send_notification"
+  | "set_task_progress";
+
+export type TriggerType = TiTriggerType | MktTriggerType;
+export type ActionType = TiActionType | MktActionType;
 
 export interface AutomationRule {
   id: string;
   name: string;
-  trigger_type: TriggerType;
+  scope: AutomationScope;
+  trigger_type: string;
   trigger_config: Record<string, any>;
-  action_type: ActionType;
+  action_type: string;
   action_config: Record<string, any>;
   is_active: boolean;
   created_at: string;
   updated_at: string;
 }
 
-export const triggerLabels: Record<TriggerType, string> = {
-  ticket_created: "Novo chamado criado via formulário",
-  status_changed: "Status alterado",
-  priority_changed: "Prioridade alterada",
-  sla_near: "Data de vencimento próxima",
+// ── Labels ──
+export const tiTriggerLabels: Record<TiTriggerType, string> = {
+  ticket_created: "Novo chamado criado",
+  status_changed: "Status do chamado alterado",
+  priority_changed: "Prioridade do chamado alterada",
+  sla_near: "SLA próximo do vencimento",
+  sla_expired: "SLA vencido",
+  ticket_assigned: "Chamado atribuído a técnico",
+  ticket_completed: "Chamado concluído",
 };
 
-export const actionLabels: Record<ActionType, string> = {
-  move_to_status: "Mover para a coluna X",
-  assign_to: "Atribuir ao técnico Y",
-  change_priority: "Alterar prioridade para Z",
+export const tiActionLabels: Record<TiActionType, string> = {
+  move_to_status: "Mover para status",
+  assign_to: "Atribuir ao técnico",
+  change_priority: "Alterar prioridade",
   send_notification: "Enviar notificação",
+  set_sla_hours: "Definir SLA personalizado (horas)",
 };
 
+export const mktTriggerLabels: Record<MktTriggerType, string> = {
+  task_created: "Nova tarefa criada",
+  task_stage_changed: "Etapa da tarefa alterada",
+  task_completed: "Tarefa concluída",
+  task_overdue: "Tarefa atrasada (passou da data)",
+  event_upcoming: "Evento se aproximando",
+  sprint_started: "Sprint iniciado",
+};
+
+export const mktActionLabels: Record<MktActionType, string> = {
+  move_to_stage: "Mover para etapa",
+  assign_task: "Atribuir tarefa a membro",
+  change_task_priority: "Alterar prioridade da tarefa",
+  send_notification: "Enviar notificação",
+  set_task_progress: "Alterar progresso da tarefa",
+};
+
+export const tiTriggerIcons: Record<TiTriggerType, string> = {
+  ticket_created: "📩",
+  status_changed: "🔄",
+  priority_changed: "⚡",
+  sla_near: "⏰",
+  sla_expired: "🚨",
+  ticket_assigned: "👤",
+  ticket_completed: "✅",
+};
+
+export const tiActionIcons: Record<TiActionType, string> = {
+  move_to_status: "📋",
+  assign_to: "👤",
+  change_priority: "🔺",
+  send_notification: "🔔",
+  set_sla_hours: "⏱️",
+};
+
+export const mktTriggerIcons: Record<MktTriggerType, string> = {
+  task_created: "📝",
+  task_stage_changed: "🔄",
+  task_completed: "✅",
+  task_overdue: "⏰",
+  event_upcoming: "📅",
+  sprint_started: "🏃",
+};
+
+export const mktActionIcons: Record<MktActionType, string> = {
+  move_to_stage: "📋",
+  assign_task: "👤",
+  change_task_priority: "🔺",
+  send_notification: "🔔",
+  set_task_progress: "📊",
+};
+
+// ── Backward compat aliases ──
+export const triggerLabels = tiTriggerLabels as Record<string, string>;
+export const actionLabels = tiActionLabels as Record<string, string>;
+
+// ── Hook ──
 export function useAutomationRules() {
   const [rules, setRules] = useState<AutomationRule[]>([]);
   const [loading, setLoading] = useState(true);
@@ -49,9 +148,7 @@ export function useAutomationRules() {
     setLoading(false);
   }, []);
 
-  useEffect(() => {
-    fetchRules();
-  }, [fetchRules]);
+  useEffect(() => { fetchRules(); }, [fetchRules]);
 
   useEffect(() => {
     const channel = supabase
@@ -66,6 +163,7 @@ export function useAutomationRules() {
   const addRule = useCallback(async (rule: Omit<AutomationRule, "id" | "created_at" | "updated_at">) => {
     const { error } = await supabase.from("automation_rules").insert({
       name: rule.name,
+      scope: rule.scope,
       trigger_type: rule.trigger_type,
       trigger_config: rule.trigger_config,
       action_type: rule.action_type,
@@ -112,10 +210,9 @@ export function useAutomationRules() {
     await updateRule(id, { is_active } as any);
   }, [updateRule]);
 
-  // Execute automation rules for a given trigger
   const executeRules = useCallback(
     async (
-      triggerType: TriggerType,
+      triggerType: string,
       context: { ticketId: string; category?: string; oldValue?: string; newValue?: string },
       callbacks: {
         onMoveToStatus?: (ticketId: string, statusId: string) => Promise<void>;
@@ -130,57 +227,45 @@ export function useAutomationRules() {
 
         switch (triggerType) {
           case "ticket_created":
-            // Check if category matches trigger config
-            if (rule.trigger_config.category) {
-              shouldExecute = context.category === rule.trigger_config.category;
-            } else {
-              shouldExecute = true; // No category filter = match all
-            }
+            shouldExecute = rule.trigger_config.category
+              ? context.category === rule.trigger_config.category
+              : true;
             break;
           case "status_changed":
-            if (rule.trigger_config.from_status) {
-              shouldExecute = context.oldValue === rule.trigger_config.from_status;
-            } else {
-              shouldExecute = true;
-            }
+            shouldExecute = rule.trigger_config.from_status
+              ? context.oldValue === rule.trigger_config.from_status
+              : true;
             break;
           case "priority_changed":
-            if (rule.trigger_config.from_priority) {
-              shouldExecute = context.oldValue === rule.trigger_config.from_priority;
-            } else {
-              shouldExecute = true;
-            }
+            shouldExecute = rule.trigger_config.from_priority
+              ? context.oldValue === rule.trigger_config.from_priority
+              : true;
             break;
-          case "sla_near":
+          default:
             shouldExecute = true;
             break;
         }
 
         if (!shouldExecute) continue;
 
-        // Execute the action
         switch (rule.action_type) {
           case "move_to_status":
             if (rule.action_config.status_id && callbacks.onMoveToStatus) {
               await callbacks.onMoveToStatus(context.ticketId, rule.action_config.status_id);
-              console.log(`[AUTOMAÇÃO] "${rule.name}" executada: moveu chamado para status ${rule.action_config.status_id}`);
             }
             break;
           case "assign_to":
             if (rule.action_config.assignee && callbacks.onAssignTo) {
               await callbacks.onAssignTo(context.ticketId, rule.action_config.assignee);
-              console.log(`[AUTOMAÇÃO] "${rule.name}" executada: atribuiu a ${rule.action_config.assignee}`);
             }
             break;
           case "change_priority":
             if (rule.action_config.priority && callbacks.onChangePriority) {
               await callbacks.onChangePriority(context.ticketId, rule.action_config.priority);
-              console.log(`[AUTOMAÇÃO] "${rule.name}" executada: prioridade alterada para ${rule.action_config.priority}`);
             }
             break;
           case "send_notification":
             toast.info(`🔔 ${rule.action_config.message || "Notificação de automação"}`);
-            console.log(`[AUTOMAÇÃO] "${rule.name}" executada: notificação enviada`);
             break;
         }
       }

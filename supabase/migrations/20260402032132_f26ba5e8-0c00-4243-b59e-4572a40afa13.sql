@@ -1,0 +1,1 @@
+ALTER TABLE public.automation_rules ADD COLUMN scope text NOT NULL DEFAULT 'ti';
