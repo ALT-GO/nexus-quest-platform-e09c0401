@@ -60,6 +60,7 @@ export function AppSidebar() {
   if (hasPermission("acessar_kanban_marketing") || hasAnyRole("admin", "marketing")) {
     
     marketingChildren.push({ title: "Solicitações", href: "/marketing/solicitacoes", icon: FileText });
+    marketingChildren.push({ title: "Eventos", href: "/marketing/eventos", icon: CalendarDays });
     marketingChildren.push({ title: "Metas", href: "/marketing/metas", icon: Target });
   }
 

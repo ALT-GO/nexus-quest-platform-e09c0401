@@ -84,6 +84,7 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
       next_recurrence_date: nextRecurrenceDate,
       sprint_id: sprintId && sprintId !== "none" ? sprintId : null,
       story_points: storyPoints ?? null,
+      event_id: eventId ?? null,
     } as any, {
       onSuccess: () => {
         setTitle(""); setDescription(""); setStageId(""); setPriority("medium"); setProgress("Não iniciado"); setAssigneeId("");
