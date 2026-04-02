@@ -1,5 +1,4 @@
 import { AppSidebar } from "./AppSidebar";
-import { NotificationCenter } from "./NotificationCenter";
 
 interface AppLayoutProps {
   children: React.ReactNode;
