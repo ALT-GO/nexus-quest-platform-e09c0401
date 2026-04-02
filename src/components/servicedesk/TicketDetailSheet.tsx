@@ -166,9 +166,9 @@ interface TicketDetailSheetProps {
 }
 
 const progressConfig = [
-  { value: "not_started", label: "NÃO INICIADO", color: "bg-muted-foreground", icon: Circle },
-  { value: "in_progress", label: "EM PROGRESSO", color: "bg-primary", icon: Loader2 },
-  { value: "completed", label: "CONCLUÍDA", color: "bg-success", icon: CheckCircle2 },
+  { value: "not_started", label: "Não Iniciado", color: "bg-muted-foreground", icon: Circle },
+  { value: "in_progress", label: "Em Andamento", color: "bg-primary", icon: Loader2 },
+  { value: "completed", label: "Concluído", color: "bg-green-500", icon: CheckCircle2 },
 ];
 
 export function TicketDetailSheet({
