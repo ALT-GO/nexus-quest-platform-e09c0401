@@ -1,0 +1,1 @@
+ALTER TABLE public.marketing_events ADD COLUMN notes_participants text DEFAULT '';
