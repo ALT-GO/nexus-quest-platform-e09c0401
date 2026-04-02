@@ -251,24 +251,23 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     return dayLabels.map((label, i) => ({ name: label, chamados: counts[i] }));
   }, [filtered]);
 
-  // Filter inventory by cost center AND date range
+  // Filter inventory by cost center only (inventory = current state, not period-bound)
   const filteredInv = useMemo(() => {
-    let items = inventoryItems.filter((i) => {
-      const created = new Date(i.created_at);
-      return created >= dateRange.start && created <= dateRange.end;
-    });
+    let items = inventoryItems;
     if (costCenter === "eng") items = items.filter((i) => i.cost_center_eng && i.cost_center_eng.trim() !== "");
     else if (costCenter === "man") items = items.filter((i) => i.cost_center_man && i.cost_center_man.trim() !== "");
     return items;
-  }, [inventoryItems, costCenter, dateRange]);
+  }, [inventoryItems, costCenter]);
 
-  const assetsDisponivel = filteredInv.filter((a) => a.status === "Disponível").length;
-  const assetsManutencao = filteredInv.filter((a) => a.status === "Manutenção").length;
+  const assetsEmUso = filteredInv.filter((a) => a.status === "Em uso").length;
+  const assetsAtivo = filteredInv.filter((a) => a.status === "Ativo").length;
+  const assetsInativo = filteredInv.filter((a) => a.status === "Inativo").length;
   const inventoryByCategory = useMemo(() => {
-    const cats = ["notebooks", "celulares", "linhas", "licencas"];
+    const cats = ["notebooks", "celulares", "tablets", "perifericos", "linhas", "licencas"];
     return cats.map((cat) => ({
       category: cat,
-      available: filteredInv.filter((i) => i.category === cat && i.status === "Disponível").length,
+      emUso: filteredInv.filter((i) => i.category === cat && i.status === "Em uso").length,
+      ativo: filteredInv.filter((i) => i.category === cat && i.status === "Ativo").length,
       total: filteredInv.filter((i) => i.category === cat).length,
     }));
   }, [filteredInv]);
