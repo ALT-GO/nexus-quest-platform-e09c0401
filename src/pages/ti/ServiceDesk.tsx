@@ -51,7 +51,7 @@ const categories = [
   "Desligamento",
 ];
 
-type ViewMode = "list" | "kanban";
+type ViewMode = "list" | "kanban" | "gantt";
 
 export default function ServiceDesk() {
   const { tickets, loading, fetchTickets, updateTicket, deleteTicket } = useTickets();
