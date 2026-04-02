@@ -113,8 +113,9 @@ export function EventCalendarCard({ events }: Props) {
                   return (
                     <div
                       key={event.id}
+                      onClick={() => navigate(`/marketing/eventos?event=${event.id}`)}
                       className={cn(
-                        "p-3 rounded-lg border space-y-1.5 transition-colors",
+                        "p-3 rounded-lg border space-y-1.5 transition-colors cursor-pointer hover:bg-accent/50",
                         isToday && "border-primary/50 bg-primary/5"
                       )}
                     >
