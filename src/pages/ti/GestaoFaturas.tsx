@@ -683,6 +683,17 @@ export default function GestaoFaturas() {
                 </SelectContent>
               </Select>
             </div>
+            <div>
+              <Label>Empresa</Label>
+              <Select value={reportEmpresa} onValueChange={(v) => setReportEmpresa(v as EmpresaFilter)}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="eng">Engenharia (Serviços)</SelectItem>
+                  <SelectItem value="man">Manutenção</SelectItem>
+                  <SelectItem value="ambas">Ambas</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
             <div className="flex justify-end gap-2 pt-2">
               <Button variant="outline" onClick={() => setReportModalOpen(false)}>Cancelar</Button>
               <Button onClick={handleGenerateReport} disabled={reportLoading || !reportOp}>
