@@ -1,9 +1,8 @@
-import { useState } from "react";
+import { useState, useRef, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -15,7 +14,10 @@ import {
   useDeleteMarketingStage,
   MarketingStage,
 } from "@/hooks/use-marketing";
+import { supabase } from "@/integrations/supabase/client";
+import { useQueryClient } from "@tanstack/react-query";
 import { Skeleton } from "@/components/ui/skeleton";
+import { toast } from "sonner";
 
 const presetColors = [
   "38 92% 50%", "199 89% 48%", "142 76% 36%", "280 67% 60%",
@@ -37,13 +39,20 @@ export function MarketingWorkflowTab() {
   const createStage = useCreateMarketingStage();
   const updateStage = useUpdateMarketingStage();
   const deleteStage = useDeleteMarketingStage();
+  const queryClient = useQueryClient();
 
   const [newName, setNewName] = useState("");
   const [newColor, setNewColor] = useState(presetColors[0]);
   const [newMetaStatus, setNewMetaStatus] = useState<MetaStatus>("unstarted");
   const [draggedId, setDraggedId] = useState<string | null>(null);
+  const [localOrder, setLocalOrder] = useState<string[] | null>(null);
 
   const sorted = [...(stages ?? [])].sort((a, b) => a.order_index - b.order_index);
+  
+  // Use local order during drag, otherwise use sorted from DB
+  const displayStages = localOrder
+    ? localOrder.map(id => sorted.find(s => s.id === id)).filter(Boolean) as MarketingStage[]
+    : sorted;
 
   const handleAdd = () => {
     if (!newName.trim()) return;
@@ -59,21 +68,63 @@ export function MarketingWorkflowTab() {
     setNewMetaStatus("unstarted");
   };
 
+  const handleDragStart = (id: string) => {
+    setDraggedId(id);
+    setLocalOrder(sorted.map(s => s.id));
+  };
+
   const handleDragOver = (e: React.DragEvent, targetId: string) => {
     e.preventDefault();
-    if (!draggedId || draggedId === targetId) return;
-    const ids = sorted.map((s) => s.id);
-    const from = ids.indexOf(draggedId);
-    const to = ids.indexOf(targetId);
+    if (!draggedId || draggedId === targetId || !localOrder) return;
+    
+    const from = localOrder.indexOf(draggedId);
+    const to = localOrder.indexOf(targetId);
     if (from === -1 || to === -1) return;
-    const reordered = [...ids];
+    
+    const reordered = [...localOrder];
     reordered.splice(from, 1);
     reordered.splice(to, 0, draggedId);
-    // Update order_index for each stage
-    reordered.forEach((id, index) => {
-      updateStage.mutate({ id, order_index: index });
-    });
+    setLocalOrder(reordered);
   };
+
+  const handleDragEnd = async () => {
+    if (!localOrder) {
+      setDraggedId(null);
+      return;
+    }
+
+    // Persist all order changes in parallel
+    const promises = localOrder.map((id, index) =>
+      supabase
+        .from("marketing_stages")
+        .update({ order_index: index } as any)
+        .eq("id", id as any)
+    );
+
+    try {
+      await Promise.all(promises);
+      queryClient.invalidateQueries({ queryKey: ["marketing_stages"] });
+    } catch {
+      toast.error("Erro ao reordenar etapas");
+    }
+
+    setDraggedId(null);
+    setLocalOrder(null);
+  };
+
+  // Debounce name updates
+  const nameTimerRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+  const handleNameChange = useCallback((id: string, value: string) => {
+    // Optimistic update in cache
+    queryClient.setQueryData<MarketingStage[]>(["marketing_stages"], (old) =>
+      old?.map(s => s.id === id ? { ...s, name: value } : s)
+    );
+    
+    if (nameTimerRef.current[id]) clearTimeout(nameTimerRef.current[id]);
+    nameTimerRef.current[id] = setTimeout(() => {
+      updateStage.mutate({ id, name: value });
+    }, 500);
+  }, [updateStage, queryClient]);
 
   if (isLoading) return <Skeleton className="h-48 w-full" />;
 
@@ -87,13 +138,13 @@ export function MarketingWorkflowTab() {
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="space-y-2 max-h-[400px] overflow-y-auto">
-          {sorted.map((stage) => (
+          {displayStages.map((stage) => (
             <div
               key={stage.id}
               draggable
-              onDragStart={() => setDraggedId(stage.id)}
+              onDragStart={() => handleDragStart(stage.id)}
               onDragOver={(e) => handleDragOver(e, stage.id)}
-              onDragEnd={() => setDraggedId(null)}
+              onDragEnd={handleDragEnd}
               className={`flex items-center gap-2 rounded-lg border p-3 transition-colors ${
                 draggedId === stage.id ? "opacity-50" : ""
               }`}
@@ -105,7 +156,7 @@ export function MarketingWorkflowTab() {
               />
               <Input
                 value={stage.name}
-                onChange={(e) => updateStage.mutate({ id: stage.id, name: e.target.value })}
+                onChange={(e) => handleNameChange(stage.id, e.target.value)}
                 className="h-8 flex-1 min-w-0"
               />
               <Select
