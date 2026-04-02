@@ -22,6 +22,8 @@ import { MarketingListView } from "@/components/marketing/MarketingListView";
 import { NewMarketingTaskDialog } from "@/components/marketing/NewMarketingTaskDialog";
 import { MarketingTaskDetailSheet } from "@/components/marketing/MarketingTaskDetailSheet";
 import { SprintSelector } from "@/components/marketing/SprintSelector";
+import { GanttChart, GanttItem } from "@/components/shared/GanttChart";
+import { useProfileAvatars } from "@/hooks/use-profile-avatars";
 import { SprintDashboard } from "@/components/marketing/SprintDashboard";
 import { supabase } from "@/integrations/supabase/client";
 
