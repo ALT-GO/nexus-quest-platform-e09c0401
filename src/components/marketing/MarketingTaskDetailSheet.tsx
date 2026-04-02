@@ -506,7 +506,7 @@ export function MarketingTaskDetailSheet({
                 </PropRow>
 
                 {/* Stage */}
-                <PropRow icon={Hash} label="Etapa">
+                <PropRow icon={Hash} label="Etapa" tooltip="Coluna do Kanban onde a tarefa se encontra no fluxo de trabalho">
                   <Select value={task.stage_id || ""} onValueChange={handleStageChange}>
                     <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
                       <SelectValue />
