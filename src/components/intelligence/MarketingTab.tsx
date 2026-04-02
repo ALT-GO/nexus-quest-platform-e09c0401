@@ -24,6 +24,7 @@ import {
 import { cn } from "@/lib/utils";
 import { format, differenceInDays, isSameDay, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useNavigate } from "react-router-dom";
 
 interface MarketingTabProps {
   dateRange: { start: Date; end: Date };
@@ -47,6 +48,7 @@ const PIE_COLORS = [
 ];
 
 export function MarketingTab({ dateRange }: MarketingTabProps) {
+  const navigate = useNavigate();
   const { data: allTasks } = useMarketingTasks();
   const { data: stages } = useMarketingStages();
   const { data: events } = useMarketingEvents();
@@ -303,18 +305,21 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             value={activeEvents.length}
             icon={CalendarIcon}
             description={`${events?.length ?? 0} eventos no total`}
+            onClick={() => navigate("/marketing/eventos")}
           />
           <StatCard
             title="Orçamento Total"
             value={totalBudget > 0 ? totalBudget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
             icon={DollarSign}
             description="planejado para todos os eventos"
+            onClick={() => navigate("/marketing/eventos")}
           />
           <StatCard
             title="Valor Real Gasto"
             value={totalActualCost > 0 ? totalActualCost.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
             icon={DollarSign}
             description={`${eventsWithActualCost} evento(s) com valor real`}
+            onClick={() => navigate("/marketing/eventos")}
           />
           <StatCard
             title={budgetDifference >= 0 ? "Economia" : "Excedente"}
@@ -329,6 +334,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
                   : "acima do orçamento ⚠"
                 : "sem dados de custo real"
             }
+            onClick={() => navigate("/marketing/eventos")}
           />
         </div>
 
@@ -338,18 +344,21 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             value={totalLeads}
             icon={TrendingUp}
             description={`${events?.filter((e) => e.leads_gerados != null).length ?? 0} eventos com dados`}
+            onClick={() => navigate("/marketing/eventos")}
           />
           <StatCard
             title="Custo/Lead (Orçamento)"
             value={costPerLeadTotal > 0 ? costPerLeadTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
             icon={DollarSign}
             description="baseado no orçamento planejado"
+            onClick={() => navigate("/marketing/eventos")}
           />
           <StatCard
             title="Custo/Lead (Real)"
             value={costPerLeadReal > 0 ? costPerLeadReal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
             icon={DollarSign}
             description="baseado no valor real gasto"
+            onClick={() => navigate("/marketing/eventos")}
           />
         </div>
 
@@ -405,7 +414,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
                     const completedEvTasks = eventTasks.filter((t) => t.progress === "Concluído").length;
                     const variance = e.actual_cost != null ? (e.budget || 0) - e.actual_cost : null;
                     return (
-                      <div key={e.id} className="p-3 rounded-lg border space-y-2">
+                      <div key={e.id} className="p-3 rounded-lg border space-y-2 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all" onClick={() => navigate("/marketing/eventos")}>
                         <div className="flex items-center justify-between text-sm">
                           <span className="font-medium truncate">{e.name}</span>
                           <Badge variant="outline" className="text-[10px]">
@@ -537,12 +546,14 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             value={totalTasks}
             icon={ListTodo}
             description={`${completedTasks} concluídas`}
+            onClick={() => navigate("/marketing/solicitacoes")}
           />
           <StatCard
             title="Taxa de Conclusão"
             value={`${completionRate}%`}
             icon={CheckCircle2}
             description={`${completedTasks}/${totalTasks}`}
+            onClick={() => navigate("/marketing/solicitacoes")}
           />
           <StatCard
             title="No Prazo"
@@ -555,6 +566,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             value={overdueCount}
             icon={AlertTriangle}
             description="vencidas sem conclusão"
+            onClick={() => navigate("/marketing/solicitacoes")}
           />
         </div>
 
@@ -781,6 +793,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             value={`${avgGoalProgress}%`}
             icon={Target}
             description={`${activeGoals.length} metas ativas`}
+            onClick={() => navigate("/marketing/metas")}
           />
         </div>
 
@@ -800,7 +813,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
                   const progress = Math.round(Math.min((g.current_value / g.target_value) * 100, 100));
                   const daysLeft = differenceInDays(new Date(g.due_date), new Date());
                   return (
-                    <div key={g.id} className="p-3 rounded-lg border space-y-2">
+                    <div key={g.id} className="p-3 rounded-lg border space-y-2 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all" onClick={() => navigate("/marketing/metas")}>
                       <div className="flex items-center justify-between text-sm">
                         <span className="font-medium truncate">{g.title}</span>
                         <Badge variant="outline" className="text-destructive text-[10px]">
@@ -834,6 +847,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             value={activeSprint ? `${sprintPointsDone}/${sprintPointsTotal} pts` : "—"}
             icon={Zap}
             description={activeSprint?.name ?? "Nenhum sprint ativo"}
+            onClick={() => navigate("/marketing/solicitacoes")}
           />
         </div>
       </div>

@@ -362,13 +362,14 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
 
       {/* Stat Cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Chamados no período" value={filtered.length} icon={Ticket} description={`${completedTickets.length} concluídos`} />
+        <StatCard title="Chamados no período" value={filtered.length} icon={Ticket} description={`${completedTickets.length} concluídos`} onClick={() => navigate("/ti/service-desk")} />
         <StatCard title="Tempo Médio Resolução" value={`${avgResolutionHours}h`} icon={Clock} description="Média em horas" />
         <StatCard
           title="SLA Cumprido" value={`${slaCumprido}%`} icon={CheckCircle2} description="No período"
           trend={slaCumprido >= 90 ? { value: slaCumprido - 90, isPositive: true } : { value: 90 - slaCumprido, isPositive: false }}
+          onClick={() => navigate("/ti/service-desk")}
         />
-        <StatCard title="Chamados Abertos" value={allOpenTickets.length} icon={AlertTriangle} description="Atualmente sem conclusão" />
+        <StatCard title="Chamados Abertos" value={allOpenTickets.length} icon={AlertTriangle} description="Atualmente sem conclusão" onClick={() => navigate("/ti/service-desk")} />
       </div>
 
       {/* Charts Row 1 */}
@@ -557,17 +558,17 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4 py-4 mb-4">
-              <div className="flex flex-col items-center gap-2 rounded-lg border p-4">
+              <div className="flex flex-col items-center gap-2 rounded-lg border p-4 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all active:scale-[0.98]" onClick={() => navigate("/ti/gestao-ativos")}>
                 <Monitor className="h-8 w-8 text-primary" />
                 <span className="text-2xl font-bold">{assetsEmUso}</span>
                 <span className="text-sm text-muted-foreground">Em uso</span>
               </div>
-              <div className="flex flex-col items-center gap-2 rounded-lg border p-4">
+              <div className="flex flex-col items-center gap-2 rounded-lg border p-4 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all active:scale-[0.98]" onClick={() => navigate("/ti/gestao-ativos")}>
                 <CheckCircle2 className="h-8 w-8 text-success" />
                 <span className="text-2xl font-bold">{assetsAtivo}</span>
                 <span className="text-sm text-muted-foreground">Ativos</span>
               </div>
-              <div className="flex flex-col items-center gap-2 rounded-lg border p-4">
+              <div className="flex flex-col items-center gap-2 rounded-lg border p-4 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all active:scale-[0.98]" onClick={() => navigate("/ti/gestao-ativos")}>
                 <AlertTriangle className="h-8 w-8 text-warning" />
                 <span className="text-2xl font-bold">{assetsInativo}</span>
                 <span className="text-sm text-muted-foreground">Inativos</span>
@@ -577,7 +578,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
               {inventoryByCategory.map((item) => {
                 const Icon = categoryIcons[item.category] || Monitor;
                 return (
-                  <div key={item.category} className="flex flex-col items-center gap-1 rounded-lg border p-3">
+                  <div key={item.category} className="flex flex-col items-center gap-1 rounded-lg border p-3 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all active:scale-[0.98]" onClick={() => navigate("/ti/gestao-ativos")}>
                     <Icon className={`h-6 w-6 ${categoryColorClasses[item.category] || "text-muted-foreground"}`} />
                     <span className="text-lg font-bold">{item.emUso + item.ativo}</span>
                     <span className="text-xs text-muted-foreground">{categoryLabels[item.category]} ativos</span>
@@ -605,6 +606,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           icon={Phone}
           description={`${filteredInv.filter((a) => a.category === "linhas" && a.valor_mensal && a.valor_mensal > 0).length} linhas ativas`}
           className="border-l-4 border-l-primary"
+          onClick={() => navigate("/ti/gestao-faturas")}
         />
         <StatCard
           title="Depreciação Acumulada"
@@ -612,6 +614,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           icon={TrendingDown}
           description={`${depreciationTotal.assetCount} ativos · Original: ${formatBRL(depreciationTotal.totalOriginal)}`}
           className="border-l-4 border-l-destructive"
+          onClick={() => navigate("/ti/gestao-ativos")}
         />
         <StatCard
           title="Total de Ativos"
@@ -619,6 +622,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           icon={Monitor}
           description={`${assetsEmUso + assetsAtivo} ativos · ${assetsInativo} inativos`}
           className="border-l-4 border-l-success"
+          onClick={() => navigate("/ti/gestao-ativos")}
         />
       </div>
 

@@ -11,6 +11,7 @@ interface StatCardProps {
     isPositive: boolean;
   };
   className?: string;
+  onClick?: () => void;
 }
 
 export function StatCard({
@@ -20,11 +21,17 @@ export function StatCard({
   icon: Icon,
   trend,
   className,
+  onClick,
 }: StatCardProps) {
   return (
     <div
+      role={onClick ? "button" : undefined}
+      tabIndex={onClick ? 0 : undefined}
+      onClick={onClick}
+      onKeyDown={onClick ? (e) => { if (e.key === "Enter" || e.key === " ") onClick(); } : undefined}
       className={cn(
-        "rounded-xl border bg-card p-6 shadow-sm transition-shadow hover:shadow-md",
+        "rounded-xl border bg-card p-6 shadow-sm transition-all hover:shadow-md",
+        onClick && "cursor-pointer hover:ring-2 hover:ring-primary/30 active:scale-[0.98]",
         className
       )}
     >
@@ -53,6 +60,11 @@ export function StatCard({
           </div>
         )}
       </div>
+      {onClick && (
+        <p className="text-[10px] text-muted-foreground/60 mt-2">
+          Clique para ver detalhes →
+        </p>
+      )}
     </div>
   );
 }
