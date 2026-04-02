@@ -394,6 +394,7 @@ export function MarketingTaskDetailSheet({
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="w-full sm:max-w-[900px] p-0 flex flex-row gap-0 overflow-hidden" side="right">
+         <TooltipProvider delayDuration={300}>
           {/* ─── LEFT: Main Content ─── */}
           <ScrollArea className="flex-1 min-w-0">
             <div className="p-6 space-y-1">
