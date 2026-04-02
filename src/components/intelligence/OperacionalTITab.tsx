@@ -558,17 +558,17 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           </CardHeader>
           <CardContent>
             <div className="grid grid-cols-3 gap-4 py-4 mb-4">
-              <div className="flex flex-col items-center gap-2 rounded-lg border p-4">
+              <div className="flex flex-col items-center gap-2 rounded-lg border p-4 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all active:scale-[0.98]" onClick={() => navigate("/ti/gestao-ativos")}>
                 <Monitor className="h-8 w-8 text-primary" />
                 <span className="text-2xl font-bold">{assetsEmUso}</span>
                 <span className="text-sm text-muted-foreground">Em uso</span>
               </div>
-              <div className="flex flex-col items-center gap-2 rounded-lg border p-4">
+              <div className="flex flex-col items-center gap-2 rounded-lg border p-4 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all active:scale-[0.98]" onClick={() => navigate("/ti/gestao-ativos")}>
                 <CheckCircle2 className="h-8 w-8 text-success" />
                 <span className="text-2xl font-bold">{assetsAtivo}</span>
                 <span className="text-sm text-muted-foreground">Ativos</span>
               </div>
-              <div className="flex flex-col items-center gap-2 rounded-lg border p-4">
+              <div className="flex flex-col items-center gap-2 rounded-lg border p-4 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all active:scale-[0.98]" onClick={() => navigate("/ti/gestao-ativos")}>
                 <AlertTriangle className="h-8 w-8 text-warning" />
                 <span className="text-2xl font-bold">{assetsInativo}</span>
                 <span className="text-sm text-muted-foreground">Inativos</span>
@@ -578,7 +578,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
               {inventoryByCategory.map((item) => {
                 const Icon = categoryIcons[item.category] || Monitor;
                 return (
-                  <div key={item.category} className="flex flex-col items-center gap-1 rounded-lg border p-3">
+                  <div key={item.category} className="flex flex-col items-center gap-1 rounded-lg border p-3 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all active:scale-[0.98]" onClick={() => navigate("/ti/gestao-ativos")}>
                     <Icon className={`h-6 w-6 ${categoryColorClasses[item.category] || "text-muted-foreground"}`} />
                     <span className="text-lg font-bold">{item.emUso + item.ativo}</span>
                     <span className="text-xs text-muted-foreground">{categoryLabels[item.category]} ativos</span>
