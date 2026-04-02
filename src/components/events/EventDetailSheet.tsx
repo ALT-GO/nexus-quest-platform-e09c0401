@@ -63,7 +63,7 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
   }, [allTasks, event]);
 
   // Budget tracking
-  const invested = 0; // Future: sum from task costs
+  const invested = event?.actual_cost ?? 0;
   const budgetRemaining = (event?.budget ?? 0) - invested;
   const budgetPercent = event && event.budget > 0 ? Math.min((invested / event.budget) * 100, 100) : 0;
 
@@ -139,33 +139,59 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
               </div>
             </div>
 
-            {/* Budget */}
-            {event.budget > 0 && (
-              <div className="space-y-2 p-3 rounded-lg border bg-muted/20">
-                <div className="flex items-center justify-between text-sm">
-                  <div className="flex items-center gap-2 font-medium">
-                    <DollarSign className="h-4 w-4 text-muted-foreground" />
-                    Budget
+            {/* Budget & Actual Cost */}
+            <div className="space-y-2 p-3 rounded-lg border bg-muted/20">
+              <div className="grid grid-cols-2 gap-4">
+                {/* Budget */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <DollarSign className="h-3.5 w-3.5" />
+                    Orçamento
                   </div>
-                  <span className="font-semibold">
-                    {event.budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                  <span className="text-sm font-semibold">
+                    {event.budget > 0
+                      ? event.budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+                      : "Não definido"}
                   </span>
                 </div>
-                <div className="h-2 rounded-full bg-muted overflow-hidden">
-                  <div
-                    className={cn(
-                      "h-full rounded-full transition-all",
-                      budgetPercent > 90 ? "bg-destructive" : budgetPercent > 70 ? "bg-warning" : "bg-success"
-                    )}
-                    style={{ width: `${budgetPercent}%` }}
+                {/* Actual Cost */}
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
+                    <DollarSign className="h-3.5 w-3.5" />
+                    Valor Real Gasto
+                  </div>
+                  <Input
+                    type="number"
+                    min={0}
+                    step="0.01"
+                    placeholder="0,00"
+                    value={event.actual_cost ?? ""}
+                    onChange={(e) => {
+                      const val = e.target.value ? parseFloat(e.target.value) : null;
+                      updateEvent.mutate({ id: event.id, actual_cost: val } as any);
+                    }}
+                    className="h-7 w-full text-sm"
                   />
                 </div>
-                <div className="flex items-center justify-between text-xs text-muted-foreground">
-                  <span>Investido: R$ {invested.toFixed(2)}</span>
-                  <span>Restante: {budgetRemaining.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
-                </div>
               </div>
-            )}
+              {event.budget > 0 && (
+                <>
+                  <div className="h-2 rounded-full bg-muted overflow-hidden">
+                    <div
+                      className={cn(
+                        "h-full rounded-full transition-all",
+                        budgetPercent > 90 ? "bg-destructive" : budgetPercent > 70 ? "bg-warning" : "bg-success"
+                      )}
+                      style={{ width: `${budgetPercent}%` }}
+                    />
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground">
+                    <span>Investido: {(event.actual_cost ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                    <span>Restante: {((event.budget ?? 0) - (event.actual_cost ?? 0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* Leads Gerados */}
             <div className="space-y-2 p-3 rounded-lg border bg-muted/20">

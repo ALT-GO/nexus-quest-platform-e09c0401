@@ -78,6 +78,9 @@ import { useMarketingTasks } from "@/hooks/use-marketing";
 import { DependencySection } from "./DependencySection";
 import { useMarketingTaskTypes } from "@/hooks/use-task-types";
 import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
+import { useTaskLinks, useAddTaskLink, useRemoveTaskLink } from "@/hooks/use-task-links";
+import { useMarketingEvents } from "@/hooks/use-events";
+import { CalendarIcon as CalendarEventIcon } from "lucide-react";
 
 interface Props {
   task: MarketingTask | null;
@@ -226,6 +229,11 @@ export function MarketingTaskDetailSheet({
   const { data: allDeps } = useTaskDependencies();
   const { data: allTasks } = useMarketingTasks();
   const { data: taskTypes } = useMarketingTaskTypes();
+  const { data: taskLinks } = useTaskLinks(task?.id ?? null);
+  const addTaskLink = useAddTaskLink();
+  const removeTaskLink = useRemoveTaskLink();
+  const { data: allEvents } = useMarketingEvents();
+  const [linkPopoverOpen, setLinkPopoverOpen] = useState(false);
 
   if (!task) return null;
 
@@ -613,6 +621,71 @@ export function MarketingTaskDetailSheet({
                     <DependencySection task={task} allTasks={allTasks} dependencies={allDeps} />
                   </PropRow>
                 )}
+
+                {/* Links (tasks + events) */}
+                <PropRow icon={Link2} label="Links">
+                  <div className="space-y-1.5">
+                    {(taskLinks || []).map((link) => {
+                      const isOutgoing = link.task_id === task.id;
+                      if (link.linked_event_id) {
+                        const evt = allEvents?.find(e => e.id === link.linked_event_id);
+                        return (
+                          <div key={link.id} className="flex items-center gap-2 group">
+                            <Badge variant="outline" className="text-xs gap-1">
+                              <CalendarEventIcon className="h-3 w-3" />
+                              {evt?.name || "Evento"}
+                            </Badge>
+                            <button onClick={() => removeTaskLink.mutate(link.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity">
+                              <X className="h-3 w-3" />
+                            </button>
+                          </div>
+                        );
+                      }
+                      const linkedId = isOutgoing ? link.linked_task_id : link.task_id;
+                      const linkedTask = allTasks?.find(t => t.id === linkedId);
+                      return (
+                        <div key={link.id} className="flex items-center gap-2 group">
+                          <Badge variant="outline" className="text-xs gap-1">
+                            <Hash className="h-3 w-3" />
+                            {linkedTask?.title || "Tarefa"}
+                          </Badge>
+                          <button onClick={() => removeTaskLink.mutate(link.id)} className="opacity-0 group-hover:opacity-100 text-muted-foreground hover:text-destructive transition-opacity">
+                            <X className="h-3 w-3" />
+                          </button>
+                        </div>
+                      );
+                    })}
+                    <Popover open={linkPopoverOpen} onOpenChange={setLinkPopoverOpen}>
+                      <PopoverTrigger asChild>
+                        <button className="text-xs text-muted-foreground hover:text-primary flex items-center gap-1">
+                          <Link2 className="h-3 w-3" /> Adicionar link
+                        </button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-64 p-2" align="start">
+                        <div className="space-y-1">
+                          <p className="text-xs font-medium text-muted-foreground px-1 py-1">Tarefas</p>
+                          <div className="max-h-32 overflow-y-auto space-y-0.5">
+                            {(allTasks || []).filter(t => t.id !== task.id && !(taskLinks || []).some(l => l.linked_task_id === t.id || (l.task_id === t.id && l.linked_task_id === task.id))).slice(0, 20).map(t => (
+                              <button key={t.id} className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-muted truncate"
+                                onClick={() => { addTaskLink.mutate({ task_id: task.id, linked_task_id: t.id }); setLinkPopoverOpen(false); }}>
+                                {t.title}
+                              </button>
+                            ))}
+                          </div>
+                          <p className="text-xs font-medium text-muted-foreground px-1 py-1 border-t mt-1 pt-1">Eventos</p>
+                          <div className="max-h-32 overflow-y-auto space-y-0.5">
+                            {(allEvents || []).filter(e => !(taskLinks || []).some(l => l.linked_event_id === e.id)).map(e => (
+                              <button key={e.id} className="w-full text-left text-xs px-2 py-1.5 rounded hover:bg-muted truncate"
+                                onClick={() => { addTaskLink.mutate({ task_id: task.id, linked_event_id: e.id }); setLinkPopoverOpen(false); }}>
+                                <CalendarEventIcon className="h-3 w-3 inline mr-1" />{e.name}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      </PopoverContent>
+                    </Popover>
+                  </div>
+                </PropRow>
 
                 {/* Story Points */}
                 <PropRow icon={Target} label="Story Points">
