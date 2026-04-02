@@ -63,7 +63,7 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
   }, [allTasks, event]);
 
   // Budget tracking
-  const invested = 0; // Future: sum from task costs
+  const invested = event?.actual_cost ?? 0;
   const budgetRemaining = (event?.budget ?? 0) - invested;
   const budgetPercent = event && event.budget > 0 ? Math.min((invested / event.budget) * 100, 100) : 0;
 

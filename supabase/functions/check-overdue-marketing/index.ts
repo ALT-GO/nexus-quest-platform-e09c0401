@@ -33,6 +33,21 @@ Deno.serve(async (req) => {
 
     const notifications: any[] = [];
 
+    // ── Recent notifications check ──
+    const { data: recentNotifs } = await supabase
+      .from('notifications')
+      .select('title, message')
+      .gte('created_at', oneDayAgo)
+      .or('title.like.Tarefa atrasada:%,title.like.Leads pendente:%,title.like.Lembrete de evento:%,title.like.Custo real pendente:%');
+
+    const alreadyNotified = new Set(
+      (recentNotifs || []).map((n: any) => `${n.title}|||${n.message}`)
+    );
+
+    function wasNotified(title: string, message: string) {
+      return alreadyNotified.has(`${title}|||${message}`);
+    }
+
     // ── 1. Overdue marketing tasks ──
     const { data: overdueTasks, error } = await supabase
       .from('marketing_tasks')
@@ -42,20 +57,6 @@ Deno.serve(async (req) => {
       .neq('progress', 'Concluído');
 
     if (error) throw error;
-
-    const { data: recentNotifs } = await supabase
-      .from('notifications')
-      .select('message')
-      .gte('created_at', oneDayAgo)
-      .or('title.like.Tarefa atrasada:%,title.like.Leads pendente:%,title.like.Lembrete de evento:%');
-
-    const alreadyNotified = new Set(
-      (recentNotifs || []).map((n: any) => `${n.title}|||${n.message}`)
-    );
-
-    function wasNotified(title: string, message: string) {
-      return alreadyNotified.has(`${title}|||${message}`);
-    }
 
     for (const task of (overdueTasks || [])) {
       const msgKey = `A tarefa "${task.title}" está com o prazo vencido.`;
@@ -87,24 +88,99 @@ Deno.serve(async (req) => {
     // ── 2. Events with empty leads_gerados after end_date ──
     const { data: endedEvents } = await supabase
       .from('marketing_events')
-      .select('id, name, end_date, leads_gerados')
+      .select('id, name, end_date, leads_gerados, actual_cost')
       .lt('end_date', nowIso)
-      .is('leads_gerados', null)
       .in('status', ['active', 'completed']);
 
     for (const evt of (endedEvents || [])) {
-      const msgKey = `O evento "${evt.name}" já terminou e o campo de Leads Gerados está vazio. Por favor, preencha.`;
-      const titleKey = `Leads pendente: ${evt.name}`;
-      if (wasNotified(titleKey, msgKey)) continue;
+      // Leads notification
+      if (evt.leads_gerados == null) {
+        const msgKey = `O evento "${evt.name}" já terminou e o campo de Leads Gerados está vazio. Por favor, preencha.`;
+        const titleKey = `Leads pendente: ${evt.name}`;
+        if (!wasNotified(titleKey, msgKey)) {
+          for (const userId of allMarketingIds) {
+            notifications.push({
+              user_id: userId,
+              title: titleKey,
+              message: msgKey,
+              type: 'warning',
+              link: '/marketing/eventos',
+            });
+          }
+        }
+      }
 
-      for (const userId of allMarketingIds) {
-        notifications.push({
-          user_id: userId,
-          title: titleKey,
-          message: msgKey,
-          type: 'warning',
-          link: '/marketing/eventos',
-        });
+      // ── Auto-create task for actual_cost when event ends and actual_cost is null ──
+      if (evt.actual_cost == null) {
+        // Check if a task already exists for this
+        const { data: existingLinks } = await supabase
+          .from('marketing_task_links')
+          .select('id, task_id')
+          .eq('linked_event_id', evt.id);
+
+        // Check if any linked task has "valor real" in title
+        let alreadyHasTask = false;
+        if (existingLinks && existingLinks.length > 0) {
+          const linkedTaskIds = existingLinks.map((l: any) => l.task_id);
+          const { data: linkedTasks } = await supabase
+            .from('marketing_tasks')
+            .select('id, title')
+            .in('id', linkedTaskIds);
+          alreadyHasTask = (linkedTasks || []).some((t: any) =>
+            t.title.toLowerCase().includes('valor real gasto')
+          );
+        }
+
+        if (!alreadyHasTask) {
+          // Get first "todo" stage
+          const { data: stages } = await supabase
+            .from('marketing_stages')
+            .select('id, meta_status')
+            .order('order_index', { ascending: true });
+
+          const todoStage = (stages || []).find((s: any) => s.meta_status === 'todo');
+
+          // Create the task
+          const { data: newTask } = await supabase
+            .from('marketing_tasks')
+            .insert({
+              title: `Definir valor real gasto — ${evt.name}`,
+              description: `O evento "${evt.name}" chegou à data limite. Por favor, defina o valor real gasto no evento.`,
+              priority: 'high',
+              progress: 'Não iniciado',
+              requester_name: 'Sistema',
+              stage_id: todoStage?.id || null,
+              event_id: evt.id,
+            } as any)
+            .select('id')
+            .single();
+
+          if (newTask) {
+            // Link the task to the event
+            await supabase
+              .from('marketing_task_links')
+              .insert({
+                task_id: (newTask as any).id,
+                linked_event_id: evt.id,
+                link_type: 'related',
+              } as any);
+
+            // Notify
+            const titleKey = `Custo real pendente: ${evt.name}`;
+            const msgKey = `Uma tarefa foi criada automaticamente para definir o valor real gasto no evento "${evt.name}".`;
+            if (!wasNotified(titleKey, msgKey)) {
+              for (const userId of allMarketingIds) {
+                notifications.push({
+                  user_id: userId,
+                  title: titleKey,
+                  message: msgKey,
+                  type: 'info',
+                  link: '/marketing/solicitacoes',
+                });
+              }
+            }
+          }
+        }
       }
     }
 
@@ -145,12 +221,12 @@ Deno.serve(async (req) => {
               link: '/marketing/eventos',
             });
           }
-          break; // Only one threshold per event per run
+          break;
         }
       }
     }
 
-    // Also check events starting today (start_date is today but already past midnight)
+    // Also check events starting today
     const todayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
     const todayEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59).toISOString();
 
