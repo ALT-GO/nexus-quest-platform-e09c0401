@@ -304,6 +304,27 @@ export default function Solicitacoes() {
           onTaskClick={handleTaskClick}
           filterTagIds={filterTagIds.length > 0 ? filterTagIds : undefined}
         />
+      ) : viewMode === "gantt" ? (
+        <GanttChart
+          items={filteredTasks.map((t): GanttItem => {
+            const stage = (stages ?? []).find(s => s.id === t.stage_id);
+            return {
+              id: t.id,
+              title: t.title,
+              group: stage?.name || "Sem etapa",
+              startDate: t.start_date,
+              endDate: t.due_date,
+              progress: t.progress,
+              priority: t.priority,
+              assigneeName: t.assignee_name || undefined,
+              assigneeAvatarUrl: t.assignee_id ? avatars?.byId[t.assignee_id] || undefined : undefined,
+            };
+          })}
+          onItemClick={(id) => {
+            const task = filteredTasks.find(t => t.id === id);
+            if (task) handleTaskClick(task);
+          }}
+        />
       ) : (
         <MarketingListView
           tasks={filteredTasks}
