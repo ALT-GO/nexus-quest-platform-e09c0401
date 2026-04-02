@@ -316,6 +316,22 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
         />
       </div>
 
+      {/* Row 2.5: Leads indicators */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard
+          title="Total de Leads"
+          value={totalLeads}
+          icon={TrendingUp}
+          description={`${events?.filter((e) => (e as any).leads_gerados != null).length ?? 0} eventos com dados`}
+        />
+        <StatCard
+          title="Custo por Lead (Geral)"
+          value={costPerLeadTotal > 0 ? costPerLeadTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+          icon={DollarSign}
+          description={totalBudget > 0 ? `Budget total: ${totalBudget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}` : "sem budget"}
+        />
+      </div>
+
       {/* Row 3: Completion pie + Tasks by Stage */}
       <div className="grid gap-6 lg:grid-cols-2">
         <Card>
