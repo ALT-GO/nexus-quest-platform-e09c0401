@@ -1,0 +1,1 @@
+ALTER TABLE public.timesheet_logs ADD COLUMN created_by uuid REFERENCES auth.users(id) DEFAULT auth.uid();

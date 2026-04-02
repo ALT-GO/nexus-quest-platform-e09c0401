@@ -1196,6 +1196,7 @@ export type Database = {
       timesheet_logs: {
         Row: {
           created_at: string
+          created_by: string | null
           duration_seconds: number | null
           end_time: string | null
           id: string
@@ -1205,6 +1206,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          created_by?: string | null
           duration_seconds?: number | null
           end_time?: string | null
           id?: string
@@ -1214,6 +1216,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          created_by?: string | null
           duration_seconds?: number | null
           end_time?: string | null
           id?: string
