@@ -222,6 +222,7 @@ const linhaCols: ColDef[] = [
   { id: "contrato", header: "Contrato", field: "contrato", accessor: (i) => i.contrato || "" },
   { id: "cost_center_eng", header: "Centro de custo - Eng", field: "cost_center_eng", accessor: (i) => i.cost_center_eng || "" },
   { id: "cost_center_man", header: "Centro de custo - Man", field: "cost_center_man", accessor: (i) => i.cost_center_man || "" },
+  { id: "notes", header: "Notas", field: "notes", accessor: (i) => i.notes || "" },
 ];
 
 const licencaCols: ColDef[] = [
