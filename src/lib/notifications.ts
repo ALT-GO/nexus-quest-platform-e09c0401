@@ -61,6 +61,7 @@ export async function notifyTITeam(params: {
       message: params.message,
       type: params.type || "info",
       link: params.link || null,
+      scope: "ti",
     }));
 
     await supabase.from("notifications" as any).insert(notifications);

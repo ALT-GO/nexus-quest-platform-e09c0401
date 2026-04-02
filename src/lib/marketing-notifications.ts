@@ -55,6 +55,7 @@ export async function notifyTaskCreator(params: {
         : `A tarefa "${params.taskTitle}" foi reprovada. Motivo: ${params.reason || "Não informado"}`,
       type: params.approved ? "success" : "warning",
       link: `/marketing/solicitacoes`,
+      scope: "marketing",
     });
   } catch {
     // Silent fail

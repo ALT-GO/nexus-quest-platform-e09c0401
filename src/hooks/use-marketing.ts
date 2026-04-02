@@ -162,6 +162,7 @@ export function useUpdateMarketingTask() {
             message: `Você foi atribuído(a) à tarefa "${(task as any).title}".`,
             type: "task_assigned",
             link: "/marketing/solicitacoes",
+            scope: "marketing",
           } as any);
         }
       }
