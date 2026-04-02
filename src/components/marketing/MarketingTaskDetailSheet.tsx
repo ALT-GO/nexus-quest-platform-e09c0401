@@ -295,6 +295,7 @@ export function MarketingTaskDetailSheet({
         message: `${authorName} comentou na tarefa "${task.title}"`,
         type: "info",
         link: "/marketing/solicitacoes",
+        scope: "marketing",
       } as any);
     }
     setCommentText("");

@@ -1,0 +1,1 @@
+ALTER TABLE public.notifications ADD COLUMN scope text NOT NULL DEFAULT 'general';

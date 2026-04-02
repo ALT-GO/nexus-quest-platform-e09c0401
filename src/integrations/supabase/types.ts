@@ -873,6 +873,7 @@ export type Database = {
           link: string | null
           message: string
           read: boolean
+          scope: string
           title: string
           type: string
           user_id: string
@@ -883,6 +884,7 @@ export type Database = {
           link?: string | null
           message?: string
           read?: boolean
+          scope?: string
           title: string
           type?: string
           user_id: string
@@ -893,6 +895,7 @@ export type Database = {
           link?: string | null
           message?: string
           read?: boolean
+          scope?: string
           title?: string
           type?: string
           user_id?: string

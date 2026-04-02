@@ -132,6 +132,7 @@ Deno.serve(async (req) => {
       message: `${requester_name} enviou uma solicitação: ${request_type}`,
       type: "info",
       link: "/marketing/solicitacoes",
+      scope: "marketing",
     }));
 
     if (notifications.length > 0) {

@@ -70,6 +70,7 @@ Deno.serve(async (req) => {
           message: msgKey,
           type: 'warning',
           link: '/marketing/solicitacoes',
+          scope: 'marketing',
         });
       }
 
@@ -81,6 +82,7 @@ Deno.serve(async (req) => {
           message: msgKey,
           type: 'warning',
           link: '/marketing/solicitacoes',
+          scope: 'marketing',
         });
       }
     }
@@ -149,6 +151,7 @@ Deno.serve(async (req) => {
               message: notifMsg,
               type: 'info',
               link: '/marketing/solicitacoes',
+              scope: 'marketing',
             });
           }
         }
@@ -218,6 +221,7 @@ Deno.serve(async (req) => {
               message: msgKey,
               type: threshold.days <= 1 ? 'warning' : 'info',
               link: '/marketing/eventos',
+              scope: 'marketing',
             });
           }
           break;
@@ -248,6 +252,7 @@ Deno.serve(async (req) => {
           message: msgKey,
           type: 'warning',
           link: '/marketing/eventos',
+          scope: 'marketing',
         });
       }
     }

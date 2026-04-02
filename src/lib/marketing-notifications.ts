@@ -26,6 +26,7 @@ export async function notifyAdminsForApproval(params: {
       message: `A tarefa "${params.taskTitle}" está aguardando aprovação.`,
       type: "warning",
       link: `/marketing/solicitacoes`,
+      scope: "marketing",
     }));
 
     await supabase.from("notifications" as any).insert(notifications);
@@ -54,6 +55,7 @@ export async function notifyTaskCreator(params: {
         : `A tarefa "${params.taskTitle}" foi reprovada. Motivo: ${params.reason || "Não informado"}`,
       type: params.approved ? "success" : "warning",
       link: `/marketing/solicitacoes`,
+      scope: "marketing",
     });
   } catch {
     // Silent fail
