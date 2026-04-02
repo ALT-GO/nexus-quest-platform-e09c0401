@@ -7,13 +7,13 @@ import {
 } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { Separator } from "@/components/ui/separator";
-import { Bell, Check, CheckCheck, Info, AlertTriangle, CheckCircle2, UserPlus } from "lucide-react";
+import { Bell, Check, CheckCheck, Info, AlertTriangle, CheckCircle2, UserPlus, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { cn } from "@/lib/utils";
 import { formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { toast } from "sonner";
 
 interface Notification {
   id: string;
@@ -24,6 +24,7 @@ interface Notification {
   read: boolean;
   link: string | null;
   created_at: string;
+  scope: string;
 }
 
 const typeIcons: Record<string, React.ElementType> = {
@@ -41,7 +42,7 @@ const typeColors: Record<string, string> = {
 };
 
 export function NotificationCenter() {
-  const { user } = useAuth();
+  const { user, isAdmin, roles } = useAuth();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [open, setOpen] = useState(false);
@@ -53,16 +54,14 @@ export function NotificationCenter() {
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
-      .limit(30);
+      .limit(50);
     setNotifications(((data as unknown) as Notification[]) || []);
   }, [user]);
 
-  // Initial fetch
   useEffect(() => {
     fetchNotifications();
   }, [fetchNotifications]);
 
-  // Realtime subscription
   useEffect(() => {
     if (!user) return;
     const channel = supabase
@@ -77,7 +76,7 @@ export function NotificationCenter() {
         },
         (payload) => {
           const newNotif = payload.new as Notification;
-          setNotifications((prev) => [newNotif, ...prev].slice(0, 30));
+          setNotifications((prev) => [newNotif, ...prev].slice(0, 50));
         }
       )
       .subscribe();
@@ -87,7 +86,19 @@ export function NotificationCenter() {
     };
   }, [user]);
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+  // Filter notifications by team scope
+  const filteredNotifications = notifications.filter((n) => {
+    if (isAdmin) return true; // Admin sees all
+    const scope = (n as any).scope || "general";
+    if (scope === "general") return true;
+    if (scope === "ti" && roles.includes("ti")) return true;
+    if (scope === "marketing" && roles.includes("marketing")) return true;
+    // If user has no matching role and scope is team-specific, hide it
+    if (scope === "ti" || scope === "marketing") return false;
+    return true;
+  });
+
+  const unreadCount = filteredNotifications.filter((n) => !n.read).length;
 
   const markAsRead = async (id: string) => {
     await supabase
@@ -101,12 +112,26 @@ export function NotificationCenter() {
 
   const markAllAsRead = async () => {
     if (!user) return;
+    const ids = filteredNotifications.filter((n) => !n.read).map((n) => n.id);
+    if (ids.length === 0) return;
     await supabase
       .from("notifications" as any)
       .update({ read: true })
       .eq("user_id", user.id as any)
       .eq("read", false as any);
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+  };
+
+  const clearAllNotifications = async () => {
+    if (!user) return;
+    const ids = filteredNotifications.map((n) => n.id);
+    if (ids.length === 0) return;
+    await supabase
+      .from("notifications" as any)
+      .delete()
+      .eq("user_id", user.id as any);
+    setNotifications([]);
+    toast.success("Todas as notificações foram removidas");
   };
 
   const handleClick = async (notif: Notification) => {
@@ -122,47 +147,71 @@ export function NotificationCenter() {
   return (
     <Popover open={open} onOpenChange={setOpen}>
       <PopoverTrigger asChild>
-        <button className="relative inline-flex items-center justify-center rounded-full p-2 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground">
-          <Bell className="h-5 w-5" />
+        <button
+          className={cn(
+            "relative flex h-9 w-9 items-center justify-center rounded-lg transition-all",
+            "text-muted-foreground hover:text-foreground hover:bg-accent",
+            open && "bg-accent text-foreground"
+          )}
+        >
+          <Bell className="h-[18px] w-[18px]" />
           {unreadCount > 0 && (
-            <span className="absolute -right-0.5 -top-0.5 flex h-4 min-w-[16px] items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+            <span className="absolute -right-0.5 -top-0.5 flex h-[18px] min-w-[18px] items-center justify-center rounded-full bg-primary px-1 text-[10px] font-bold text-primary-foreground ring-2 ring-background">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" className="w-96 p-0">
-        <div className="flex items-center justify-between border-b px-4 py-3">
+      <PopoverContent align="end" sideOffset={8} className="w-[380px] p-0 rounded-xl shadow-lg border">
+        {/* Header */}
+        <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30 rounded-t-xl">
           <div>
             <p className="text-sm font-semibold">Notificações</p>
             {unreadCount > 0 && (
-              <p className="text-xs text-muted-foreground">
+              <p className="text-[11px] text-muted-foreground">
                 {unreadCount} não lida{unreadCount > 1 ? "s" : ""}
               </p>
             )}
           </div>
-          {unreadCount > 0 && (
-            <Button
-              variant="ghost"
-              size="sm"
-              className="h-7 gap-1 text-xs"
-              onClick={markAllAsRead}
-            >
-              <CheckCheck className="h-3.5 w-3.5" />
-              Marcar todas
-            </Button>
-          )}
+          <div className="flex items-center gap-1">
+            {unreadCount > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+                onClick={markAllAsRead}
+              >
+                <CheckCheck className="h-3.5 w-3.5" />
+                Marcar lidas
+              </Button>
+            )}
+            {filteredNotifications.length > 0 && (
+              <Button
+                variant="ghost"
+                size="sm"
+                className="h-7 gap-1 text-[11px] text-destructive hover:text-destructive hover:bg-destructive/10"
+                onClick={clearAllNotifications}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Limpar
+              </Button>
+            )}
+          </div>
         </div>
 
-        <ScrollArea className="max-h-80">
-          {notifications.length === 0 ? (
-            <div className="py-10 text-center text-sm text-muted-foreground">
-              <Bell className="mx-auto h-8 w-8 mb-2 opacity-30" />
-              Nenhuma notificação
+        {/* List */}
+        <ScrollArea className="max-h-[360px]">
+          {filteredNotifications.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
+                <Bell className="h-5 w-5 opacity-40" />
+              </div>
+              <p className="text-sm font-medium">Tudo limpo!</p>
+              <p className="text-xs mt-0.5">Nenhuma notificação no momento</p>
             </div>
           ) : (
             <div className="divide-y">
-              {notifications.map((notif) => {
+              {filteredNotifications.map((notif) => {
                 const Icon = typeIcons[notif.type] || Info;
                 const color = typeColors[notif.type] || "text-muted-foreground";
                 return (
@@ -170,18 +219,22 @@ export function NotificationCenter() {
                     key={notif.id}
                     onClick={() => handleClick(notif)}
                     className={cn(
-                      "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/50",
+                      "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/50",
                       !notif.read && "bg-primary/5"
                     )}
                   >
-                    <Icon className={cn("mt-0.5 h-4 w-4 flex-shrink-0", color)} />
+                    <div className={cn("mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-lg", 
+                      !notif.read ? "bg-primary/10" : "bg-muted"
+                    )}>
+                      <Icon className={cn("h-3.5 w-3.5", !notif.read ? color : "text-muted-foreground")} />
+                    </div>
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
                         <p className={cn("text-sm truncate", !notif.read && "font-semibold")}>
                           {notif.title}
                         </p>
                         {!notif.read && (
-                          <span className="h-2 w-2 rounded-full bg-primary flex-shrink-0" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-primary flex-shrink-0" />
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
@@ -205,7 +258,7 @@ export function NotificationCenter() {
                         }}
                         title="Marcar como lida"
                       >
-                        <Check className="h-3.5 w-3.5" />
+                        <Check className="h-3 w-3" />
                       </Button>
                     )}
                   </button>
