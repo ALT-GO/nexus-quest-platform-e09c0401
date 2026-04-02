@@ -63,6 +63,7 @@ export function EventDialog({ open, onOpenChange, event }: Props) {
       priority,
       status,
       notes,
+      leads_gerados: leadsGerados.trim() !== "" ? parseInt(leadsGerados) : null,
       checklist: event?.checklist ?? [],
     };
 
