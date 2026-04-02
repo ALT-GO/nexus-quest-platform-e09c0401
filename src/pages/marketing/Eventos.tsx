@@ -245,6 +245,18 @@ export default function Eventos() {
                       <Users className="h-3 w-3" />
                       <span>{info?.taskCount ?? 0} tarefas</span>
                     </div>
+                    {event.leads_gerados != null && (
+                      <div className="flex items-center gap-1">
+                        <Flag className="h-3 w-3" />
+                        <span>{event.leads_gerados} leads</span>
+                      </div>
+                    )}
+                    {event.leads_gerados != null && event.budget > 0 && event.leads_gerados > 0 && (
+                      <div className="flex items-center gap-1 ml-auto">
+                        <DollarSign className="h-3 w-3" />
+                        <span>{(event.budget / event.leads_gerados).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}/lead</span>
+                      </div>
+                    )}
                   </div>
                 </CardContent>
               </Card>
