@@ -166,9 +166,9 @@ interface TicketDetailSheetProps {
 }
 
 const progressConfig = [
-  { value: "not_started", label: "NÃO INICIADO", color: "bg-muted-foreground", icon: Circle },
-  { value: "in_progress", label: "EM PROGRESSO", color: "bg-primary", icon: Loader2 },
-  { value: "completed", label: "CONCLUÍDA", color: "bg-success", icon: CheckCircle2 },
+  { value: "not_started", label: "Não Iniciado", color: "bg-muted-foreground", icon: Circle },
+  { value: "in_progress", label: "Em Andamento", color: "bg-primary", icon: Loader2 },
+  { value: "completed", label: "Concluído", color: "bg-green-500", icon: CheckCircle2 },
 ];
 
 export function TicketDetailSheet({
@@ -236,14 +236,6 @@ export function TicketDetailSheet({
       await startTimer();
       if (ticket.progress === "not_started") {
         await supabase.from("tickets").update({ progress: "in_progress", updated_at: new Date().toISOString() } as any).eq("id", ticket.id as any);
-      }
-      const currentSt = statuses.find((s) => s.id === ticket.status_id);
-      if (currentSt?.statusType === "todo") {
-        const inProgressStatus = statuses.find((s) => s.statusType === "in_progress" && s.ativo);
-        if (inProgressStatus) {
-          onStatusChange(ticket.ticket_number, inProgressStatus.id);
-          await logHistory("status_change", `Status alterado automaticamente para ${inProgressStatus.nome} (cronômetro iniciado)`, "Admin");
-        }
       }
       await logHistory("timesheet", "Cronômetro iniciado", "Admin");
     }
@@ -475,7 +467,7 @@ export function TicketDetailSheet({
                   await supabase.from("tickets").update({ progress: v, updated_at: new Date().toISOString() } as any).eq("id", ticket.id as any);
                 }} disabled={isCompleted}>
                   <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
-                    <span className={cn("inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white", currentProgress.color)}>
+                    <span className={cn("inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold tracking-wide text-white", currentProgress.color)}>
                       {currentProgress.label}
                     </span>
                   </SelectTrigger>
