@@ -145,8 +145,13 @@ export default function Solicitacoes() {
     if (filterTaskType !== "all") {
       result = result.filter((t) => t.task_type_id === filterTaskType);
     }
+    // Hide completed tasks (stage meta_status === "completed")
+    if (hideCompleted && stages) {
+      const completedStageIds = stages.filter(s => s.meta_status === "completed").map(s => s.id);
+      result = result.filter(t => !t.stage_id || !completedStageIds.includes(t.stage_id));
+    }
     return result;
-  }, [tasks, selectedSprintId, searchQuery, filterPriority, filterAssignee, filterProgress, filterMilestoneOnly, filterTaskType]);
+  }, [tasks, stages, selectedSprintId, searchQuery, filterPriority, filterAssignee, filterProgress, filterMilestoneOnly, filterTaskType, hideCompleted]);
 
   const activeSprint = sprints?.find((s) => s.id === selectedSprintId) || null;
   const loading = stagesLoading || tasksLoading;
