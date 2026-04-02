@@ -3,7 +3,6 @@ import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { cn } from "@/lib/utils";
 import { useAuth, AppRole } from "@/hooks/use-auth";
-import { cn } from "@/lib/utils";
 import { ProfileTab } from "@/components/settings/ProfileTab";
 import { UserManagementTab } from "@/components/settings/UserManagementTab";
 import { StatusManagerTab } from "@/components/settings/StatusManagerTab";
@@ -14,12 +13,11 @@ import { CsvImportTab } from "@/components/settings/CsvImportTab";
 import { TicketImportTab } from "@/components/settings/TicketImportTab";
 import { IntegrityAuditorTab } from "@/components/settings/IntegrityAuditorTab";
 import { DangerZoneTab } from "@/components/settings/DangerZoneTab";
-import { useAuth } from "@/hooks/use-auth";
 import { SlaSettingsSection } from "@/components/settings/SlaSettingsSection";
 import { AuditLogSection } from "@/components/settings/AuditLogSection";
 import {
-  User, Users, Headset, Megaphone, Upload, ShieldAlert,
-  ListChecks, Zap, Clock, Shapes, ScrollText, Search, AlertTriangle,
+  User, Users, Upload,
+  ListChecks, Zap, Clock, Shapes, ScrollText, Search, AlertTriangle, Megaphone,
 } from "lucide-react";
 
 type Section =
