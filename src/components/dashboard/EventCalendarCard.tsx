@@ -21,6 +21,7 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 };
 
 export function EventCalendarCard({ events }: Props) {
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   // Events in the selected month
