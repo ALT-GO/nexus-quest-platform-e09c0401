@@ -46,7 +46,7 @@ export function GlobalTimerBadge() {
         <button className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm font-medium text-primary transition-colors hover:bg-primary/20">
           <Timer className="h-3.5 w-3.5 animate-pulse" />
           <span className="font-mono tabular-nums text-xs">
-            {formatDuration(latest.elapsed_seconds)}
+            {formatDuration(latest.total_accumulated_seconds)}
           </span>
           {activeTimers.length > 1 && (
             <span className="ml-0.5 rounded-full bg-primary/20 px-1.5 py-0.5 text-[10px] leading-none">
@@ -89,7 +89,7 @@ export function GlobalTimerBadge() {
                 </p>
               </div>
               <span className="font-mono text-xs font-semibold text-primary tabular-nums">
-                {formatDuration(timer.elapsed_seconds)}
+                {formatDuration(timer.total_accumulated_seconds)}
               </span>
               <Button
                 size="icon"

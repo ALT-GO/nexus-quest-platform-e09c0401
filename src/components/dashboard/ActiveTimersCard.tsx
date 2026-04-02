@@ -111,7 +111,7 @@ export function ActiveTimersCard() {
                 </div>
 
                 <span className="font-mono text-sm font-semibold text-primary tabular-nums">
-                  {formatDuration(timer.elapsed_seconds)}
+                  {formatDuration(timer.total_accumulated_seconds)}
                 </span>
 
                 <Button

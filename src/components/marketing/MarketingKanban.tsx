@@ -22,7 +22,7 @@ import {
 import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
 import { useMarketingTaskTypes } from "@/hooks/use-task-types";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { fetchMarketingTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
+import { fetchMarketingTimesheetTotals, formatDuration, useActiveTimerIds } from "@/hooks/use-timesheet";
 import { format, isToday, isBefore, startOfDay } from "date-fns";
 import {
   MarketingStage,
@@ -85,6 +85,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
   const { data: allDeps } = useTaskDependencies();
   const { data: taskTypes } = useMarketingTaskTypes();
   const { data: avatars } = useProfileAvatars();
+  const activeTimerMap = useActiveTimerIds();
 
   const [quickAddStageId, setQuickAddStageId] = useState<string | null>(null);
   const [quickAddTitle, setQuickAddTitle] = useState("");
@@ -344,17 +345,25 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                     </div>
                                   )}
 
-                                  {/* Status badge */}
-                                  <span className={cn(
-                                    "inline-block text-[10px] font-semibold rounded px-2 py-0.5 leading-none",
-                                    task.progress === "Concluído"
-                                      ? "bg-success/15 text-success"
-                                      : task.progress === "Em andamento"
-                                      ? "bg-primary/15 text-primary"
-                                      : "bg-muted text-muted-foreground"
-                                  )}>
-                                    {task.progress}
-                                  </span>
+                                  {/* Status badge + timer */}
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className={cn(
+                                      "inline-block text-[10px] font-semibold rounded px-2 py-0.5 leading-none",
+                                      task.progress === "Concluído"
+                                        ? "bg-success/15 text-success"
+                                        : task.progress === "Em andamento"
+                                        ? "bg-primary/15 text-primary"
+                                        : "bg-muted text-muted-foreground"
+                                    )}>
+                                      {task.progress}
+                                    </span>
+                                    {activeTimerMap[task.id] && (
+                                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold rounded px-2 py-0.5 leading-none bg-primary/10 text-primary animate-pulse">
+                                        <Timer className="h-3 w-3" />
+                                        {formatDuration(activeTimerMap[task.id].elapsed)}
+                                      </span>
+                                    )}
+                                  </div>
 
                                   {/* Property rows — ClickUp style */}
                                   <div className="space-y-1.5 text-muted-foreground">

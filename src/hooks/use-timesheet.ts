@@ -20,6 +20,7 @@ export interface ActiveTimer extends TimesheetLog {
   ticket_assignee?: string;
   source?: "ti" | "marketing";
   elapsed_seconds: number;
+  total_accumulated_seconds: number;
 }
 
 export function useTimesheet(ticketId: string | null) {
@@ -295,27 +296,62 @@ export function useActiveTimers(userTicketIds?: string[]) {
 
     const currentUserId = user?.id || "";
 
+    // Fetch ALL completed logs for same tickets/tasks to accumulate total time
+    const allEntityIds = [...ticketIds, ...mktIds];
+    let completedLogsByEntity = new Map<string, number>();
+    if (allEntityIds.length > 0) {
+      // Fetch completed logs for TI tickets
+      if (ticketIds.length > 0) {
+        const { data: completedTi } = await supabase
+          .from("timesheet_logs")
+          .select("ticket_id, duration_seconds")
+          .in("ticket_id", ticketIds as any)
+          .not("end_time", "is", null);
+        ((completedTi as any[]) || []).forEach((r: any) => {
+          const key = `ti_${r.ticket_id}`;
+          completedLogsByEntity.set(key, (completedLogsByEntity.get(key) || 0) + (r.duration_seconds || 0));
+        });
+      }
+      // Fetch completed logs for marketing tasks
+      if (mktIds.length > 0) {
+        const { data: completedMkt } = await supabase
+          .from("timesheet_logs")
+          .select("marketing_task_id, duration_seconds")
+          .in("marketing_task_id", mktIds as any)
+          .not("end_time", "is", null);
+        ((completedMkt as any[]) || []).forEach((r: any) => {
+          const key = `mkt_${r.marketing_task_id}`;
+          completedLogsByEntity.set(key, (completedLogsByEntity.get(key) || 0) + (r.duration_seconds || 0));
+        });
+      }
+    }
+
     const now = Date.now();
     let timers: ActiveTimer[] = fetched.map((l) => {
+      const currentSessionSeconds = Math.floor((now - new Date(l.start_time).getTime()) / 1000);
       if (l.ticket_id) {
         const ticket = ticketMap.get(l.ticket_id);
+        const accumulated = completedLogsByEntity.get(`ti_${l.ticket_id}`) || 0;
         return {
           ...l,
           ticket_title: ticket?.title || "",
           ticket_number: ticket?.ticket_number || "",
           ticket_assignee: ticket?.assignee || "",
           source: "ti" as const,
-          elapsed_seconds: Math.floor((now - new Date(l.start_time).getTime()) / 1000),
+          elapsed_seconds: currentSessionSeconds,
+          total_accumulated_seconds: accumulated + currentSessionSeconds,
         };
       } else {
         const mkt = mktMap.get(l.marketing_task_id!);
+        const accumulated = completedLogsByEntity.get(`mkt_${l.marketing_task_id}`) || 0;
         return {
           ...l,
           ticket_title: mkt?.title || "",
           ticket_number: "MKT",
           ticket_assignee: mkt?.assignee_name || "",
           source: "marketing" as const,
-          elapsed_seconds: Math.floor((now - new Date(l.start_time).getTime()) / 1000),
+          elapsed_seconds: currentSessionSeconds,
+          total_accumulated_seconds: accumulated + currentSessionSeconds,
         };
       }
     });
@@ -356,10 +392,15 @@ export function useActiveTimers(userTicketIds?: string[]) {
     intervalRef.current = setInterval(() => {
       const now = Date.now();
       setActiveTimers((prev) =>
-        prev.map((t) => ({
-          ...t,
-          elapsed_seconds: Math.floor((now - new Date(t.start_time).getTime()) / 1000),
-        }))
+        prev.map((t) => {
+          const currentSession = Math.floor((now - new Date(t.start_time).getTime()) / 1000);
+          const baseAccumulated = t.total_accumulated_seconds - t.elapsed_seconds;
+          return {
+            ...t,
+            elapsed_seconds: currentSession,
+            total_accumulated_seconds: baseAccumulated + currentSession,
+          };
+        })
       );
     }, 1000);
     return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
@@ -425,4 +466,68 @@ export async function fetchTimesheetByDateRange(
     .lte("start_time", dateRange.end.toISOString());
 
   return (data as unknown as { ticket_id: string; start_time: string; end_time: string | null; duration_seconds: number }[]) || [];
+}
+
+/**
+ * Hook that returns a Set of entity IDs (ticket or marketing_task) with active timers,
+ * plus their elapsed seconds. Subscribes to realtime updates.
+ */
+export function useActiveTimerIds() {
+  const [timerMap, setTimerMap] = useState<Record<string, { elapsed: number; startTime: string }>>({});
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const fetchActiveIds = useCallback(async () => {
+    const { data } = await supabase
+      .from("timesheet_logs")
+      .select("ticket_id, marketing_task_id, start_time")
+      .is("end_time", null);
+
+    const map: Record<string, { elapsed: number; startTime: string }> = {};
+    const now = Date.now();
+    ((data as any[]) || []).forEach((l: any) => {
+      const key = l.ticket_id || l.marketing_task_id;
+      if (key) {
+        const elapsed = Math.floor((now - new Date(l.start_time).getTime()) / 1000);
+        // Keep the longest running one per entity
+        if (!map[key] || elapsed > map[key].elapsed) {
+          map[key] = { elapsed, startTime: l.start_time };
+        }
+      }
+    });
+    setTimerMap(map);
+  }, []);
+
+  useEffect(() => { fetchActiveIds(); }, [fetchActiveIds]);
+
+  useEffect(() => {
+    const channel = supabase
+      .channel("active_timer_ids_realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "timesheet_logs" }, () => {
+        fetchActiveIds();
+      })
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [fetchActiveIds]);
+
+  // Tick every second
+  useEffect(() => {
+    const keys = Object.keys(timerMap);
+    if (keys.length === 0) return;
+    intervalRef.current = setInterval(() => {
+      const now = Date.now();
+      setTimerMap((prev) => {
+        const next = { ...prev };
+        for (const key of Object.keys(next)) {
+          next[key] = {
+            ...next[key],
+            elapsed: Math.floor((now - new Date(next[key].startTime).getTime()) / 1000),
+          };
+        }
+        return next;
+      });
+    }, 1000);
+    return () => { if (intervalRef.current) clearInterval(intervalRef.current); };
+  }, [Object.keys(timerMap).length]);
+
+  return timerMap;
 }
