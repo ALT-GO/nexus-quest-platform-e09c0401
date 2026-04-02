@@ -204,8 +204,11 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   // ── 13. Eventos Ativos / Próximos ──
   const activeEvents = events?.filter((e) => e.status === "active" || e.status === "planning") ?? [];
 
-  // ── 14. Budget Total vs Utilizado ──
+  // ── 14. Budget Total vs Real ──
   const totalBudget = events?.reduce((sum, e) => sum + (e.budget || 0), 0) ?? 0;
+  const totalActualCost = events?.reduce((sum, e) => sum + (e.actual_cost || 0), 0) ?? 0;
+  const budgetDifference = totalBudget - totalActualCost;
+  const eventsWithActualCost = events?.filter((e) => e.actual_cost != null).length ?? 0;
 
   // ── 15. Tarefas por Evento ──
   const tasksByEvent = useMemo(() => {
@@ -220,26 +223,46 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   // ── 16. Total de Leads Gerados ──
   const totalLeads = useMemo(() => {
     if (!events) return 0;
-    return events.reduce((sum, e) => sum + ((e as any).leads_gerados || 0), 0);
+    return events.reduce((sum, e) => sum + (e.leads_gerados || 0), 0);
   }, [events]);
 
-  // ── 17. Custo por Lead Total ──
+  // ── 17. Custo por Lead Total (budget) ──
   const costPerLeadTotal = totalLeads > 0 ? totalBudget / totalLeads : 0;
+
+  // ── 17b. Custo por Lead Real (actual_cost) ──
+  const costPerLeadReal = totalLeads > 0 && totalActualCost > 0 ? totalActualCost / totalLeads : 0;
 
   // ── 18. Leads e Custo por Evento (chart data) ──
   const leadsPerEvent = useMemo(() => {
     if (!events) return [];
     return events
-      .filter((e) => (e as any).leads_gerados != null && (e as any).leads_gerados > 0)
+      .filter((e) => e.leads_gerados != null && e.leads_gerados > 0)
       .map((e) => ({
         name: e.name.length > 18 ? e.name.substring(0, 18) + "…" : e.name,
-        leads: (e as any).leads_gerados || 0,
-        custoLead: (e as any).leads_gerados > 0 && e.budget > 0
-          ? Math.round((e.budget / (e as any).leads_gerados) * 100) / 100
+        leads: e.leads_gerados || 0,
+        custoLead: e.leads_gerados! > 0 && e.budget > 0
+          ? Math.round((e.budget / e.leads_gerados!) * 100) / 100
+          : 0,
+        custoLeadReal: e.leads_gerados! > 0 && e.actual_cost
+          ? Math.round((e.actual_cost / e.leads_gerados!) * 100) / 100
           : 0,
         budget: e.budget || 0,
       }))
       .sort((a, b) => b.leads - a.leads);
+  }, [events]);
+
+  // ── 19. Budget Planejado vs Real por Evento ──
+  const budgetVsRealData = useMemo(() => {
+    if (!events) return [];
+    return events
+      .filter((e) => e.budget > 0 || (e.actual_cost != null && e.actual_cost > 0))
+      .map((e) => ({
+        name: e.name.length > 18 ? e.name.substring(0, 18) + "…" : e.name,
+        planejado: e.budget || 0,
+        real: e.actual_cost ?? 0,
+        diff: (e.budget || 0) - (e.actual_cost ?? 0),
+      }))
+      .sort((a, b) => b.planejado - a.planejado);
   }, [events]);
 
   // ── Priority distribution ──
