@@ -204,8 +204,11 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   // ── 13. Eventos Ativos / Próximos ──
   const activeEvents = events?.filter((e) => e.status === "active" || e.status === "planning") ?? [];
 
-  // ── 14. Budget Total vs Utilizado ──
+  // ── 14. Budget Total vs Real ──
   const totalBudget = events?.reduce((sum, e) => sum + (e.budget || 0), 0) ?? 0;
+  const totalActualCost = events?.reduce((sum, e) => sum + (e.actual_cost || 0), 0) ?? 0;
+  const budgetDifference = totalBudget - totalActualCost;
+  const eventsWithActualCost = events?.filter((e) => e.actual_cost != null).length ?? 0;
 
   // ── 15. Tarefas por Evento ──
   const tasksByEvent = useMemo(() => {
@@ -220,26 +223,46 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   // ── 16. Total de Leads Gerados ──
   const totalLeads = useMemo(() => {
     if (!events) return 0;
-    return events.reduce((sum, e) => sum + ((e as any).leads_gerados || 0), 0);
+    return events.reduce((sum, e) => sum + (e.leads_gerados || 0), 0);
   }, [events]);
 
-  // ── 17. Custo por Lead Total ──
+  // ── 17. Custo por Lead Total (budget) ──
   const costPerLeadTotal = totalLeads > 0 ? totalBudget / totalLeads : 0;
+
+  // ── 17b. Custo por Lead Real (actual_cost) ──
+  const costPerLeadReal = totalLeads > 0 && totalActualCost > 0 ? totalActualCost / totalLeads : 0;
 
   // ── 18. Leads e Custo por Evento (chart data) ──
   const leadsPerEvent = useMemo(() => {
     if (!events) return [];
     return events
-      .filter((e) => (e as any).leads_gerados != null && (e as any).leads_gerados > 0)
+      .filter((e) => e.leads_gerados != null && e.leads_gerados > 0)
       .map((e) => ({
         name: e.name.length > 18 ? e.name.substring(0, 18) + "…" : e.name,
-        leads: (e as any).leads_gerados || 0,
-        custoLead: (e as any).leads_gerados > 0 && e.budget > 0
-          ? Math.round((e.budget / (e as any).leads_gerados) * 100) / 100
+        leads: e.leads_gerados || 0,
+        custoLead: e.leads_gerados! > 0 && e.budget > 0
+          ? Math.round((e.budget / e.leads_gerados!) * 100) / 100
+          : 0,
+        custoLeadReal: e.leads_gerados! > 0 && e.actual_cost
+          ? Math.round((e.actual_cost / e.leads_gerados!) * 100) / 100
           : 0,
         budget: e.budget || 0,
       }))
       .sort((a, b) => b.leads - a.leads);
+  }, [events]);
+
+  // ── 19. Budget Planejado vs Real por Evento ──
+  const budgetVsRealData = useMemo(() => {
+    if (!events) return [];
+    return events
+      .filter((e) => e.budget > 0 || (e.actual_cost != null && e.actual_cost > 0))
+      .map((e) => ({
+        name: e.name.length > 18 ? e.name.substring(0, 18) + "…" : e.name,
+        planejado: e.budget || 0,
+        real: e.actual_cost ?? 0,
+        diff: (e.budget || 0) - (e.actual_cost ?? 0),
+      }))
+      .sort((a, b) => b.planejado - a.planejado);
   }, [events]);
 
   // ── Priority distribution ──
@@ -279,21 +302,89 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             title="Eventos Ativos"
             value={activeEvents.length}
             icon={CalendarIcon}
-            description={totalBudget > 0 ? `Budget: ${totalBudget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}` : "sem budget definido"}
+            description={`${events?.length ?? 0} eventos no total`}
           />
+          <StatCard
+            title="Orçamento Total"
+            value={totalBudget > 0 ? totalBudget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+            icon={DollarSign}
+            description="planejado para todos os eventos"
+          />
+          <StatCard
+            title="Valor Real Gasto"
+            value={totalActualCost > 0 ? totalActualCost.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+            icon={DollarSign}
+            description={`${eventsWithActualCost} evento(s) com valor real`}
+          />
+          <StatCard
+            title={budgetDifference >= 0 ? "Economia" : "Excedente"}
+            value={eventsWithActualCost > 0
+              ? Math.abs(budgetDifference).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })
+              : "—"}
+            icon={TrendingUp}
+            description={
+              eventsWithActualCost > 0
+                ? budgetDifference >= 0
+                  ? "abaixo do orçamento ✓"
+                  : "acima do orçamento ⚠"
+                : "sem dados de custo real"
+            }
+          />
+        </div>
+
+        <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
           <StatCard
             title="Total de Leads"
             value={totalLeads}
             icon={TrendingUp}
-            description={`${events?.filter((e) => (e as any).leads_gerados != null).length ?? 0} eventos com dados`}
+            description={`${events?.filter((e) => e.leads_gerados != null).length ?? 0} eventos com dados`}
           />
           <StatCard
-            title="Custo por Lead (Geral)"
+            title="Custo/Lead (Orçamento)"
             value={costPerLeadTotal > 0 ? costPerLeadTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
             icon={DollarSign}
-            description={totalBudget > 0 ? `Budget total: ${totalBudget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}` : "sem budget"}
+            description="baseado no orçamento planejado"
+          />
+          <StatCard
+            title="Custo/Lead (Real)"
+            value={costPerLeadReal > 0 ? costPerLeadReal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+            icon={DollarSign}
+            description="baseado no valor real gasto"
           />
         </div>
+
+        {/* Planejado vs Real por Evento */}
+        {budgetVsRealData.length > 0 && (
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                Orçamento Planejado vs Valor Real por Evento
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="h-[320px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={budgetVsRealData}>
+                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                    <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                    <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} />
+                    <Tooltip
+                      contentStyle={tooltipStyle}
+                      formatter={(v: number, name: string) => [
+                        v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }),
+                        name === "planejado" ? "Planejado" : "Real",
+                      ]}
+                    />
+                    <Legend formatter={(v) => (v === "planejado" ? "Planejado" : "Real")} />
+                    <Bar dataKey="planejado" name="planejado" fill="hsl(var(--primary))" opacity={0.4} radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="real" name="real" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         {/* Eventos ativos + Tarefas por evento */}
         <div className="grid gap-6 lg:grid-cols-2">
@@ -312,6 +403,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
                   {activeEvents.slice(0, 5).map((e) => {
                     const eventTasks = (allTasks ?? []).filter((t: any) => t.event_id === e.id);
                     const completedEvTasks = eventTasks.filter((t) => t.progress === "Concluído").length;
+                    const variance = e.actual_cost != null ? (e.budget || 0) - e.actual_cost : null;
                     return (
                       <div key={e.id} className="p-3 rounded-lg border space-y-2">
                         <div className="flex items-center justify-between text-sm">
@@ -326,12 +418,20 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
                           </span>
                           <span>{completedEvTasks}/{eventTasks.length} tarefas</span>
                         </div>
-                        {e.budget > 0 && (
-                          <div className="flex items-center gap-2 text-xs">
-                            <DollarSign className="h-3 w-3 text-muted-foreground" />
-                            <span>Budget: {e.budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
-                          </div>
-                        )}
+                        <div className="flex items-center gap-4 text-xs">
+                          {e.budget > 0 && (
+                            <div className="flex items-center gap-1 text-muted-foreground">
+                              <DollarSign className="h-3 w-3" />
+                              <span>Orç: {e.budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                            </div>
+                          )}
+                          {e.actual_cost != null && (
+                            <div className={cn("flex items-center gap-1", variance != null && variance < 0 ? "text-destructive" : "text-success")}>
+                              <DollarSign className="h-3 w-3" />
+                              <span>Real: {e.actual_cost.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     );
                   })}
@@ -394,18 +494,26 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
                   <DollarSign className="h-4 w-4 text-muted-foreground" />
-                  Custo por Lead por Evento
+                  Custo por Lead: Planejado vs Real
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="h-[280px]">
                   <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={leadsPerEvent.filter((e) => e.custoLead > 0)}>
+                    <BarChart data={leadsPerEvent.filter((e) => e.custoLead > 0 || e.custoLeadReal > 0)}>
                       <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                       <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
                       <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                      <Tooltip contentStyle={tooltipStyle} formatter={(v: number) => [`R$ ${v.toFixed(2)}`, "Custo/Lead"]} />
-                      <Bar dataKey="custoLead" name="R$/Lead" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
+                      <Tooltip
+                        contentStyle={tooltipStyle}
+                        formatter={(v: number, name: string) => [
+                          `R$ ${v.toFixed(2)}`,
+                          name === "custoLead" ? "Custo/Lead (Orçamento)" : "Custo/Lead (Real)",
+                        ]}
+                      />
+                      <Legend formatter={(v) => (v === "custoLead" ? "Orçamento" : "Real")} />
+                      <Bar dataKey="custoLead" name="custoLead" fill="hsl(var(--primary))" opacity={0.4} radius={[4, 4, 0, 0]} />
+                      <Bar dataKey="custoLeadReal" name="custoLeadReal" fill="hsl(var(--chart-4))" radius={[4, 4, 0, 0]} />
                     </BarChart>
                   </ResponsiveContainer>
                 </div>
