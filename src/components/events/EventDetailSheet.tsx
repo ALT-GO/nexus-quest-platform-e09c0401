@@ -92,19 +92,6 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
     ? Math.round((checklist.filter(c => c.checked).length / checklist.length) * 100)
     : 0;
 
-  // Participant profiles
-  const participantProfiles = useMemo(() => {
-    if (!participants) return [];
-    return participants.map(p => {
-      const member = teamMembers.find(m => m.id === p.profile_id);
-      return { ...p, name: member?.name ?? "Desconhecido", avatarUrl: avatars?.byId[p.profile_id] ?? null };
-    });
-  }, [participants, teamMembers, avatars]);
-
-  const nonParticipantMembers = useMemo(() => {
-    const participantIds = new Set(participants?.map(p => p.profile_id) ?? []);
-    return teamMembers.filter(m => !participantIds.has(m.id));
-  }, [teamMembers, participants]);
 
   if (!event) return null;
   const st = statusLabels[event.status] || statusLabels.planning;
