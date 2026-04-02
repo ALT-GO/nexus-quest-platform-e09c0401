@@ -11,7 +11,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, X, LayoutGrid, List, Search, FilterX, Diamond, GanttChart as GanttChartIcon } from "lucide-react";
+import { Plus, X, LayoutGrid, List, Search, FilterX, Diamond, GanttChart as GanttChartIcon, Eye, EyeOff } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useMarketingStages, useMarketingTasks, MarketingTask } from "@/hooks/use-marketing";
 import { useMarketingTags } from "@/hooks/use-marketing-tags";
@@ -56,6 +56,7 @@ export default function Solicitacoes() {
   const [filterStage, setFilterStage] = useState("all");
   const [filterMilestoneOnly, setFilterMilestoneOnly] = useState(false);
   const [filterTaskType, setFilterTaskType] = useState("all");
+  const [hideCompleted, setHideCompleted] = useState(true);
   useEffect(() => {
     supabase.from("profiles").select("id, full_name").then(({ data }) => {
       if (data) setTeamMembers(data.map(p => ({ id: p.id, name: p.full_name })));
@@ -144,8 +145,13 @@ export default function Solicitacoes() {
     if (filterTaskType !== "all") {
       result = result.filter((t) => t.task_type_id === filterTaskType);
     }
+    // Hide completed tasks (stage meta_status === "completed")
+    if (hideCompleted && stages) {
+      const completedStageIds = stages.filter(s => s.meta_status === "completed").map(s => s.id);
+      result = result.filter(t => !t.stage_id || !completedStageIds.includes(t.stage_id));
+    }
     return result;
-  }, [tasks, selectedSprintId, searchQuery, filterPriority, filterAssignee, filterProgress, filterMilestoneOnly, filterTaskType]);
+  }, [tasks, stages, selectedSprintId, searchQuery, filterPriority, filterAssignee, filterProgress, filterMilestoneOnly, filterTaskType, hideCompleted]);
 
   const activeSprint = sprints?.find((s) => s.id === selectedSprintId) || null;
   const loading = stagesLoading || tasksLoading;
@@ -187,6 +193,16 @@ export default function Solicitacoes() {
               Gantt
             </Button>
           </div>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setHideCompleted(!hideCompleted)}
+            className="gap-1.5"
+            title={hideCompleted ? "Mostrar tarefas concluídas" : "Ocultar tarefas concluídas"}
+          >
+            {hideCompleted ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            {hideCompleted ? "Concluídas ocultas" : "Concluídas visíveis"}
+          </Button>
           <Button onClick={() => setDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" /> Nova Tarefa
           </Button>
