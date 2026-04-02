@@ -443,6 +443,15 @@ export default function GestaoFaturas() {
 
   const totalAdjusted = adjustedRows.reduce((acc, r) => acc + r.adjusted, 0);
 
+  // For "ambas" mode: split rows by company
+  const engRows = useMemo(() => adjustedRows.filter((r) => r.type === "eng"), [adjustedRows]);
+  const manRows = useMemo(() => adjustedRows.filter((r) => r.type === "man"), [adjustedRows]);
+  const noneRows = useMemo(() => adjustedRows.filter((r) => r.type === "none"), [adjustedRows]);
+  const totalEng = engRows.reduce((a, r) => a + r.adjusted, 0) + noneRows.reduce((a, r) => a + r.adjusted, 0) / 2;
+  const totalMan = manRows.reduce((a, r) => a + r.adjusted, 0) + noneRows.reduce((a, r) => a + r.adjusted, 0) / 2;
+
+  const empresaLabel = generatedEmpresa === "eng" ? "Engenharia (Serviços)" : generatedEmpresa === "man" ? "Manutenção" : "Ambas";
+
   const handleExportCSV = () => {
     if (!adjustedRows.length) return;
     const header = "Centro de Custo;Descrição;Qtd Itens;Valor Total do Rateio";
