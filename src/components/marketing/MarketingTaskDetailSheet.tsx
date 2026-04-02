@@ -629,7 +629,7 @@ export function MarketingTaskDetailSheet({
                 </PropRow>
 
                 {/* Tags */}
-                <PropRow icon={Tag} label="Etiquetas">
+                <PropRow icon={Tag} label="Etiquetas" tooltip="Tags de categorização para filtrar e organizar tarefas">
                   <MarketingTagSelector taskId={task.id} />
                 </PropRow>
 
