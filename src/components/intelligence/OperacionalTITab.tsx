@@ -552,26 +552,31 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
             </CardTitle>
           </CardHeader>
           <CardContent>
-            <div className="grid grid-cols-2 gap-4 py-4 mb-4">
+            <div className="grid grid-cols-3 gap-4 py-4 mb-4">
               <div className="flex flex-col items-center gap-2 rounded-lg border p-4">
                 <Monitor className="h-8 w-8 text-primary" />
-                <span className="text-2xl font-bold">{assetsDisponivel}</span>
-                <span className="text-sm text-muted-foreground">Disponíveis</span>
+                <span className="text-2xl font-bold">{assetsEmUso}</span>
+                <span className="text-sm text-muted-foreground">Em uso</span>
               </div>
               <div className="flex flex-col items-center gap-2 rounded-lg border p-4">
-                <Wrench className="h-8 w-8 text-warning" />
-                <span className="text-2xl font-bold">{assetsManutencao}</span>
-                <span className="text-sm text-muted-foreground">Em manutenção</span>
+                <CheckCircle2 className="h-8 w-8 text-success" />
+                <span className="text-2xl font-bold">{assetsAtivo}</span>
+                <span className="text-sm text-muted-foreground">Ativos</span>
+              </div>
+              <div className="flex flex-col items-center gap-2 rounded-lg border p-4">
+                <AlertTriangle className="h-8 w-8 text-warning" />
+                <span className="text-2xl font-bold">{assetsInativo}</span>
+                <span className="text-sm text-muted-foreground">Inativos</span>
               </div>
             </div>
-            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
               {inventoryByCategory.map((item) => {
                 const Icon = categoryIcons[item.category] || Monitor;
                 return (
                   <div key={item.category} className="flex flex-col items-center gap-1 rounded-lg border p-3">
                     <Icon className={`h-6 w-6 ${categoryColorClasses[item.category] || "text-muted-foreground"}`} />
-                    <span className="text-lg font-bold">{item.available}</span>
-                    <span className="text-xs text-muted-foreground">{categoryLabels[item.category]} disp.</span>
+                    <span className="text-lg font-bold">{item.emUso + item.ativo}</span>
+                    <span className="text-xs text-muted-foreground">{categoryLabels[item.category]} ativos</span>
                     <span className="text-[10px] text-muted-foreground/60">{item.total} total</span>
                   </div>
                 );
