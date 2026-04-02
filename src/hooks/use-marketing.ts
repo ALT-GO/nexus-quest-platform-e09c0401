@@ -114,6 +114,19 @@ export function useCreateMarketingTask() {
         .select()
         .single();
       if (error) throw error;
+
+      // Notify assignee about the new task
+      const created = data as any;
+      if (created.assignee_id) {
+        await supabase.from("notifications").insert({
+          user_id: created.assignee_id,
+          title: "Nova tarefa atribuída",
+          message: `Você foi atribuído(a) à tarefa "${created.title}".`,
+          type: "task_assigned",
+          link: "/marketing/solicitacoes",
+        } as any);
+      }
+
       return data;
     },
     onSuccess: () => {
@@ -133,6 +146,24 @@ export function useUpdateMarketingTask() {
         .update({ ...updates, updated_at: new Date().toISOString() } as any)
         .eq("id", id);
       if (error) throw error;
+
+      // Notify new assignee when assignment changes
+      if (updates.assignee_id) {
+        const { data: task } = await supabase
+          .from("marketing_tasks")
+          .select("title")
+          .eq("id", id)
+          .single();
+        if (task) {
+          await supabase.from("notifications").insert({
+            user_id: updates.assignee_id,
+            title: "Tarefa atribuída a você",
+            message: `Você foi atribuído(a) à tarefa "${(task as any).title}".`,
+            type: "task_assigned",
+            link: "/marketing/solicitacoes",
+          } as any);
+        }
+      }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["marketing_tasks"] }),
     onError: (e: any) => toast.error(e.message),
