@@ -546,12 +546,14 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             value={totalTasks}
             icon={ListTodo}
             description={`${completedTasks} concluídas`}
+            onClick={() => navigate("/marketing/solicitacoes")}
           />
           <StatCard
             title="Taxa de Conclusão"
             value={`${completionRate}%`}
             icon={CheckCircle2}
             description={`${completedTasks}/${totalTasks}`}
+            onClick={() => navigate("/marketing/solicitacoes")}
           />
           <StatCard
             title="No Prazo"
@@ -564,6 +566,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             value={overdueCount}
             icon={AlertTriangle}
             description="vencidas sem conclusão"
+            onClick={() => navigate("/marketing/solicitacoes")}
           />
         </div>
 
