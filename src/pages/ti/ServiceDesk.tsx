@@ -443,7 +443,7 @@ export default function ServiceDesk() {
               title: `${t.ticket_number} - ${t.title}`,
               group: t.category,
               startDate: t.created_at,
-              endDate: t.completed_at || null,
+              endDate: t.sla_deadline || null,
               progress: t.completed_at ? "Concluído" : "Em andamento",
               priority: t.priority,
               assigneeName: t.assignee || undefined,
