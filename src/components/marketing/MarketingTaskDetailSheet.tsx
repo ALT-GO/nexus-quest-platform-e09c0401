@@ -482,7 +482,7 @@ export function MarketingTaskDetailSheet({
               {/* ─── Properties Grid ─── */}
               <div className="mt-4 space-y-0 divide-y divide-border/50">
                 {/* Status */}
-                <PropRow icon={Target} label="Status">
+                <PropRow icon={Target} label="Status" tooltip="Estado atual da tarefa: não iniciado, em progresso ou concluído">
                   <Select value={task.progress} onValueChange={handleProgressChange}>
                     <SelectTrigger className="w-auto h-7 border-none shadow-none gap-1.5 px-0">
                       <span className={cn(
