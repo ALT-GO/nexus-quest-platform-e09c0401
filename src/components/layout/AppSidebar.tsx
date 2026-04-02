@@ -58,7 +58,7 @@ export function AppSidebar() {
   // Build marketing children
   const marketingChildren: { title: string; href: string; icon?: React.ElementType }[] = [];
   if (hasPermission("acessar_kanban_marketing") || hasAnyRole("admin", "marketing")) {
-    marketingChildren.push({ title: "Projetos", href: "/marketing/projetos", icon: FileText });
+    
     marketingChildren.push({ title: "Solicitações", href: "/marketing/solicitacoes", icon: FileText });
     marketingChildren.push({ title: "Metas", href: "/marketing/metas", icon: Target });
   }
