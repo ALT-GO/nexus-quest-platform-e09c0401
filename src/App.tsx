@@ -5,7 +5,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth, UserPermissions } from "@/hooks/use-auth";
 import Dashboard from "./pages/Dashboard";
-import Projetos from "./pages/marketing/Projetos";
+
 import Solicitacoes from "./pages/marketing/Solicitacoes";
 import Metas from "./pages/marketing/Metas";
 import ServiceDesk from "./pages/ti/ServiceDesk";
