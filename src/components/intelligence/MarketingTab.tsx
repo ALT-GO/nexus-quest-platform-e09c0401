@@ -414,7 +414,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
                     const completedEvTasks = eventTasks.filter((t) => t.progress === "Concluído").length;
                     const variance = e.actual_cost != null ? (e.budget || 0) - e.actual_cost : null;
                     return (
-                      <div key={e.id} className="p-3 rounded-lg border space-y-2">
+                      <div key={e.id} className="p-3 rounded-lg border space-y-2 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all" onClick={() => navigate("/marketing/eventos")}>
                         <div className="flex items-center justify-between text-sm">
                           <span className="font-medium truncate">{e.name}</span>
                           <Badge variant="outline" className="text-[10px]">
