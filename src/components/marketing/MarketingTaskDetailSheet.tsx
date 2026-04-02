@@ -48,6 +48,7 @@ import {
   Eye,
   EyeOff,
 } from "lucide-react";
+import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { ChecklistEditor } from "./ChecklistEditor";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
