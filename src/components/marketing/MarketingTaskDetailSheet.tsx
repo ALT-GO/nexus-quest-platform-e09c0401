@@ -721,7 +721,7 @@ export function MarketingTaskDetailSheet({
                 </PropRow>
 
                 {/* Milestone */}
-                <PropRow icon={Diamond} label="Milestone">
+                <PropRow icon={Diamond} label="Milestone" tooltip="Marque como marco importante para destacar entregas-chave do projeto">
                   <Switch
                     checked={task.is_milestone ?? false}
                     onCheckedChange={(checked) => {
