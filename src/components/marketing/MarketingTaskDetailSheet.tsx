@@ -170,18 +170,34 @@ function TimeEstimateField({ taskId, currentMinutes, updateTask }: {
 }
 
 /* ─── Property Row ─── */
-function PropRow({ icon: Icon, label, children, isEmpty }: {
+function PropRow({ icon: Icon, label, children, isEmpty, tooltip }: {
   icon: React.ElementType;
   label: string;
   children: React.ReactNode;
   isEmpty?: boolean;
+  tooltip?: string;
 }) {
+  const labelContent = (
+    <div className="flex items-center gap-2 w-[160px] shrink-0">
+      <Icon className="h-4 w-4 text-muted-foreground" />
+      <span className="text-sm text-muted-foreground font-medium">{label}</span>
+    </div>
+  );
+
   return (
     <div className="flex items-center py-2 min-h-[36px] group">
-      <div className="flex items-center gap-2 w-[160px] shrink-0">
-        <Icon className="h-4 w-4 text-muted-foreground" />
-        <span className="text-sm text-muted-foreground font-medium">{label}</span>
-      </div>
+      {tooltip ? (
+        <Tooltip>
+          <TooltipTrigger asChild>
+            <div className="cursor-help">{labelContent}</div>
+          </TooltipTrigger>
+          <TooltipContent side="left" className="max-w-[220px] text-xs">
+            {tooltip}
+          </TooltipContent>
+        </Tooltip>
+      ) : (
+        labelContent
+      )}
       <div className="flex-1 min-w-0">{children}</div>
     </div>
   );
