@@ -61,7 +61,7 @@ import {
 } from "@/hooks/use-marketing";
 import { MarketingTimerButton } from "./MarketingTimerButton";
 import { useAuth } from "@/hooks/use-auth";
-import { notifyTaskCreator } from "@/lib/marketing-notifications";
+import { notifyTaskCreator, notifyAdminsForApproval } from "@/lib/marketing-notifications";
 import { format, formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
