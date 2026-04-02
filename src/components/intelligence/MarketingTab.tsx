@@ -15,7 +15,6 @@ import { useProfileAvatars } from "@/hooks/use-profile-avatars";
 import {
   CheckCircle2, Clock, ListTodo, AlertTriangle, Target, TrendingUp,
   Timer, Users, CalendarIcon, DollarSign, Flag, Zap, BarChart3, Milestone,
-  Separator as SeparatorIcon,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
