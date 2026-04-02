@@ -362,13 +362,14 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
 
       {/* Stat Cards */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Chamados no período" value={filtered.length} icon={Ticket} description={`${completedTickets.length} concluídos`} />
+        <StatCard title="Chamados no período" value={filtered.length} icon={Ticket} description={`${completedTickets.length} concluídos`} onClick={() => navigate("/ti/service-desk")} />
         <StatCard title="Tempo Médio Resolução" value={`${avgResolutionHours}h`} icon={Clock} description="Média em horas" />
         <StatCard
           title="SLA Cumprido" value={`${slaCumprido}%`} icon={CheckCircle2} description="No período"
           trend={slaCumprido >= 90 ? { value: slaCumprido - 90, isPositive: true } : { value: 90 - slaCumprido, isPositive: false }}
+          onClick={() => navigate("/ti/service-desk")}
         />
-        <StatCard title="Chamados Abertos" value={allOpenTickets.length} icon={AlertTriangle} description="Atualmente sem conclusão" />
+        <StatCard title="Chamados Abertos" value={allOpenTickets.length} icon={AlertTriangle} description="Atualmente sem conclusão" onClick={() => navigate("/ti/service-desk")} />
       </div>
 
       {/* Charts Row 1 */}
