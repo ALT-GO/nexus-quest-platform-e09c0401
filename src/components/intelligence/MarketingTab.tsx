@@ -344,18 +344,21 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             value={totalLeads}
             icon={TrendingUp}
             description={`${events?.filter((e) => e.leads_gerados != null).length ?? 0} eventos com dados`}
+            onClick={() => navigate("/marketing/eventos")}
           />
           <StatCard
             title="Custo/Lead (Orçamento)"
             value={costPerLeadTotal > 0 ? costPerLeadTotal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
             icon={DollarSign}
             description="baseado no orçamento planejado"
+            onClick={() => navigate("/marketing/eventos")}
           />
           <StatCard
             title="Custo/Lead (Real)"
             value={costPerLeadReal > 0 ? costPerLeadReal.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
             icon={DollarSign}
             description="baseado no valor real gasto"
+            onClick={() => navigate("/marketing/eventos")}
           />
         </div>
 
