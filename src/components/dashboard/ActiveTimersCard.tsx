@@ -9,8 +9,9 @@ import {
 } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
 import { Timer, Pause, ExternalLink } from "lucide-react";
-import { useActiveTimers, formatDuration } from "@/hooks/use-timesheet";
+import { useActiveTimers, formatDuration, ActiveTimer } from "@/hooks/use-timesheet";
 import { useTickets, Ticket } from "@/hooks/use-tickets";
+import { useMarketingTasks, MarketingTask } from "@/hooks/use-marketing";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { format } from "date-fns";
@@ -19,8 +20,10 @@ import { useNavigate } from "react-router-dom";
 
 export function ActiveTimersCard() {
   const { tickets } = useTickets();
+  const { data: marketingTasks } = useMarketingTasks();
   const navigate = useNavigate();
   const [selectedTicket, setSelectedTicket] = useState<Ticket | null>(null);
+  const [selectedMktTask, setSelectedMktTask] = useState<MarketingTask | null>(null);
 
   const { activeTimers, loading, refetch } = useActiveTimers();
   const top5 = activeTimers.slice(0, 5);
@@ -46,10 +49,13 @@ export function ActiveTimersCard() {
     }
   };
 
-  const handleOpenTicket = (ticketId: string) => {
-    const ticket = tickets.find((t) => t.id === ticketId);
-    if (ticket) {
-      setSelectedTicket(ticket);
+  const handleOpenTimer = (timer: ActiveTimer) => {
+    if (timer.source === "marketing" && timer.marketing_task_id) {
+      const task = (marketingTasks || []).find((t) => t.id === timer.marketing_task_id);
+      if (task) setSelectedMktTask(task);
+    } else if (timer.ticket_id) {
+      const ticket = tickets.find((t) => t.id === timer.ticket_id);
+      if (ticket) setSelectedTicket(ticket);
     }
   };
 
@@ -81,12 +87,24 @@ export function ActiveTimersCard() {
                 className="flex items-center gap-3 rounded-lg border bg-card p-3 transition-colors hover:bg-muted/50"
               >
                 <div className="flex-1 min-w-0">
-                  <button
-                    onClick={() => handleOpenTicket(timer.ticket_id)}
-                    className="text-sm font-medium text-foreground hover:text-primary hover:underline text-left truncate block w-full"
-                  >
-                    {timer.ticket_title || "Sem título"}
-                  </button>
+                  <div className="flex items-center gap-1.5">
+                    <Badge
+                      variant="outline"
+                      className={`text-[10px] px-1.5 py-0 shrink-0 ${
+                        timer.source === "marketing"
+                          ? "border-purple-400 text-purple-600 dark:text-purple-400"
+                          : "border-blue-400 text-blue-600 dark:text-blue-400"
+                      }`}
+                    >
+                      {timer.source === "marketing" ? "MKT" : "TI"}
+                    </Badge>
+                    <button
+                      onClick={() => handleOpenTimer(timer)}
+                      className="text-sm font-medium text-foreground hover:text-primary hover:underline text-left truncate block w-full"
+                    >
+                      {timer.ticket_title || "Sem título"}
+                    </button>
+                  </div>
                   <p className="text-xs text-muted-foreground">
                     {timer.ticket_number} {timer.ticket_assignee ? `· ${timer.ticket_assignee}` : ""}
                   </p>
@@ -111,7 +129,7 @@ export function ActiveTimersCard() {
         </CardContent>
       </Card>
 
-      {/* Mini detail sheet */}
+      {/* TI Ticket detail sheet */}
       <Sheet
         open={!!selectedTicket}
         onOpenChange={(open) => !open && setSelectedTicket(null)}
@@ -186,6 +204,90 @@ export function ActiveTimersCard() {
                 >
                   <ExternalLink className="h-4 w-4" />
                   Abrir no Service Desk
+                </Button>
+              </div>
+            </>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Marketing Task detail sheet */}
+      <Sheet
+        open={!!selectedMktTask}
+        onOpenChange={(open) => !open && setSelectedMktTask(null)}
+      >
+        <SheetContent className="sm:max-w-md">
+          {selectedMktTask && (
+            <>
+              <SheetHeader>
+                <SheetTitle className="text-left pr-6">
+                  {selectedMktTask.title}
+                </SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 space-y-4">
+                <div className="grid grid-cols-2 gap-3 text-sm">
+                  <div>
+                    <p className="text-muted-foreground">Prioridade</p>
+                    <Badge
+                      variant={
+                        selectedMktTask.priority === "high"
+                          ? "destructive"
+                          : "secondary"
+                      }
+                    >
+                      {selectedMktTask.priority === "high"
+                        ? "Alta"
+                        : selectedMktTask.priority === "medium"
+                        ? "Média"
+                        : "Baixa"}
+                    </Badge>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Responsável</p>
+                    <p className="font-medium">
+                      {selectedMktTask.assignee_name || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Solicitante</p>
+                    <p className="font-medium">
+                      {selectedMktTask.requester_name || "—"}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-muted-foreground">Progresso</p>
+                    <p className="font-medium">{selectedMktTask.progress}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <p className="text-muted-foreground">Criado em</p>
+                    <p className="font-medium">
+                      {format(
+                        new Date(selectedMktTask.created_at),
+                        "dd/MM/yyyy 'às' HH:mm",
+                        { locale: ptBR }
+                      )}
+                    </p>
+                  </div>
+                </div>
+                {selectedMktTask.description && (
+                  <div>
+                    <p className="text-sm text-muted-foreground mb-1">
+                      Descrição
+                    </p>
+                    <p className="text-sm whitespace-pre-wrap rounded-md bg-muted p-3">
+                      {selectedMktTask.description}
+                    </p>
+                  </div>
+                )}
+                <Button
+                  className="w-full gap-2"
+                  onClick={() => {
+                    setSelectedMktTask(null);
+                    navigate("/marketing/solicitacoes");
+                  }}
+                >
+                  <ExternalLink className="h-4 w-4" />
+                  Abrir em Solicitações
                 </Button>
               </div>
             </>
