@@ -284,6 +284,80 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_event_participants: {
+        Row: {
+          created_at: string
+          event_id: string
+          id: string
+          profile_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_id: string
+          id?: string
+          profile_id: string
+        }
+        Update: {
+          created_at?: string
+          event_id?: string
+          id?: string
+          profile_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_event_participants_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      marketing_events: {
+        Row: {
+          budget: number | null
+          checklist: Json | null
+          created_at: string
+          end_date: string
+          id: string
+          location: string | null
+          name: string
+          notes: string | null
+          priority: string
+          start_date: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          budget?: number | null
+          checklist?: Json | null
+          created_at?: string
+          end_date: string
+          id?: string
+          location?: string | null
+          name: string
+          notes?: string | null
+          priority?: string
+          start_date: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          budget?: number | null
+          checklist?: Json | null
+          created_at?: string
+          end_date?: string
+          id?: string
+          location?: string | null
+          name?: string
+          notes?: string | null
+          priority?: string
+          start_date?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       marketing_goal_targets: {
         Row: {
           created_at: string
@@ -632,6 +706,7 @@ export type Database = {
           created_at: string
           description: string | null
           due_date: string | null
+          event_id: string | null
           id: string
           is_milestone: boolean
           is_recurring: boolean
@@ -658,6 +733,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          event_id?: string | null
           id?: string
           is_milestone?: boolean
           is_recurring?: boolean
@@ -684,6 +760,7 @@ export type Database = {
           created_at?: string
           description?: string | null
           due_date?: string | null
+          event_id?: string | null
           id?: string
           is_milestone?: boolean
           is_recurring?: boolean
@@ -704,6 +781,13 @@ export type Database = {
           updated_at?: string
         }
         Relationships: [
+          {
+            foreignKeyName: "marketing_tasks_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_events"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "marketing_tasks_sprint_id_fkey"
             columns: ["sprint_id"]
