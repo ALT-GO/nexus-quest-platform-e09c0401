@@ -386,6 +386,15 @@ export default function ServiceDesk() {
             <LayoutList className="h-4 w-4" />
             <span className="hidden sm:inline">Lista</span>
           </Button>
+          <Button
+            variant={viewMode === "gantt" ? "default" : "ghost"}
+            size="sm"
+            onClick={() => setViewMode("gantt")}
+            className="gap-1.5"
+          >
+            <GanttChartIcon className="h-4 w-4" />
+            <span className="hidden sm:inline">Gantt</span>
+          </Button>
         </div>
       </div>
 
