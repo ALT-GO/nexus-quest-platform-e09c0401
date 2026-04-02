@@ -613,7 +613,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           title="Total de Ativos"
           value={filteredInv.length}
           icon={Monitor}
-          description={`${assetsDisponivel} disponíveis · ${assetsManutencao} em manutenção`}
+          description={`${assetsEmUso + assetsAtivo} ativos · ${assetsInativo} inativos`}
           className="border-l-4 border-l-success"
         />
       </div>
