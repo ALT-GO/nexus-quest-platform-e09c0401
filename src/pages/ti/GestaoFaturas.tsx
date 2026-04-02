@@ -530,7 +530,7 @@ export default function GestaoFaturas() {
                 <CardHeader className="flex flex-row items-center justify-between">
                   <div>
                     <CardTitle className="text-base font-semibold">
-                      Rateio — {generatedOp}
+                      Rateio — {generatedOp} ({empresaLabel})
                     </CardTitle>
                     <p className="text-sm text-muted-foreground mt-1">
                       Competência: {generatedMesAno} • {reportItems.length} itens total •
