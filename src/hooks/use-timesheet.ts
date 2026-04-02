@@ -10,6 +10,7 @@ export interface TimesheetLog {
   end_time: string | null;
   duration_seconds: number;
   created_at: string;
+  created_by: string | null;
 }
 
 export interface ActiveTimer extends TimesheetLog {
