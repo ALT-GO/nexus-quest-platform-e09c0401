@@ -38,43 +38,38 @@ export function AppSidebar() {
   const navigate = useNavigate();
   const { user, isAdmin, roles, hasPermission, signOut } = useAuth();
 
-  const hasAnyRole = (...r: string[]) => r.some((role) => roles.includes(role as any));
-  const isPrivileged = isAdmin || hasAnyRole("ti", "marketing");
-
-  // Build TI children based on permissions
+  // Build TI children based on page permissions
   const tiChildren: { title: string; href: string; icon?: React.ElementType }[] = [];
-  if (hasPermission("criar_chamados") || hasPermission("atender_chamados")) {
+  if (hasPermission("ver_service_desk")) {
     tiChildren.push({ title: "Service Desk", href: "/ti/service-desk", icon: Headphones });
   }
-  if (hasPermission("gerenciar_estoque") || hasAnyRole("admin", "ti")) {
+  if (hasPermission("ver_colaboradores")) {
     tiChildren.push({ title: "Colaboradores", href: "/ti/colaboradores", icon: Users });
   }
-  if (hasPermission("ver_custos_faturas")) {
+  if (hasPermission("ver_gestao_custos")) {
     tiChildren.push({ title: "Gestão de Custos", href: "/ti/faturas", icon: Receipt });
   }
-  if (hasPermission("acessar_cofre_senhas")) {
+  if (hasPermission("ver_cofre_senhas")) {
     tiChildren.push({ title: "Cofre de Senhas", href: "/ti/cofre-senhas", icon: KeyRound });
   }
 
-  // Build marketing children
+  // Build marketing children based on page permissions
   const marketingChildren: { title: string; href: string; icon?: React.ElementType }[] = [];
-  if (hasPermission("acessar_kanban_marketing") || hasAnyRole("admin", "marketing")) {
-    
+  if (hasPermission("ver_solicitacoes_marketing")) {
     marketingChildren.push({ title: "Solicitações", href: "/marketing/solicitacoes", icon: FileText });
+  }
+  if (hasPermission("ver_eventos_marketing")) {
     marketingChildren.push({ title: "Eventos", href: "/marketing/eventos", icon: CalendarDays });
+  }
+  if (hasPermission("ver_metas_marketing")) {
     marketingChildren.push({ title: "Metas", href: "/marketing/metas", icon: Target });
   }
 
   const navigation: NavItem[] = [
-    ...(!isPrivileged ? [{
+    ...(hasPermission("ver_dashboard") ? [{
       title: "Dashboard",
-      href: "/",
-      icon: LayoutDashboard,
-    } as NavItem] : []),
-    ...(hasAnyRole("admin", "ti") || hasPermission("ver_dashboard_financeiro") ? [{
-      title: "Dashboard",
-      href: "/central-inteligencia",
-      icon: Brain,
+      href: hasPermission("ver_central_inteligencia") ? "/central-inteligencia" : "/",
+      icon: hasPermission("ver_central_inteligencia") ? Brain : LayoutDashboard,
     } as NavItem] : []),
     ...(marketingChildren.length > 0 ? [{
       title: "Marketing",

@@ -5,17 +5,41 @@ import type { User, Session } from "@supabase/supabase-js";
 export type AppRole = "admin" | "ti" | "marketing" | "colaborador";
 
 export interface UserPermissions {
+  // Pages - TI
+  ver_dashboard: boolean;
+  ver_central_inteligencia: boolean;
+  ver_service_desk: boolean;
+  ver_colaboradores: boolean;
+  ver_gestao_custos: boolean;
+  ver_cofre_senhas: boolean;
+  // Pages - Marketing
+  ver_solicitacoes_marketing: boolean;
+  ver_eventos_marketing: boolean;
+  ver_metas_marketing: boolean;
+  // Actions - TI
   criar_chamados: boolean;
   atender_chamados: boolean;
   gerenciar_estoque: boolean;
+  // Actions - Financeiro
   ver_custos_faturas: boolean;
   ver_dashboard_financeiro: boolean;
+  // Actions - Marketing
   acessar_kanban_marketing: boolean;
+  // Actions - Segurança
   acessar_cofre_senhas: boolean;
   acesso_admin_global: boolean;
 }
 
 export const DEFAULT_PERMISSIONS: UserPermissions = {
+  ver_dashboard: true,
+  ver_central_inteligencia: false,
+  ver_service_desk: true,
+  ver_colaboradores: false,
+  ver_gestao_custos: false,
+  ver_cofre_senhas: false,
+  ver_solicitacoes_marketing: false,
+  ver_eventos_marketing: false,
+  ver_metas_marketing: false,
   criar_chamados: true,
   atender_chamados: false,
   gerenciar_estoque: false,
@@ -128,7 +152,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const hasPermission = useCallback(
     (key: keyof UserPermissions) => {
-      // Admins always have all permissions
       if (isAdmin || permissions.acesso_admin_global) return true;
       return !!permissions[key];
     },
