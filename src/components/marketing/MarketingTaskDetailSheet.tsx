@@ -641,7 +641,7 @@ export function MarketingTaskDetailSheet({
                 )}
 
                 {/* Links (tasks + events) */}
-                <PropRow icon={Link2} label="Links">
+                <PropRow icon={Link2} label="Links" tooltip="Vincule esta tarefa a outras tarefas ou eventos relacionados">
                   <div className="space-y-1.5">
                     {(taskLinks || []).map((link) => {
                       const isOutgoing = link.task_id === task.id;
