@@ -489,6 +489,7 @@ export type Database = {
       }
       marketing_stages: {
         Row: {
+          color: string
           created_at: string
           id: string
           meta_status: string
@@ -496,6 +497,7 @@ export type Database = {
           order_index: number
         }
         Insert: {
+          color?: string
           created_at?: string
           id?: string
           meta_status?: string
@@ -503,6 +505,7 @@ export type Database = {
           order_index?: number
         }
         Update: {
+          color?: string
           created_at?: string
           id?: string
           meta_status?: string

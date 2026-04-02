@@ -8,6 +8,7 @@ export interface MarketingStage {
   name: string;
   meta_status: string;
   order_index: number;
+  color: string;
   created_at: string;
 }
 
