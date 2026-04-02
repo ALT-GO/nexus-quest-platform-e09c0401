@@ -292,7 +292,10 @@ export function MarketingTaskDetailSheet({
         return;
       }
     }
-    updateTask.mutate({ id: task.id, progress: val });
+    const completionData = val === "Concluído"
+      ? { completed_at: new Date().toISOString(), completed_by: authorName }
+      : { completed_at: null, completed_by: null };
+    updateTask.mutate({ id: task.id, progress: val, ...completionData } as any);
     logHistory("Mudança de progresso", `${task.progress} → ${val}`);
   };
 
@@ -777,6 +780,18 @@ export function MarketingTaskDetailSheet({
                     )}
                   </div>
                 </PropRow>
+
+                {/* Completed info */}
+                {task.progress === "Concluído" && (task as any).completed_at && (
+                  <PropRow icon={Check} label="Concluído em" tooltip="Data e hora em que esta tarefa foi marcada como concluída">
+                    <span className="text-sm text-success font-medium">
+                      {format(new Date((task as any).completed_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}
+                      {(task as any).completed_by && (
+                        <span className="text-muted-foreground font-normal ml-2">por {(task as any).completed_by}</span>
+                      )}
+                    </span>
+                  </PropRow>
+                )}
               </div>
 
               {/* Hide empty toggle */}
