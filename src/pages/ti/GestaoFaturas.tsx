@@ -730,41 +730,110 @@ export default function GestaoFaturas() {
               <div className="text-sm">
                 <p><strong>Operadora:</strong> {generatedOp}</p>
                 <p><strong>Competência:</strong> {generatedMesAno}</p>
+                <p><strong>Empresa:</strong> {empresaLabel}</p>
                 <p><strong>Data de emissão:</strong> {today}</p>
                 {ajusteNum !== 0 && (
                   <p><strong>Ajuste global aplicado:</strong> {formatBRL(ajusteNum)}</p>
                 )}
               </div>
 
-              <table className="w-full border-collapse text-sm" style={{ fontSize: "10pt" }}>
-                <thead>
-                  <tr style={{ backgroundColor: "#f3f4f6" }}>
-                    <th className="border border-gray-400 px-3 py-2 text-left font-semibold">Centro de Custo</th>
-                    <th className="border border-gray-400 px-3 py-2 text-left font-semibold">Descrição</th>
-                    <th className="border border-gray-400 px-3 py-2 text-center font-semibold">Qtd Itens</th>
-                    <th className="border border-gray-400 px-3 py-2 text-right font-semibold">Valor Total do Rateio</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {adjustedRows.map((row, i) => (
-                    <tr key={i} style={{ pageBreakInside: "avoid" }}>
-                      <td className="border border-gray-400 px-3 py-1.5 font-mono">{row.code}</td>
-                      <td className="border border-gray-400 px-3 py-1.5">
-                        {row.code === "9999" ? "⚠ Sem centro de custo" : row.type === "eng" ? "Engenharia" : "Manutenção"}
-                      </td>
-                      <td className="border border-gray-400 px-3 py-1.5 text-center">{row.items}</td>
-                      <td className="border border-gray-400 px-3 py-1.5 text-right font-medium">{formatBRL(row.adjusted)}</td>
+              {generatedEmpresa === "ambas" ? (
+                <>
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Engenharia (Serviços) */}
+                    <div>
+                      <p className="font-semibold text-sm mb-1">Engenharia (Serviços)</p>
+                      <table className="w-full border-collapse text-sm" style={{ fontSize: "9pt" }}>
+                        <thead>
+                          <tr style={{ backgroundColor: "#f3f4f6" }}>
+                            <th className="border border-gray-400 px-2 py-1.5 text-left font-semibold">CC</th>
+                            <th className="border border-gray-400 px-2 py-1.5 text-center font-semibold">Qtd</th>
+                            <th className="border border-gray-400 px-2 py-1.5 text-right font-semibold">Valor</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {engRows.map((row, i) => (
+                            <tr key={i}><td className="border border-gray-400 px-2 py-1 font-mono">{row.code}</td><td className="border border-gray-400 px-2 py-1 text-center">{row.items}</td><td className="border border-gray-400 px-2 py-1 text-right">{formatBRL(row.adjusted)}</td></tr>
+                          ))}
+                          {noneRows.map((row, i) => (
+                            <tr key={`none-eng-${i}`}><td className="border border-gray-400 px-2 py-1 font-mono">{row.code} ⚠</td><td className="border border-gray-400 px-2 py-1 text-center">{row.items}</td><td className="border border-gray-400 px-2 py-1 text-right">{formatBRL(row.adjusted / 2)}</td></tr>
+                          ))}
+                          <tr style={{ backgroundColor: "#e5e7eb", fontWeight: 700 }}>
+                            <td className="border border-gray-400 px-2 py-1.5">TOTAL</td>
+                            <td className="border border-gray-400 px-2 py-1.5 text-center">{engRows.reduce((a, r) => a + r.items, 0) + noneRows.reduce((a, r) => a + r.items, 0)}</td>
+                            <td className="border border-gray-400 px-2 py-1.5 text-right">{formatBRL(totalEng)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                    {/* Manutenção */}
+                    <div>
+                      <p className="font-semibold text-sm mb-1">Manutenção</p>
+                      <table className="w-full border-collapse text-sm" style={{ fontSize: "9pt" }}>
+                        <thead>
+                          <tr style={{ backgroundColor: "#f3f4f6" }}>
+                            <th className="border border-gray-400 px-2 py-1.5 text-left font-semibold">CC</th>
+                            <th className="border border-gray-400 px-2 py-1.5 text-center font-semibold">Qtd</th>
+                            <th className="border border-gray-400 px-2 py-1.5 text-right font-semibold">Valor</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {manRows.map((row, i) => (
+                            <tr key={i}><td className="border border-gray-400 px-2 py-1 font-mono">{row.code}</td><td className="border border-gray-400 px-2 py-1 text-center">{row.items}</td><td className="border border-gray-400 px-2 py-1 text-right">{formatBRL(row.adjusted)}</td></tr>
+                          ))}
+                          {noneRows.map((row, i) => (
+                            <tr key={`none-man-${i}`}><td className="border border-gray-400 px-2 py-1 font-mono">{row.code} ⚠</td><td className="border border-gray-400 px-2 py-1 text-center">{row.items}</td><td className="border border-gray-400 px-2 py-1 text-right">{formatBRL(row.adjusted / 2)}</td></tr>
+                          ))}
+                          <tr style={{ backgroundColor: "#e5e7eb", fontWeight: 700 }}>
+                            <td className="border border-gray-400 px-2 py-1.5">TOTAL</td>
+                            <td className="border border-gray-400 px-2 py-1.5 text-center">{manRows.reduce((a, r) => a + r.items, 0) + noneRows.reduce((a, r) => a + r.items, 0)}</td>
+                            <td className="border border-gray-400 px-2 py-1.5 text-right">{formatBRL(totalMan)}</td>
+                          </tr>
+                        </tbody>
+                      </table>
+                    </div>
+                  </div>
+                  <table className="w-full border-collapse text-sm mt-2" style={{ fontSize: "10pt" }}>
+                    <tbody>
+                      <tr style={{ backgroundColor: "#d1d5db", fontWeight: 700 }}>
+                        <td className="border border-gray-400 px-3 py-2">TOTAL GERAL (AMBAS EMPRESAS)</td>
+                        <td className="border border-gray-400 px-3 py-2 text-center">{adjustedRows.reduce((a, r) => a + r.items, 0)}</td>
+                        <td className="border border-gray-400 px-3 py-2 text-right text-base">{formatBRL(totalAdjusted)}</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </>
+              ) : (
+                <table className="w-full border-collapse text-sm" style={{ fontSize: "10pt" }}>
+                  <thead>
+                    <tr style={{ backgroundColor: "#f3f4f6" }}>
+                      <th className="border border-gray-400 px-3 py-2 text-left font-semibold">Centro de Custo</th>
+                      <th className="border border-gray-400 px-3 py-2 text-left font-semibold">Descrição</th>
+                      <th className="border border-gray-400 px-3 py-2 text-center font-semibold">Qtd Itens</th>
+                      <th className="border border-gray-400 px-3 py-2 text-right font-semibold">Valor Total do Rateio</th>
                     </tr>
-                  ))}
-                  <tr style={{ backgroundColor: "#e5e7eb", fontWeight: 700 }}>
-                    <td className="border border-gray-400 px-3 py-2" colSpan={2}>TOTAL GERAL DA FATURA</td>
-                    <td className="border border-gray-400 px-3 py-2 text-center">
-                      {adjustedRows.reduce((a, r) => a + r.items, 0)}
-                    </td>
-                    <td className="border border-gray-400 px-3 py-2 text-right text-base">{formatBRL(totalAdjusted)}</td>
-                  </tr>
-                </tbody>
-              </table>
+                  </thead>
+                  <tbody>
+                    {adjustedRows.map((row, i) => (
+                      <tr key={i} style={{ pageBreakInside: "avoid" }}>
+                        <td className="border border-gray-400 px-3 py-1.5 font-mono">{row.code}</td>
+                        <td className="border border-gray-400 px-3 py-1.5">
+                          {row.code === "9999" ? "⚠ Sem centro de custo" : row.type === "eng" ? "Engenharia" : "Manutenção"}
+                        </td>
+                        <td className="border border-gray-400 px-3 py-1.5 text-center">{row.items}</td>
+                        <td className="border border-gray-400 px-3 py-1.5 text-right font-medium">{formatBRL(row.adjusted)}</td>
+                      </tr>
+                    ))}
+                    <tr style={{ backgroundColor: "#e5e7eb", fontWeight: 700 }}>
+                      <td className="border border-gray-400 px-3 py-2" colSpan={2}>TOTAL GERAL DA FATURA</td>
+                      <td className="border border-gray-400 px-3 py-2 text-center">
+                        {adjustedRows.reduce((a, r) => a + r.items, 0)}
+                      </td>
+                      <td className="border border-gray-400 px-3 py-2 text-right text-base">{formatBRL(totalAdjusted)}</td>
+                    </tr>
+                  </tbody>
+                </table>
+              )}
 
               <div className="pt-8 mt-auto" style={{ pageBreakInside: "avoid" }}>
                 <div className="flex justify-between gap-8">
