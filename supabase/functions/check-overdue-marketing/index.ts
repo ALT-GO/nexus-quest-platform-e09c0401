@@ -85,101 +85,100 @@ Deno.serve(async (req) => {
       }
     }
 
-    // ── 2. Events with empty leads_gerados after end_date ──
+    // ── 2. Events past end_date — auto-create tasks for leads + actual_cost ──
     const { data: endedEvents } = await supabase
       .from('marketing_events')
       .select('id, name, end_date, leads_gerados, actual_cost')
       .lt('end_date', nowIso)
       .in('status', ['active', 'completed']);
 
-    for (const evt of (endedEvents || [])) {
-      // Leads notification
-      if (evt.leads_gerados == null) {
-        const msgKey = `O evento "${evt.name}" já terminou e o campo de Leads Gerados está vazio. Por favor, preencha.`;
-        const titleKey = `Leads pendente: ${evt.name}`;
-        if (!wasNotified(titleKey, msgKey)) {
+    // Helper: get existing linked tasks for an event
+    async function getLinkedTaskTitles(eventId: string): Promise<string[]> {
+      const { data: links } = await supabase
+        .from('marketing_task_links')
+        .select('task_id')
+        .eq('linked_event_id', eventId);
+      if (!links || links.length === 0) return [];
+      const ids = links.map((l: any) => l.task_id);
+      const { data: tasks } = await supabase
+        .from('marketing_tasks')
+        .select('title')
+        .in('id', ids);
+      return (tasks || []).map((t: any) => t.title.toLowerCase());
+    }
+
+    // Get first "todo" stage (cached)
+    const { data: stagesData } = await supabase
+      .from('marketing_stages')
+      .select('id, meta_status')
+      .order('order_index', { ascending: true });
+    const todoStage = (stagesData || []).find((s: any) => s.meta_status === 'todo');
+
+    async function createAutoTask(title: string, description: string, eventId: string) {
+      const { data: newTask } = await supabase
+        .from('marketing_tasks')
+        .insert({
+          title,
+          description,
+          priority: 'high',
+          progress: 'Não iniciado',
+          requester_name: 'Sistema',
+          stage_id: todoStage?.id || null,
+          event_id: eventId,
+        } as any)
+        .select('id')
+        .single();
+
+      if (newTask) {
+        await supabase
+          .from('marketing_task_links')
+          .insert({
+            task_id: (newTask as any).id,
+            linked_event_id: eventId,
+            link_type: 'related',
+          } as any);
+
+        // Notify all marketing/admin users about the new task
+        const notifTitle = `Nova tarefa automática`;
+        const notifMsg = `Tarefa "${title}" criada automaticamente.`;
+        if (!wasNotified(notifTitle, notifMsg)) {
           for (const userId of allMarketingIds) {
             notifications.push({
               user_id: userId,
-              title: titleKey,
-              message: msgKey,
-              type: 'warning',
-              link: '/marketing/eventos',
+              title: notifTitle,
+              message: notifMsg,
+              type: 'info',
+              link: '/marketing/solicitacoes',
             });
           }
         }
       }
+    }
 
-      // ── Auto-create task for actual_cost when event ends and actual_cost is null ──
-      if (evt.actual_cost == null) {
-        // Check if a task already exists for this
-        const { data: existingLinks } = await supabase
-          .from('marketing_task_links')
-          .select('id, task_id')
-          .eq('linked_event_id', evt.id);
+    for (const evt of (endedEvents || [])) {
+      const existingTitles = await getLinkedTaskTitles(evt.id);
 
-        // Check if any linked task has "valor real" in title
-        let alreadyHasTask = false;
-        if (existingLinks && existingLinks.length > 0) {
-          const linkedTaskIds = existingLinks.map((l: any) => l.task_id);
-          const { data: linkedTasks } = await supabase
-            .from('marketing_tasks')
-            .select('id, title')
-            .in('id', linkedTaskIds);
-          alreadyHasTask = (linkedTasks || []).some((t: any) =>
-            t.title.toLowerCase().includes('valor real gasto')
+      // Auto-create task for leads_gerados if empty
+      if (evt.leads_gerados == null) {
+        const keyword = 'leads gerados';
+        if (!existingTitles.some(t => t.includes(keyword))) {
+          await createAutoTask(
+            `Preencher leads gerados — ${evt.name}`,
+            `O evento "${evt.name}" já terminou. Por favor, preencha a quantidade de leads gerados.`,
+            evt.id
           );
         }
+      }
 
-        if (!alreadyHasTask) {
-          // Get first "todo" stage
-          const { data: stages } = await supabase
-            .from('marketing_stages')
-            .select('id, meta_status')
-            .order('order_index', { ascending: true });
-
-          const todoStage = (stages || []).find((s: any) => s.meta_status === 'todo');
-
-          // Create the task
-          const { data: newTask } = await supabase
-            .from('marketing_tasks')
-            .insert({
-              title: `Definir valor real gasto — ${evt.name}`,
-              description: `O evento "${evt.name}" chegou à data limite. Por favor, defina o valor real gasto no evento.`,
-              priority: 'high',
-              progress: 'Não iniciado',
-              requester_name: 'Sistema',
-              stage_id: todoStage?.id || null,
-              event_id: evt.id,
-            } as any)
-            .select('id')
-            .single();
-
-          if (newTask) {
-            // Link the task to the event
-            await supabase
-              .from('marketing_task_links')
-              .insert({
-                task_id: (newTask as any).id,
-                linked_event_id: evt.id,
-                link_type: 'related',
-              } as any);
-
-            // Notify
-            const titleKey = `Custo real pendente: ${evt.name}`;
-            const msgKey = `Uma tarefa foi criada automaticamente para definir o valor real gasto no evento "${evt.name}".`;
-            if (!wasNotified(titleKey, msgKey)) {
-              for (const userId of allMarketingIds) {
-                notifications.push({
-                  user_id: userId,
-                  title: titleKey,
-                  message: msgKey,
-                  type: 'info',
-                  link: '/marketing/solicitacoes',
-                });
-              }
-            }
-          }
+      // Auto-create task for actual_cost if empty
+      if (evt.actual_cost == null) {
+        const keyword = 'valor real gasto';
+        if (!existingTitles.some(t => t.includes(keyword))) {
+          await createAutoTask(
+            `Definir valor real gasto — ${evt.name}`,
+            `O evento "${evt.name}" chegou à data limite. Por favor, defina o valor real gasto no evento.`,
+            evt.id
+          );
         }
       }
     }
