@@ -425,7 +425,7 @@ function CategoryStockTable({
   return (
     <Card>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
+        <div>
           <Table>
             <TableHeader>
               <TableRow>

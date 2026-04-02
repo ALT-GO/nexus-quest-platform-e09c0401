@@ -309,7 +309,7 @@ export function CategoryTable({ category, label }: Props) {
         </div>
       </CardHeader>
       <CardContent className="p-0">
-        <div className="overflow-x-auto">
+        <div>
           <Table>
             <TableHeader>
               <TableRow>
