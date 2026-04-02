@@ -1,0 +1,1 @@
+ALTER TABLE public.marketing_stages ADD COLUMN color TEXT NOT NULL DEFAULT '280 67% 60%';
