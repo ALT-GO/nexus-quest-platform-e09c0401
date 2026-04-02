@@ -162,6 +162,15 @@ export default function Solicitacoes() {
               <List className="h-3.5 w-3.5" />
               Lista
             </Button>
+            <Button
+              variant={viewMode === "gantt" ? "default" : "ghost"}
+              size="sm"
+              className="h-7 px-2.5 gap-1.5 text-xs"
+              onClick={() => handleViewChange("gantt")}
+            >
+              <GanttChartIcon className="h-3.5 w-3.5" />
+              Gantt
+            </Button>
           </div>
           <Button onClick={() => setDialogOpen(true)}>
             <Plus className="h-4 w-4 mr-2" /> Nova Tarefa
