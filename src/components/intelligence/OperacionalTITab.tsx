@@ -193,9 +193,13 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
 
   // ---- Top 5 Tarefas Demoradas (using date-range-filtered timesheet) ----
   const top5SlowTasks = useMemo(() => {
+    // Build set of existing ticket IDs to exclude orphaned timesheet logs
+    const existingTicketIds = new Set(mainTickets.map((t) => t.id));
+
     // Aggregate timesheet seconds per ticket from date-range data
     const timesheetByTicket: Record<string, number> = {};
     allTimesheetData.forEach((log) => {
+      if (!existingTicketIds.has(log.ticket_id)) return; // skip deleted tickets
       const secs = log.end_time ? log.duration_seconds : Math.floor((Date.now() - new Date(log.start_time).getTime()) / 1000);
       if (secs > 0) timesheetByTicket[log.ticket_id] = (timesheetByTicket[log.ticket_id] || 0) + secs;
     });
@@ -211,7 +215,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
       }))
       .sort((a, b) => b.totalSeconds - a.totalSeconds)
       .slice(0, 5);
-  }, [filtered, allTimesheetData]);
+  }, [filtered, allTimesheetData, mainTickets]);
 
   // ---- Horas Trabalhadas por Colaborador (date-range filtered) ----
   const hoursByAssignee = useMemo(() => {
