@@ -71,6 +71,7 @@ function AppRoutes() {
     <Routes>
       {/* Public routes — never blocked by loading */}
       <Route path="/chamado-publico" element={<ChamadoPublico />} />
+      <Route path="/solicitacao-marketing" element={<SolicitacaoPublica />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/login" element={loading ? <LoadingScreen /> : user ? <Navigate to="/" replace /> : <Login />} />
