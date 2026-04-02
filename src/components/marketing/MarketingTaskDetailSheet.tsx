@@ -519,7 +519,7 @@ export function MarketingTaskDetailSheet({
 
                 {/* Assignee */}
                 {(!hideEmpty || hasAssignee) && (
-                  <PropRow icon={User} label="Responsáveis" isEmpty={!hasAssignee}>
+                  <PropRow icon={User} label="Responsáveis" isEmpty={!hasAssignee} tooltip="Membro da equipe responsável por executar esta tarefa">
                     <Select value={task.assignee_id || ""} onValueChange={handleAssigneeChange}>
                       <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
                         {task.assignee_name ? (
