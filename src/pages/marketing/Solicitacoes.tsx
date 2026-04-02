@@ -42,8 +42,8 @@ export default function Solicitacoes() {
   const [teamMembers, setTeamMembers] = useState<{ id: string; name: string }[]>([]);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
   const [selectedSprintId, setSelectedSprintId] = useState("all");
-  const [viewMode, setViewMode] = useState<"kanban" | "list">(() => {
-    return (localStorage.getItem(VIEW_KEY) as "kanban" | "list") || "kanban";
+  const [viewMode, setViewMode] = useState<"kanban" | "list" | "gantt">(() => {
+    return (localStorage.getItem(VIEW_KEY) as "kanban" | "list" | "gantt") || "kanban";
   });
 
   // Shared filters
