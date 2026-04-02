@@ -618,7 +618,7 @@ export function MarketingTaskDetailSheet({
 
                 {/* Time estimate */}
                 {(!hideEmpty || hasTimeEstimate) && (
-                  <PropRow icon={Clock} label="Tempo estimado" isEmpty={!hasTimeEstimate}>
+                  <PropRow icon={Clock} label="Tempo estimado" isEmpty={!hasTimeEstimate} tooltip="Tempo previsto para conclusão da tarefa">
                     <TimeEstimateField taskId={task.id} currentMinutes={task.time_estimate_minutes} updateTask={updateTask} />
                   </PropRow>
                 )}
