@@ -19,7 +19,9 @@ import {
   Flag,
   CalendarIcon,
   Plus,
+  Trash2,
 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
 
@@ -54,16 +56,10 @@ interface KanbanBoardProps {
   onReorder?: (ticketId: string, statusId: string, newIndex: number) => void;
 }
 
-const priorityConfig: Record<string, { label: string; color: string; dot: string }> = {
-  high: { label: "Alta", color: "text-destructive", dot: "bg-destructive" },
-  medium: { label: "Média", color: "text-warning", dot: "bg-warning" },
-  low: { label: "Baixa", color: "text-muted-foreground", dot: "bg-success" },
-};
-
-const statusTypeColors: Record<string, string> = {
-  todo: "bg-muted-foreground/50",
-  in_progress: "bg-primary",
-  done: "bg-success",
+const priorityConfig: Record<string, { label: string; color: string }> = {
+  high: { label: "Alta", color: "text-destructive" },
+  medium: { label: "Média", color: "text-warning" },
+  low: { label: "Baixa", color: "text-muted-foreground" },
 };
 
 export function KanbanBoard({
@@ -97,6 +93,7 @@ export function KanbanBoard({
     (result: DropResult) => {
       const { source, destination, draggableId } = result;
       if (!destination) return;
+      if (source.droppableId === destination.droppableId && source.index === destination.index) return;
       const sourceColumnId = source.droppableId;
       const destColumnId = destination.droppableId;
       if (sourceColumnId !== destColumnId) onStatusChange(draggableId, destColumnId);
@@ -114,19 +111,24 @@ export function KanbanBoard({
         <div className="flex gap-3 min-w-max h-full">
           {statuses.map((status) => {
             const columnTickets = getColumnTickets(status.id);
+            const statusColor = `hsl(${status.cor})`;
 
             return (
               <div key={status.id} className="w-[280px] shrink-0 flex flex-col h-full">
-                {/* Column Header — ClickUp style */}
-                <div className="flex items-center gap-2 px-2 py-2.5 mb-1">
+                {/* Column Header — ClickUp style with colored background */}
+                <div
+                  className="flex items-center gap-2 px-3 py-2.5 mb-1 rounded-lg"
+                  style={{ backgroundColor: `hsl(${status.cor} / 0.12)` }}
+                >
                   <div
                     className="h-2.5 w-2.5 rounded-full shrink-0"
-                    style={{ backgroundColor: `hsl(${status.cor})` }}
+                    style={{ backgroundColor: statusColor }}
                   />
                   <h3 className="text-sm font-semibold truncate">{status.nome}</h3>
                   <span className="text-xs text-muted-foreground font-medium tabular-nums">
                     {columnTickets.length}
                   </span>
+                  <div className="flex-1" />
                 </div>
 
                 {/* Droppable Column */}
@@ -154,15 +156,22 @@ export function KanbanBoard({
                                 ref={dragProvided.innerRef}
                                 {...dragProvided.draggableProps}
                                 className={cn(
-                                  "group relative rounded-lg border bg-card shadow-sm transition-all hover:shadow-md overflow-hidden cursor-pointer",
+                                  "group relative rounded-lg border bg-card shadow-sm transition-all hover:shadow-md cursor-pointer overflow-hidden",
                                   dragSnapshot.isDragging && "shadow-lg ring-2 ring-primary/20 rotate-[1deg]",
                                   isCompleted && "opacity-60"
                                 )}
                                 onClick={() => onTicketClick?.(ticket.id)}
                               >
-                                <div className="p-3 space-y-2">
+                                <div className="p-3 space-y-2.5">
                                   {/* Title row */}
                                   <div className="flex items-start gap-1.5">
+                                    <div
+                                      {...dragProvided.dragHandleProps}
+                                      className="mt-0.5 opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing shrink-0"
+                                      onClick={(e) => e.stopPropagation()}
+                                    >
+                                      <GripVertical className="h-3.5 w-3.5 text-muted-foreground/50" />
+                                    </div>
                                     <button
                                       onClick={(e) => {
                                         e.stopPropagation();
@@ -189,19 +198,22 @@ export function KanbanBoard({
                                         {ticket.title}
                                       </p>
                                     </div>
-                                    <div
-                                      {...dragProvided.dragHandleProps}
-                                      className="opacity-0 group-hover:opacity-100 cursor-grab active:cursor-grabbing shrink-0"
-                                      onClick={(e) => e.stopPropagation()}
-                                    >
-                                      <GripVertical className="h-3.5 w-3.5 text-muted-foreground/40" />
-                                    </div>
                                   </div>
 
-                                  {/* Category tag */}
-                                  <span className="inline-block rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground">
-                                    {ticket.category}
-                                  </span>
+                                  {/* Status + Category tags */}
+                                  <div className="flex items-center gap-1.5 flex-wrap">
+                                    <span className={cn(
+                                      "text-[10px] font-medium rounded px-1.5 py-0.5 leading-none",
+                                      isCompleted
+                                        ? "bg-success/15 text-success"
+                                        : "bg-primary/15 text-primary"
+                                    )}>
+                                      {status.nome}
+                                    </span>
+                                    <span className="inline-block rounded bg-secondary px-1.5 py-0.5 text-[10px] font-medium text-secondary-foreground">
+                                      {ticket.category}
+                                    </span>
+                                  </div>
 
                                   {/* Asset linker */}
                                   <div onClick={(e) => e.stopPropagation()}>
@@ -234,7 +246,7 @@ export function KanbanBoard({
                                   )}
 
                                   {/* Bottom icon bar — ClickUp style */}
-                                  <div className="flex items-center gap-2 flex-wrap text-muted-foreground pt-0.5">
+                                  <div className="flex items-center gap-2 flex-wrap text-muted-foreground">
                                     {/* Priority flag */}
                                     <Flag className={cn("h-3 w-3", priority.color)} />
 
@@ -262,10 +274,10 @@ export function KanbanBoard({
                                   </div>
                                 </div>
 
-                                {/* Delete — hover */}
+                                {/* Card actions — visible on hover */}
                                 {onDelete && (
                                   <div
-                                    className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100"
+                                    className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 flex gap-0.5"
                                     onClick={(e) => e.stopPropagation()}
                                   >
                                     <ConfirmDeleteDialog onConfirm={() => onDelete(ticket.id)} />
