@@ -600,7 +600,7 @@ export function MarketingTaskDetailSheet({
                 )}
 
                 {/* Priority */}
-                <PropRow icon={Flag} label="Prioridade">
+                <PropRow icon={Flag} label="Prioridade" tooltip="Nível de urgência: baixa, média ou alta">
                   <Select value={task.priority} onValueChange={handlePriorityChange}>
                     <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
                       <span className={cn("flex items-center gap-1.5", priorityColors[task.priority])}>
