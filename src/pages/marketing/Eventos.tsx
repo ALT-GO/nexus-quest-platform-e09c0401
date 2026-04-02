@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -39,11 +40,25 @@ export default function Eventos() {
   const { data: events, isLoading } = useMarketingEvents();
   const { data: allTasks } = useMarketingTasks();
   const deleteEvent = useDeleteEvent();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [searchQuery, setSearchQuery] = useState("");
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingEvent, setEditingEvent] = useState<MarketingEvent | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<MarketingEvent | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+
+  // Open event from URL query param
+  useEffect(() => {
+    const eventId = searchParams.get("event");
+    if (eventId && events && !detailOpen) {
+      const found = events.find(e => e.id === eventId);
+      if (found) {
+        setSelectedEvent(found);
+        setDetailOpen(true);
+        setSearchParams({}, { replace: true });
+      }
+    }
+  }, [events, searchParams]);
 
   useEffect(() => {
     if (selectedEvent && events) {

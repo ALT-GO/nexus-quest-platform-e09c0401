@@ -1,4 +1,5 @@
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar } from "@/components/ui/calendar";
@@ -20,6 +21,7 @@ const statusLabels: Record<string, { label: string; color: string }> = {
 };
 
 export function EventCalendarCard({ events }: Props) {
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
 
   // Events in the selected month
@@ -111,8 +113,9 @@ export function EventCalendarCard({ events }: Props) {
                   return (
                     <div
                       key={event.id}
+                      onClick={() => navigate(`/marketing/eventos?event=${event.id}`)}
                       className={cn(
-                        "p-3 rounded-lg border space-y-1.5 transition-colors",
+                        "p-3 rounded-lg border space-y-1.5 transition-colors cursor-pointer hover:bg-accent/50",
                         isToday && "border-primary/50 bg-primary/5"
                       )}
                     >
