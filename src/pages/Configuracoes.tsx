@@ -11,13 +11,14 @@ import { MarketingWorkflowTab } from "@/components/settings/MarketingWorkflowTab
 import { TaskTypesManagerTab } from "@/components/settings/TaskTypesManagerTab";
 import { CsvImportTab } from "@/components/settings/CsvImportTab";
 import { TicketImportTab } from "@/components/settings/TicketImportTab";
+import { MarketingImportTab } from "@/components/settings/MarketingImportTab";
 import { IntegrityAuditorTab } from "@/components/settings/IntegrityAuditorTab";
 import { DangerZoneTab } from "@/components/settings/DangerZoneTab";
 import { SlaSettingsSection } from "@/components/settings/SlaSettingsSection";
 import { AuditLogSection } from "@/components/settings/AuditLogSection";
 import {
   User, Users, Upload,
-  ListChecks, Zap, Clock, Shapes, ScrollText, Search, AlertTriangle, Megaphone,
+  ListChecks, Zap, Clock, Shapes, ScrollText, Search, AlertTriangle, Megaphone, FileSpreadsheet,
 } from "lucide-react";
 
 type Section =
@@ -30,6 +31,7 @@ type Section =
   | "mkt-types"
   | "import-assets"
   | "import-tickets"
+  | "import-marketing"
   | "audit-log"
   | "integrity"
   | "danger";
