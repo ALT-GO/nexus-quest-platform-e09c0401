@@ -114,6 +114,19 @@ export function useCreateMarketingTask() {
         .select()
         .single();
       if (error) throw error;
+
+      // Notify assignee about the new task
+      const created = data as any;
+      if (created.assignee_id) {
+        await supabase.from("notifications").insert({
+          user_id: created.assignee_id,
+          title: "Nova tarefa atribuída",
+          message: `Você foi atribuído(a) à tarefa "${created.title}".`,
+          type: "task_assigned",
+          link: "/marketing/solicitacoes",
+        } as any);
+      }
+
       return data;
     },
     onSuccess: () => {
