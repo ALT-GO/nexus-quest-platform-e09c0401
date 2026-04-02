@@ -32,6 +32,7 @@ export function EventDialog({ open, onOpenChange, event }: Props) {
   const [priority, setPriority] = useState("medium");
   const [status, setStatus] = useState("planning");
   const [notes, setNotes] = useState("");
+  const [leadsGerados, setLeadsGerados] = useState("");
 
   useEffect(() => {
     if (event) {

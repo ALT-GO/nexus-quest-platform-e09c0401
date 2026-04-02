@@ -14,6 +14,7 @@ export interface MarketingEvent {
   priority: string;
   status: string;
   checklist: any[];
+  leads_gerados: number | null;
   created_at: string;
   updated_at: string;
 }
