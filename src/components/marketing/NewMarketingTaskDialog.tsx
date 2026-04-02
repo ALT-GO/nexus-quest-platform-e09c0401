@@ -24,9 +24,10 @@ interface Props {
   stages: MarketingStage[];
   teamMembers: { id: string; name: string }[];
   sprints?: MarketingSprint[];
+  eventId?: string;
 }
 
-export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers, sprints }: Props) {
+export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers, sprints, eventId }: Props) {
   const { user } = useAuth();
   const { data: profileData } = useQuery({
     queryKey: ["my-profile", user?.id],
@@ -83,6 +84,7 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
       next_recurrence_date: nextRecurrenceDate,
       sprint_id: sprintId && sprintId !== "none" ? sprintId : null,
       story_points: storyPoints ?? null,
+      event_id: eventId ?? null,
     } as any, {
       onSuccess: () => {
         setTitle(""); setDescription(""); setStageId(""); setPriority("medium"); setProgress("Não iniciado"); setAssigneeId("");

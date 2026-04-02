@@ -8,6 +8,7 @@ import Dashboard from "./pages/Dashboard";
 
 import Solicitacoes from "./pages/marketing/Solicitacoes";
 import Metas from "./pages/marketing/Metas";
+import Eventos from "./pages/marketing/Eventos";
 import ServiceDesk from "./pages/ti/ServiceDesk";
 import Colaboradores from "./pages/ti/Colaboradores";
 import CentralInteligencia from "./pages/CentralInteligencia";
@@ -90,6 +91,11 @@ function AppRoutes() {
           <Route path="/marketing/metas" element={
             <PermissionRoute permission="acessar_kanban_marketing" fallbackRoles={["admin", "marketing"]}>
               <Metas />
+            </PermissionRoute>
+          } />
+          <Route path="/marketing/eventos" element={
+            <PermissionRoute permission="acessar_kanban_marketing" fallbackRoles={["admin", "marketing"]}>
+              <Eventos />
             </PermissionRoute>
           } />
           <Route path="/ti/service-desk" element={
