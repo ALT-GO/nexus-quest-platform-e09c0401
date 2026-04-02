@@ -195,20 +195,22 @@ export function GanttChart({ items, onItemClick }: GanttChartProps) {
                     <div
                       key={i}
                       className={cn(
-                        "shrink-0 flex flex-col items-center justify-center border-r text-[10px]",
+                        "shrink-0 flex flex-col items-center justify-center border-r overflow-hidden text-[10px]",
                         isWeekend(day) && "bg-muted/40",
                         today && "bg-primary/5"
                       )}
                       style={{ width: dayWidth }}
                     >
-                      {(zoom === "day" || isWeekStart || isMonthStart) && (
+                      {(zoom === "day" || ((isWeekStart || isMonthStart) && dayWidth >= 20)) && (
                         <>
-                          <span className="text-muted-foreground font-medium uppercase">
-                            {format(day, "EEE", { locale: ptBR })}
-                          </span>
+                          {dayWidth >= 28 && (
+                            <span className="text-muted-foreground font-medium uppercase leading-none truncate max-w-full">
+                              {format(day, dayWidth >= 50 ? "EEE" : "EEEEE", { locale: ptBR })}
+                            </span>
+                          )}
                           <span
                             className={cn(
-                              "font-bold",
+                              "font-bold leading-none",
                               today
                                 ? "bg-destructive text-white rounded-full w-5 h-5 flex items-center justify-center text-[10px]"
                                 : "text-foreground"
@@ -218,8 +220,8 @@ export function GanttChart({ items, onItemClick }: GanttChartProps) {
                           </span>
                         </>
                       )}
-                      {zoom !== "day" && !isWeekStart && !isMonthStart && (
-                        <span className="text-muted-foreground/50">{format(day, "d")}</span>
+                      {zoom !== "day" && !isWeekStart && !isMonthStart && dayWidth >= 14 && (
+                        <span className="text-muted-foreground/50 leading-none">{format(day, "d")}</span>
                       )}
                     </div>
                   );
