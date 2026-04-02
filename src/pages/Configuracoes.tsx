@@ -2,6 +2,8 @@ import { useState } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { cn } from "@/lib/utils";
+import { useAuth, AppRole } from "@/hooks/use-auth";
+import { cn } from "@/lib/utils";
 import { ProfileTab } from "@/components/settings/ProfileTab";
 import { UserManagementTab } from "@/components/settings/UserManagementTab";
 import { StatusManagerTab } from "@/components/settings/StatusManagerTab";
