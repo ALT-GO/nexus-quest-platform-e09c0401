@@ -65,6 +65,7 @@ function AppRoutes() {
       {/* Public routes */}
       <Route path="/chamado-publico" element={<ChamadoPublico />} />
       <Route path="/solicitacao-marketing" element={<SolicitacaoPublica />} />
+      <Route path="/evento-publico" element={<EventoPublico />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/login" element={loading ? <LoadingScreen /> : user ? <Navigate to="/" replace /> : <Login />} />
