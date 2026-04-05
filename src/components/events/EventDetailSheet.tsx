@@ -6,12 +6,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Progress } from "@/components/ui/progress";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   CalendarIcon, MapPin, DollarSign, Users, Plus, Flag,
-  CheckCircle2, Clock, AlertTriangle, Trash2, GripVertical,
+  CheckCircle2, Clock, AlertTriangle, Trash2, ListTodo,
+  Circle, ArrowUpRight,
 } from "lucide-react";
-import { format } from "date-fns";
+import { format, isPast, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { MarketingEvent, useUpdateEvent } from "@/hooks/use-events";
@@ -34,6 +36,12 @@ const statusLabels: Record<string, { label: string; color: string }> = {
   active: { label: "Ativo", color: "bg-primary/15 text-primary" },
   completed: { label: "Concluído", color: "bg-success/15 text-success" },
   cancelled: { label: "Cancelado", color: "bg-destructive/15 text-destructive" },
+};
+
+const priorityIcons: Record<string, { color: string; label: string }> = {
+  high: { color: "text-destructive", label: "Alta" },
+  medium: { color: "text-warning", label: "Média" },
+  low: { color: "text-muted-foreground", label: "Baixa" },
 };
 
 export function EventDetailSheet({ event, open, onOpenChange }: Props) {
@@ -60,9 +68,22 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
     return allTasks.filter((t: any) => t.event_id === event.id);
   }, [allTasks, event]);
 
+  // Task progress stats
+  const taskStats = useMemo(() => {
+    const total = eventTasks.length;
+    const completed = eventTasks.filter((t: any) => t.progress === "Concluído" || !!t.completed_at).length;
+    const inProgress = eventTasks.filter((t: any) => t.progress === "Em andamento" && !t.completed_at).length;
+    const overdue = eventTasks.filter((t: any) => {
+      if (t.progress === "Concluído" || t.completed_at) return false;
+      if (!t.due_date) return false;
+      return isPast(new Date(t.due_date)) && !isToday(new Date(t.due_date));
+    }).length;
+    const percent = total > 0 ? Math.round((completed / total) * 100) : 0;
+    return { total, completed, inProgress, overdue, percent };
+  }, [eventTasks]);
+
   // Budget tracking
   const invested = event?.actual_cost ?? 0;
-  const budgetRemaining = (event?.budget ?? 0) - invested;
   const budgetPercent = event && event.budget > 0 ? Math.min((invested / event.budget) * 100, 100) : 0;
 
   // Checklist
@@ -91,7 +112,6 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
   const checklistProgress = checklist.length > 0
     ? Math.round((checklist.filter(c => c.checked).length / checklist.length) * 100)
     : 0;
-
 
   if (!event) return null;
   const st = statusLabels[event.status] || statusLabels.planning;
@@ -127,7 +147,6 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
             {/* Budget & Actual Cost */}
             <div className="space-y-2 p-3 rounded-lg border bg-muted/20">
               <div className="grid grid-cols-2 gap-4">
-                {/* Budget */}
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                     <DollarSign className="h-3.5 w-3.5" />
@@ -139,7 +158,6 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
                       : "Não definido"}
                   </span>
                 </div>
-                {/* Actual Cost */}
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 text-xs font-medium text-muted-foreground">
                     <DollarSign className="h-3.5 w-3.5" />
@@ -278,47 +296,130 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
 
             <Separator />
 
-            {/* Tasks */}
-            <div className="space-y-3">
+            {/* ===== SUBTASKS / ETAPAS DO EVENTO ===== */}
+            <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <h4 className="text-sm font-medium">Tarefas do Evento ({eventTasks.length})</h4>
-                <Button size="sm" variant="outline" className="h-7 text-xs gap-1" onClick={() => setNewTaskDialogOpen(true)}>
-                  <Plus className="h-3 w-3" /> Nova Tarefa
+                <div className="flex items-center gap-2">
+                  <ListTodo className="h-4 w-4 text-primary" />
+                  <h4 className="text-sm font-semibold">Etapas / Subtarefas ({taskStats.total})</h4>
+                </div>
+                <Button size="sm" variant="default" className="h-7 text-xs gap-1" onClick={() => setNewTaskDialogOpen(true)}>
+                  <Plus className="h-3 w-3" /> Nova Etapa
                 </Button>
               </div>
+
+              {/* Progress summary */}
+              {taskStats.total > 0 && (
+                <div className="space-y-2 p-3 rounded-lg border bg-muted/20">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium">Progresso geral</span>
+                    <span className="text-muted-foreground">{taskStats.completed}/{taskStats.total} concluídas ({taskStats.percent}%)</span>
+                  </div>
+                  <Progress value={taskStats.percent} className="h-2" />
+                  <div className="flex items-center gap-4 text-[11px] text-muted-foreground">
+                    <span className="flex items-center gap-1">
+                      <CheckCircle2 className="h-3 w-3 text-success" /> {taskStats.completed} concluídas
+                    </span>
+                    <span className="flex items-center gap-1">
+                      <Clock className="h-3 w-3 text-primary" /> {taskStats.inProgress} em andamento
+                    </span>
+                    {taskStats.overdue > 0 && (
+                      <span className="flex items-center gap-1">
+                        <AlertTriangle className="h-3 w-3 text-destructive" /> {taskStats.overdue} atrasadas
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Task list */}
               {eventTasks.length === 0 ? (
-                <p className="text-xs text-muted-foreground text-center py-4">Nenhuma tarefa vinculada a este evento</p>
+                <div className="text-center py-6 border rounded-lg border-dashed">
+                  <ListTodo className="h-8 w-8 mx-auto mb-2 text-muted-foreground/40" />
+                  <p className="text-xs text-muted-foreground">Nenhuma etapa criada</p>
+                  <p className="text-[11px] text-muted-foreground/60">Crie subtarefas para organizar as etapas do evento</p>
+                </div>
               ) : (
                 <div className="space-y-1.5">
                   {eventTasks.map((task: any) => {
                     const stage = (stages ?? []).find((s: any) => s.id === task.stage_id);
+                    const pri = priorityIcons[task.priority] || priorityIcons.medium;
+                    const isCompleted = task.progress === "Concluído" || !!task.completed_at;
+                    const isOverdue = !isCompleted && task.due_date && isPast(new Date(task.due_date)) && !isToday(new Date(task.due_date));
+
                     return (
                       <div
                         key={task.id}
-                        className="flex items-center gap-2 p-2 rounded-lg border hover:bg-muted/30 cursor-pointer transition-colors"
+                        className={cn(
+                          "flex items-center gap-2.5 p-2.5 rounded-lg border hover:bg-muted/30 cursor-pointer transition-colors group",
+                          isOverdue && "border-destructive/30 bg-destructive/5",
+                          isCompleted && "opacity-60"
+                        )}
                         onClick={() => { setSelectedTask(task); setTaskDetailOpen(true); }}
                       >
-                        <CheckCircle2 className={cn(
-                          "h-4 w-4 shrink-0",
-                          task.progress === "Concluído" ? "text-success" : "text-muted-foreground"
-                        )} />
-                        <span className={cn(
-                          "text-sm flex-1 truncate",
-                          task.progress === "Concluído" && "line-through text-muted-foreground"
-                        )}>
-                          {task.title}
-                        </span>
-                        {stage && (
-                          <Badge variant="outline" className="text-[10px]">{stage.name}</Badge>
+                        {/* Status icon */}
+                        {isCompleted ? (
+                          <CheckCircle2 className="h-4 w-4 shrink-0 text-success" />
+                        ) : (
+                          <Circle className="h-4 w-4 shrink-0 text-muted-foreground" />
                         )}
+
+                        {/* Main info */}
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className={cn(
+                              "text-sm font-medium truncate",
+                              isCompleted && "line-through text-muted-foreground"
+                            )}>
+                              {task.title}
+                            </span>
+                            <Flag className={cn("h-3 w-3 shrink-0", pri.color)} />
+                          </div>
+                          <div className="flex items-center gap-2 mt-0.5">
+                            {stage && (
+                              <Badge
+                                variant="outline"
+                                className="text-[9px] h-4 px-1.5"
+                                style={stage.color ? { borderColor: `hsl(${stage.color})`, color: `hsl(${stage.color})` } : undefined}
+                              >
+                                {stage.name}
+                              </Badge>
+                            )}
+                            {task.due_date && (
+                              <span className={cn(
+                                "text-[10px] flex items-center gap-0.5",
+                                isOverdue ? "text-destructive font-medium" : "text-muted-foreground"
+                              )}>
+                                <CalendarIcon className="h-2.5 w-2.5" />
+                                {format(new Date(task.due_date), "dd/MM/yy")}
+                                {isOverdue && " (atrasada)"}
+                              </span>
+                            )}
+                            {!isCompleted && task.progress === "Em andamento" && (
+                              <span className="text-[10px] text-primary flex items-center gap-0.5">
+                                <Clock className="h-2.5 w-2.5" /> Em andamento
+                              </span>
+                            )}
+                          </div>
+                        </div>
+
+                        {/* Assignee */}
                         {task.assignee_name && (
-                          <UserAvatar
-                            name={task.assignee_name}
-                            avatarUrl={task.assignee_id ? avatars?.byId[task.assignee_id] : null}
-                            className="h-5 w-5"
-                            fallbackClassName="text-[8px]"
-                          />
+                          <div className="flex items-center gap-1 shrink-0">
+                            <UserAvatar
+                              name={task.assignee_name}
+                              avatarUrl={task.assignee_id ? avatars?.byId[task.assignee_id] : null}
+                              className="h-5 w-5"
+                              fallbackClassName="text-[8px]"
+                            />
+                            <span className="text-[10px] text-muted-foreground hidden sm:inline max-w-[60px] truncate">
+                              {task.assignee_name.split(" ")[0]}
+                            </span>
+                          </div>
                         )}
+
+                        {/* Open indicator */}
+                        <ArrowUpRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 group-hover:opacity-100 shrink-0 transition-opacity" />
                       </div>
                     );
                   })}
