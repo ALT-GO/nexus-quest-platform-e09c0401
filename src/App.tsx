@@ -14,6 +14,7 @@ import Colaboradores from "./pages/ti/Colaboradores";
 import CentralInteligencia from "./pages/CentralInteligencia";
 import ChamadoPublico from "./pages/ti/ChamadoPublico";
 import SolicitacaoPublica from "./pages/marketing/SolicitacaoPublica";
+import EventoPublico from "./pages/marketing/EventoPublico";
 import Configuracoes from "./pages/Configuracoes";
 import GestaoFaturas from "./pages/ti/GestaoFaturas";
 import CofreSenhas from "./pages/ti/CofreSenhas";
@@ -64,6 +65,7 @@ function AppRoutes() {
       {/* Public routes */}
       <Route path="/chamado-publico" element={<ChamadoPublico />} />
       <Route path="/solicitacao-marketing" element={<SolicitacaoPublica />} />
+      <Route path="/evento-publico" element={<EventoPublico />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/reset-password" element={<ResetPassword />} />
       <Route path="/login" element={loading ? <LoadingScreen /> : user ? <Navigate to="/" replace /> : <Login />} />

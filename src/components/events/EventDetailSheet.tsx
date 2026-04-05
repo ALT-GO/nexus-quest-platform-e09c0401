@@ -11,7 +11,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   CalendarIcon, MapPin, DollarSign, Users, Plus, Flag,
   CheckCircle2, Clock, AlertTriangle, Trash2, ListTodo,
-  Circle, ArrowUpRight,
+  Circle, ArrowUpRight, Share2, Copy,
 } from "lucide-react";
 import { format, isPast, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -121,9 +121,24 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
       <Sheet open={open} onOpenChange={onOpenChange}>
         <SheetContent className="sm:max-w-2xl overflow-y-auto">
           <SheetHeader>
-            <div className="flex items-center gap-3">
-              <SheetTitle className="text-xl">{event.name}</SheetTitle>
-              <Badge variant="outline" className={cn("text-xs", st.color)}>{st.label}</Badge>
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <SheetTitle className="text-xl">{event.name}</SheetTitle>
+                <Badge variant="outline" className={cn("text-xs", st.color)}>{st.label}</Badge>
+              </div>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-8 gap-1.5 text-xs"
+                onClick={() => {
+                  const url = `${window.location.origin}/evento-publico?id=${event.id}`;
+                  navigator.clipboard.writeText(url);
+                  toast.success("Link copiado para a área de transferência!");
+                }}
+              >
+                <Share2 className="h-3.5 w-3.5" />
+                Compartilhar
+              </Button>
             </div>
           </SheetHeader>
 
