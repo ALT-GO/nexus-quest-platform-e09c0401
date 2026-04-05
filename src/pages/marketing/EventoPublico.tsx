@@ -39,13 +39,6 @@ export default function EventoPublico() {
 
     const fetchData = async () => {
       try {
-        const { data, error: fnError } = await supabase.functions.invoke("get-public-event", {
-          body: null,
-          headers: {},
-          method: "GET",
-        });
-
-        // supabase.functions.invoke doesn't support query params well, use fetch directly
         const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/get-public-event?id=${eventId}`;
         const res = await fetch(url, {
           headers: {
