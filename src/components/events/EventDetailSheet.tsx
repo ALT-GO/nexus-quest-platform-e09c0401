@@ -11,7 +11,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   CalendarIcon, MapPin, DollarSign, Users, Plus, Flag,
   CheckCircle2, Clock, AlertTriangle, Trash2, ListTodo,
-  Circle, ArrowUpRight,
+  Circle, ArrowUpRight, Share2, Copy,
 } from "lucide-react";
 import { format, isPast, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
