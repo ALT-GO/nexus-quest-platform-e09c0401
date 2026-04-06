@@ -162,9 +162,9 @@ export function NotificationCenter() {
           )}
         </button>
       </PopoverTrigger>
-      <PopoverContent align="end" sideOffset={8} className="w-[380px] p-0 rounded-xl shadow-lg border">
+      <PopoverContent align="end" sideOffset={8} className="w-[440px] p-0 rounded-xl shadow-lg border">
         {/* Header */}
-        <div className="flex items-center justify-between px-4 py-3 border-b bg-muted/30 rounded-t-xl">
+        <div className="flex items-center justify-between px-5 py-3 border-b bg-muted/30 rounded-t-xl">
           <div>
             <p className="text-sm font-semibold">Notificações</p>
             {unreadCount > 0 && (
@@ -219,7 +219,7 @@ export function NotificationCenter() {
                     key={notif.id}
                     onClick={() => handleClick(notif)}
                     className={cn(
-                      "flex w-full items-start gap-3 px-4 py-3 text-left transition-colors hover:bg-accent/50",
+                      "flex w-full items-start gap-3 px-5 py-3.5 text-left transition-colors hover:bg-accent/50",
                       !notif.read && "bg-primary/5"
                     )}
                   >
@@ -228,16 +228,16 @@ export function NotificationCenter() {
                     )}>
                       <Icon className={cn("h-3.5 w-3.5", !notif.read ? color : "text-muted-foreground")} />
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-0 pr-2">
                       <div className="flex items-center gap-2">
-                        <p className={cn("text-sm truncate", !notif.read && "font-semibold")}>
+                        <p className={cn("text-sm", !notif.read && "font-semibold")}>
                           {notif.title}
                         </p>
                         {!notif.read && (
                           <span className="h-1.5 w-1.5 rounded-full bg-primary flex-shrink-0" />
                         )}
                       </div>
-                      <p className="text-xs text-muted-foreground line-clamp-2 mt-0.5">
+                      <p className="text-xs text-muted-foreground mt-0.5">
                         {notif.message}
                       </p>
                       <p className="text-[10px] text-muted-foreground/60 mt-1">
@@ -251,14 +251,14 @@ export function NotificationCenter() {
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-6 w-6 flex-shrink-0 text-muted-foreground hover:text-foreground"
+                        className="h-7 w-7 flex-shrink-0 text-muted-foreground hover:text-foreground"
                         onClick={(e) => {
                           e.stopPropagation();
                           markAsRead(notif.id);
                         }}
                         title="Marcar como lida"
                       >
-                        <Check className="h-3 w-3" />
+                        <Check className="h-3.5 w-3.5" />
                       </Button>
                     )}
                   </button>
