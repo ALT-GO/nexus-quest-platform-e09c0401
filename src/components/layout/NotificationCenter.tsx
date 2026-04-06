@@ -200,7 +200,7 @@ export function NotificationCenter() {
         </div>
 
         {/* List */}
-        <ScrollArea className="max-h-[360px]">
+        <ScrollArea className="max-h-[60vh] overflow-y-auto">
           {filteredNotifications.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-muted mb-3">
