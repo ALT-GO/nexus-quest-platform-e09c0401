@@ -15,6 +15,7 @@ import { ptBR } from "date-fns/locale";
 import { useCreateMarketingTask, MarketingStage } from "@/hooks/use-marketing";
 import { MarketingSprint } from "@/hooks/use-sprints";
 import { useAuth } from "@/hooks/use-auth";
+import { useAddTaskLink } from "@/hooks/use-task-links";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
