@@ -40,6 +40,7 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
     enabled: !!user,
   });
   const createTask = useCreateMarketingTask();
+  const addTaskLink = useAddTaskLink();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [stageId, setStageId] = useState("");
