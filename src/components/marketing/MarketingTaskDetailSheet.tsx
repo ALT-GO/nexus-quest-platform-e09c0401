@@ -74,6 +74,7 @@ import {
   useAddMarketingHistory,
 } from "@/hooks/use-marketing-comments";
 import { UserAvatar } from "@/components/ui/user-avatar";
+import { CommentInput } from "@/components/shared/CommentInput";
 import { useTaskDependencies, isTaskBlocked } from "@/hooks/use-dependencies";
 import { useMarketingTasks } from "@/hooks/use-marketing";
 import { DependencySection } from "./DependencySection";
@@ -907,7 +908,9 @@ export function MarketingTaskDetailSheet({
                           "text-xs mt-0.5 whitespace-pre-wrap",
                           item.type === "comment" ? "text-foreground" : "text-muted-foreground"
                         )}>
-                          {item.content}
+                          {item.type === "comment"
+                            ? renderMentionText(item.content)
+                            : item.content}
                         </p>
                       </div>
                     </div>
@@ -917,29 +920,13 @@ export function MarketingTaskDetailSheet({
 
             {/* Comment input — always visible at bottom */}
             <div className="border-t p-3">
-              <div className="flex gap-2">
-                <Textarea
-                  placeholder="Escreva um comentário..."
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSendComment();
-                    }
-                  }}
-                  className="min-h-[50px] text-sm resize-none flex-1"
-                  rows={2}
-                />
-                <Button
-                  size="icon"
-                  onClick={handleSendComment}
-                  disabled={!commentText.trim() || addComment.isPending}
-                  className="shrink-0 self-end h-8 w-8"
-                >
-                  <Send className="h-3.5 w-3.5" />
-                </Button>
-              </div>
+              <CommentInput
+                value={commentText}
+                onChange={setCommentText}
+                onSend={handleSendComment}
+                disabled={!commentText.trim() || addComment.isPending}
+                teamMembers={teamMembers.map(m => ({ id: m.id, name: m.name }))}
+              />
             </div>
           </div>
          </TooltipProvider>
