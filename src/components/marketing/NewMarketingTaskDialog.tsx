@@ -15,6 +15,7 @@ import { ptBR } from "date-fns/locale";
 import { useCreateMarketingTask, MarketingStage } from "@/hooks/use-marketing";
 import { MarketingSprint } from "@/hooks/use-sprints";
 import { useAuth } from "@/hooks/use-auth";
+import { useAddTaskLink } from "@/hooks/use-task-links";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -39,6 +40,7 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
     enabled: !!user,
   });
   const createTask = useCreateMarketingTask();
+  const addTaskLink = useAddTaskLink();
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [stageId, setStageId] = useState("");
@@ -86,7 +88,15 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
       story_points: storyPoints ?? null,
       event_id: eventId ?? null,
     } as any, {
-      onSuccess: () => {
+      onSuccess: (data: any) => {
+        // Auto-link the event to the created task
+        if (eventId && data?.id) {
+          addTaskLink.mutate({
+            task_id: data.id,
+            linked_event_id: eventId,
+            link_type: "related",
+          });
+        }
         setTitle(""); setDescription(""); setStageId(""); setPriority("medium"); setProgress("Não iniciado"); setAssigneeId("");
         setStartDate(undefined); setDueDate(undefined);
         setIsRecurring(false); setRecurrenceRule("weekly");
