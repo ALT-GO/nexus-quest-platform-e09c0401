@@ -88,7 +88,15 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
       story_points: storyPoints ?? null,
       event_id: eventId ?? null,
     } as any, {
-      onSuccess: () => {
+      onSuccess: (data: any) => {
+        // Auto-link the event to the created task
+        if (eventId && data?.id) {
+          addTaskLink.mutate({
+            task_id: data.id,
+            linked_event_id: eventId,
+            link_type: "related",
+          });
+        }
         setTitle(""); setDescription(""); setStageId(""); setPriority("medium"); setProgress("Não iniciado"); setAssigneeId("");
         setStartDate(undefined); setDueDate(undefined);
         setIsRecurring(false); setRecurrenceRule("weekly");
