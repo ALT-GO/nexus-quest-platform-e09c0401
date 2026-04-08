@@ -371,6 +371,18 @@ export function MarketingTaskDetailSheet({
     setEditingDesc(false);
   };
 
+  // Render @mentions with highlight
+  const renderMentionText = (text: string) => {
+    const parts = text.split(/(@\S+)/g);
+    return parts.map((part, i) =>
+      part.startsWith("@") ? (
+        <span key={i} className="text-primary font-medium">{part}</span>
+      ) : (
+        <span key={i}>{part}</span>
+      )
+    );
+  };
+
   // Merged activity feed (comments + history)
   const activityFeed = [
     ...(comments || []).map(c => ({
