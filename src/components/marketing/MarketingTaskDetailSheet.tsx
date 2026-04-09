@@ -918,7 +918,7 @@ export function MarketingTaskDetailSheet({
                         className="h-6 w-6 shrink-0 mt-0.5"
                         fallbackClassName="text-[9px]"
                       />
-                      <div className="flex-1 min-w-0">
+                      <div className="flex-1 min-w-0 overflow-hidden">
                         <div className="flex items-baseline gap-1.5">
                           <span className="text-xs font-medium truncate">{item.author}</span>
                           <span className="text-[10px] text-muted-foreground whitespace-nowrap">
@@ -926,7 +926,7 @@ export function MarketingTaskDetailSheet({
                           </span>
                         </div>
                         <p className={cn(
-                          "text-xs mt-0.5 whitespace-pre-wrap",
+                          "text-xs mt-0.5 whitespace-pre-wrap break-words overflow-hidden",
                           item.type === "comment" ? "text-foreground" : "text-muted-foreground"
                         )}>
                           {item.type === "comment"
