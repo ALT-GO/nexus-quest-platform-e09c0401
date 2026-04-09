@@ -421,7 +421,7 @@ export function MarketingTaskDetailSheet({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-[900px] p-0 flex flex-row gap-0 overflow-hidden" side="right">
+        <SheetContent className="w-full sm:max-w-[1100px] p-0 flex flex-row gap-0 overflow-hidden" side="right">
          <TooltipProvider delayDuration={300}>
           {/* ─── LEFT: Main Content ─── */}
           <ScrollArea className="flex-1 min-w-0">
@@ -876,7 +876,7 @@ export function MarketingTaskDetailSheet({
           </ScrollArea>
 
           {/* ─── RIGHT: Activity Sidebar ─── */}
-          <div className="w-[320px] shrink-0 border-l flex flex-col bg-muted/20">
+          <div className="w-[360px] shrink-0 border-l flex flex-col bg-muted/20 overflow-hidden">
             {/* Sidebar header */}
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <h3 className="text-sm font-semibold">Atividade</h3>
@@ -926,7 +926,7 @@ export function MarketingTaskDetailSheet({
                           </span>
                         </div>
                         <p className={cn(
-                          "text-xs mt-0.5 whitespace-pre-wrap break-words overflow-hidden",
+                          "text-xs mt-0.5 whitespace-pre-wrap break-all overflow-hidden [overflow-wrap:anywhere]",
                           item.type === "comment" ? "text-foreground" : "text-muted-foreground"
                         )}>
                           {item.type === "comment"
