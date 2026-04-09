@@ -347,10 +347,13 @@ export function MarketingTaskDetailSheet({
 
   const handleReject = async () => {
     if (!rejectReason.trim()) return;
-    const inProgressStage = stages.find((s) => s.meta_status === "in_progress");
-    if (!inProgressStage) { toast.error("Nenhuma etapa de progresso configurada"); return; }
+    const currentStage = stages.find((s) => s.id === task.stage_id);
+    const previousStage = stages
+      .filter((s) => s.order_index < (currentStage?.order_index ?? 0))
+      .sort((a, b) => b.order_index - a.order_index)[0];
+    if (!previousStage) { toast.error("Não há etapa anterior para devolver"); return; }
     await supabase.from("marketing_tasks")
-      .update({ stage_id: inProgressStage.id, progress: "Em andamento", updated_at: new Date().toISOString() } as any)
+      .update({ stage_id: previousStage.id, progress: "Em andamento", updated_at: new Date().toISOString() } as any)
       .eq("id", task.id);
     logHistory("Reprovação", `Tarefa reprovada por ${authorName}. Motivo: ${rejectReason}`);
     if (task.requester_id) notifyTaskCreator({ creatorId: task.requester_id, taskTitle: task.title, taskId: task.id, approved: false, reason: rejectReason });
