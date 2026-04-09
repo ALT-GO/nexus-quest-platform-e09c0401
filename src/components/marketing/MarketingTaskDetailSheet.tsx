@@ -327,15 +327,21 @@ export function MarketingTaskDetailSheet({
   };
 
   const handleApprove = async () => {
-    const completedStage = stages.find((s) => s.meta_status === "completed");
-    if (!completedStage) { toast.error("Nenhuma etapa de conclusão configurada"); return; }
+    // Find the next stage after the current approval stage (by order_index)
+    const currentIdx = currentStage?.order_index ?? 0;
+    const nextStage = stages
+      .filter((s) => s.order_index > currentIdx)
+      .sort((a, b) => a.order_index - b.order_index)[0];
+
+    const targetStageId = nextStage?.id || task.stage_id;
+
     await supabase.from("marketing_tasks")
-      .update({ stage_id: completedStage.id, progress: "Concluído", updated_at: new Date().toISOString() } as any)
+      .update({ stage_id: targetStageId, updated_at: new Date().toISOString() } as any)
       .eq("id", task.id);
-    logHistory("Aprovação", `Tarefa aprovada por ${authorName}`);
+    logHistory("Aprovação", `Tarefa aprovada por ${authorName}${nextStage ? ` e movida para "${nextStage.name}"` : ""}`);
     if (task.requester_id) notifyTaskCreator({ creatorId: task.requester_id, taskTitle: task.title, taskId: task.id, approved: true });
     qc.invalidateQueries({ queryKey: ["marketing_tasks"] });
-    toast.success("Tarefa aprovada e movida para Concluído");
+    toast.success(nextStage ? `Tarefa aprovada e movida para "${nextStage.name}"` : "Tarefa aprovada");
     onOpenChange(false);
   };
 
