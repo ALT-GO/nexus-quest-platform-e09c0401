@@ -157,7 +157,7 @@ export function AssetLinker({
                   Vincular ativo
                 </Button>
               </DialogTrigger>
-              <DialogContent className="sm:max-w-lg">
+              <DialogContent className="sm:max-w-3xl w-[95vw]">
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
                     <Laptop className="h-5 w-5" />
