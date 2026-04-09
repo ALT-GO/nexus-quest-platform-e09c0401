@@ -10,9 +10,17 @@ export async function notifyAdminsForApproval(params: {
 }) {
   try {
     // Get admin user IDs via the existing RPC
-    const { data: userIds } = await supabase.rpc("get_ti_admin_user_ids" as any);
+    const { data: userIds, error: rpcError } = await supabase.rpc("get_ti_admin_user_ids");
 
-    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) return;
+    if (rpcError) {
+      console.error("Error fetching admin user IDs:", rpcError);
+      return;
+    }
+
+    if (!userIds || !Array.isArray(userIds) || userIds.length === 0) {
+      console.warn("No admin users found for approval notification");
+      return;
+    }
 
     const filtered = params.excludeUserId
       ? userIds.filter((id: string) => id !== params.excludeUserId)
@@ -29,9 +37,12 @@ export async function notifyAdminsForApproval(params: {
       scope: "marketing",
     }));
 
-    await supabase.from("notifications" as any).insert(notifications);
-  } catch {
-    // Silent fail
+    const { error: insertError } = await supabase.from("notifications").insert(notifications);
+    if (insertError) {
+      console.error("Error inserting approval notifications:", insertError);
+    }
+  } catch (e) {
+    console.error("notifyAdminsForApproval failed:", e);
   }
 }
 
@@ -46,7 +57,7 @@ export async function notifyTaskCreator(params: {
   reason?: string;
 }) {
   try {
-    await supabase.from("notifications" as any).insert({
+    const { error } = await supabase.from("notifications").insert({
       user_id: params.creatorId,
       title: params.approved
         ? `Tarefa Aprovada: ${params.taskTitle}`
@@ -58,7 +69,8 @@ export async function notifyTaskCreator(params: {
       link: `/marketing/solicitacoes?task=${params.taskId}`,
       scope: "marketing",
     });
-  } catch {
-    // Silent fail
+    if (error) console.error("Error notifying task creator:", error);
+  } catch (e) {
+    console.error("notifyTaskCreator failed:", e);
   }
 }
