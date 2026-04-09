@@ -926,7 +926,7 @@ export function MarketingTaskDetailSheet({
                           </span>
                         </div>
                         <p className={cn(
-                          "text-xs mt-0.5 whitespace-pre-wrap break-words overflow-hidden",
+                          "text-xs mt-0.5 whitespace-pre-wrap break-all overflow-hidden [overflow-wrap:anywhere]",
                           item.type === "comment" ? "text-foreground" : "text-muted-foreground"
                         )}>
                           {item.type === "comment"
