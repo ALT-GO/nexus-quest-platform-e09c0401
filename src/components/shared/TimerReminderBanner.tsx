@@ -2,21 +2,19 @@ import { useState, useEffect } from "react";
 import { Timer, Play, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { hasActiveTimer } from "@/hooks/use-timesheet";
-import { cn } from "@/lib/utils";
 
 interface Props {
   entityId: string;
   type: "ticket" | "marketing";
-  isInProgress: boolean;
   onStartTimer: () => void;
 }
 
-export function TimerReminderBanner({ entityId, type, isInProgress, onStartTimer }: Props) {
+export function TimerReminderBanner({ entityId, type, onStartTimer }: Props) {
   const [hasTimer, setHasTimer] = useState(true);
   const [dismissed, setDismissed] = useState(false);
 
   useEffect(() => {
-    if (!entityId || !isInProgress) return;
+    if (!entityId) return;
     let cancelled = false;
     hasActiveTimer(entityId, type).then((result) => {
       if (!cancelled) setHasTimer(result);
@@ -27,19 +25,19 @@ export function TimerReminderBanner({ entityId, type, isInProgress, onStartTimer
       });
     }, 5000);
     return () => { cancelled = true; clearInterval(interval); };
-  }, [entityId, type, isInProgress]);
+  }, [entityId, type]);
 
   useEffect(() => {
     setDismissed(false);
   }, [entityId]);
 
-  if (!isInProgress || hasTimer || dismissed) return null;
+  if (hasTimer || dismissed) return null;
 
   return (
     <div className="flex items-center gap-2 rounded-lg border border-warning/50 bg-warning/10 px-3 py-2 mb-3">
       <Timer className="h-4 w-4 text-warning flex-shrink-0 animate-pulse" />
       <span className="text-xs text-warning-foreground flex-1">
-        Esta tarefa está em andamento sem timer ativo. Deseja iniciar?
+        Esta tarefa está sem timer ativo. Deseja iniciar?
       </span>
       <Button
         size="sm"

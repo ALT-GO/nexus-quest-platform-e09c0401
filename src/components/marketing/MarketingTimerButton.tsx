@@ -1,6 +1,7 @@
 import { Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMarketingTimesheet, formatDuration } from "@/hooks/use-timesheet";
+import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
@@ -18,7 +19,8 @@ export function MarketingTimerButton({ taskId, size = "card" }: Props) {
       await pause();
     } else {
       await start();
-      // Refresh marketing tasks to reflect progress change
+      // Auto-set progress to "Em andamento"
+      await supabase.from("marketing_tasks").update({ progress: "Em andamento" }).eq("id", taskId);
       qc.invalidateQueries({ queryKey: ["marketing_tasks"] });
     }
   };

@@ -372,8 +372,11 @@ export function TicketDetailSheet({
             <TimerReminderBanner
               entityId={ticket.id}
               type="ticket"
-              isInProgress={currentStatus?.statusType === "in_progress" && !isCompleted}
-              onStartTimer={() => { startTimer(); }}
+              onStartTimer={() => {
+                startTimer();
+                // Also set progress to in_progress
+                supabase.from("tickets").update({ progress: "in_progress" }).eq("id", ticket.id);
+              }}
             />
             {/* Top bar */}
             <div className="flex items-center gap-3 mb-2">
