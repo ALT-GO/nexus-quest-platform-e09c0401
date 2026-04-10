@@ -1,6 +1,7 @@
 import { Play, Pause } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useMarketingTimesheet, formatDuration } from "@/hooks/use-timesheet";
+import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
