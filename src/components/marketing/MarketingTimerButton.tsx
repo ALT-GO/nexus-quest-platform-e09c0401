@@ -19,7 +19,8 @@ export function MarketingTimerButton({ taskId, size = "card" }: Props) {
       await pause();
     } else {
       await start();
-      // Refresh marketing tasks to reflect progress change
+      // Auto-set progress to "Em andamento"
+      await supabase.from("marketing_tasks").update({ progress: "Em andamento" }).eq("id", taskId);
       qc.invalidateQueries({ queryKey: ["marketing_tasks"] });
     }
   };
