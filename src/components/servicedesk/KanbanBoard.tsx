@@ -24,8 +24,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Timer } from "lucide-react";
 import { useActiveTimerIds, formatDuration } from "@/hooks/use-timesheet";
+import { KanbanTimerButton } from "@/components/shared/KanbanTimerButton";
 
 interface KanbanTicket {
   id: string;
@@ -273,6 +273,11 @@ export function KanbanBoard({
                                       ))}
                                     </div>
                                   )}
+                                </div>
+
+                                {/* Fixed timer button at card footer */}
+                                <div className="px-3.5 pb-3 pt-0" onClick={(e) => e.stopPropagation()}>
+                                  <KanbanTimerButton entityId={ticket.id} type="ticket" />
                                 </div>
 
                                 {/* Delete — hover */}
