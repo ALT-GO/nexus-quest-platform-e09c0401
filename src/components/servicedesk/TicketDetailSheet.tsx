@@ -21,6 +21,7 @@ import { SlaIndicator } from "@/components/sla/SlaIndicator";
 import { AssetLinker } from "@/components/servicedesk/AssetLinker";
 import { supabase } from "@/integrations/supabase/client";
 import { useTimesheet, formatDuration } from "@/hooks/use-timesheet";
+import { TimerReminderBanner } from "@/components/shared/TimerReminderBanner";
 import { useTicketComments } from "@/hooks/use-ticket-comments";
 import { useTicketHistory } from "@/hooks/use-ticket-history";
 import { StatusCustom } from "@/hooks/use-custom-status";
