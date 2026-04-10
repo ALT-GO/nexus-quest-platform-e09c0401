@@ -22,7 +22,7 @@ import {
 import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
 import { useMarketingTaskTypes } from "@/hooks/use-task-types";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { fetchMarketingTimesheetTotals, formatDuration, useActiveTimerIds } from "@/hooks/use-timesheet";
+import { fetchMarketingTimesheetTotals, formatDuration, useActiveTimerIds, autoStartTimer, autoPauseTimer } from "@/hooks/use-timesheet";
 import { format, isToday, isBefore, startOfDay } from "date-fns";
 import {
   MarketingStage,
