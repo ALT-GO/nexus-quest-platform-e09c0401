@@ -432,10 +432,11 @@ export function MarketingTaskDetailSheet({
               <TimerReminderBanner
                 entityId={task.id}
                 type="marketing"
-                isInProgress={currentStage?.meta_status === "in_progress" && task.progress !== "Concluído"}
                 onStartTimer={async () => {
                   const { autoStartTimer } = await import("@/hooks/use-timesheet");
                   autoStartTimer(task.id, "marketing");
+                  // Also set progress to Em andamento
+                  updateTask.mutate({ id: task.id, progress: "Em andamento" });
                 }}
               />
               {/* Top bar: Task type + ID */}
