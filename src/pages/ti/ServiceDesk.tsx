@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { autoStartTimer, autoPauseTimer } from "@/hooks/use-timesheet";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { NewTicketDialog } from "@/components/servicedesk/NewTicketDialog";
