@@ -428,6 +428,16 @@ export function MarketingTaskDetailSheet({
           {/* ─── LEFT: Main Content ─── */}
           <ScrollArea className="flex-1 min-w-0">
             <div className="p-6 space-y-1">
+              {/* Timer reminder banner */}
+              <TimerReminderBanner
+                entityId={task.id}
+                type="marketing"
+                isInProgress={currentStage?.meta_status === "in_progress" && task.progress !== "Concluído"}
+                onStartTimer={async () => {
+                  const { autoStartTimer } = await import("@/hooks/use-timesheet");
+                  autoStartTimer(task.id, "marketing");
+                }}
+              />
               {/* Top bar: Task type + ID */}
               <div className="flex items-center gap-2 mb-2">
                 {/* Task type selector */}
