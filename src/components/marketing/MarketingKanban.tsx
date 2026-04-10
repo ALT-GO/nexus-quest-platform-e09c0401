@@ -39,7 +39,7 @@ import {
 } from "@hello-pangea/dnd";
 import { supabase } from "@/integrations/supabase/client";
 import { useQueryClient } from "@tanstack/react-query";
-import { MarketingTimerButton } from "./MarketingTimerButton";
+import { KanbanTimerButton } from "@/components/shared/KanbanTimerButton";
 import { notifyAdminsForApproval } from "@/lib/marketing-notifications";
 import { useAuth } from "@/hooks/use-auth";
 import { useAllTaskTags } from "@/hooks/use-marketing-tags";
@@ -358,7 +358,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                     </div>
                                   )}
 
-                                  {/* Status badge + timer */}
+                                  {/* Status badge */}
                                   <div className="flex items-center gap-1.5 flex-wrap">
                                     <span className={cn(
                                       "inline-block text-[10px] font-semibold rounded px-2 py-0.5 leading-none",
@@ -370,12 +370,6 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                     )}>
                                       {task.progress}
                                     </span>
-                                    {activeTimerMap[task.id] && (
-                                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold rounded px-2 py-0.5 leading-none bg-primary/10 text-primary animate-pulse">
-                                        <Timer className="h-3 w-3" />
-                                        {formatDuration(activeTimerMap[task.id].elapsed)}
-                                      </span>
-                                    )}
                                   </div>
 
                                   {/* Property rows — ClickUp style */}
@@ -452,9 +446,13 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                   )}
                                 </div>
 
+                                {/* Fixed timer button at card footer */}
+                                <div className="px-3.5 pb-3 pt-0" onClick={(e) => e.stopPropagation()}>
+                                  <KanbanTimerButton entityId={task.id} type="marketing" />
+                                </div>
+
                                 {/* Card actions — visible on hover */}
                                 <div className="absolute top-1.5 right-1.5 opacity-0 group-hover:opacity-100 flex gap-0.5">
-                                  <MarketingTimerButton taskId={task.id} size="card" />
                                   <Button
                                     variant="ghost"
                                     size="icon"

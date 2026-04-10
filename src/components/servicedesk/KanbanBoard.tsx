@@ -24,8 +24,8 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
-import { Timer } from "lucide-react";
 import { useActiveTimerIds, formatDuration } from "@/hooks/use-timesheet";
+import { KanbanTimerButton } from "@/components/shared/KanbanTimerButton";
 
 interface KanbanTicket {
   id: string;
@@ -234,15 +234,6 @@ export function KanbanBoard({
                                     </div>
                                   </div>
 
-                                  {/* Active timer badge */}
-                                  {activeTimerMap[ticket.id] && (
-                                    <div className="py-0.5">
-                                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold rounded px-2 py-0.5 leading-none bg-primary/10 text-primary animate-pulse">
-                                        <Timer className="h-3 w-3" />
-                                        {formatDuration(activeTimerMap[ticket.id].elapsed)}
-                                      </span>
-                                    </div>
-                                  )}
 
                                   {/* SLA */}
                                   {!isCompleted && (
@@ -273,6 +264,11 @@ export function KanbanBoard({
                                       ))}
                                     </div>
                                   )}
+                                </div>
+
+                                {/* Fixed timer button at card footer */}
+                                <div className="px-3.5 pb-3 pt-0" onClick={(e) => e.stopPropagation()}>
+                                  <KanbanTimerButton entityId={ticket.id} type="ticket" />
                                 </div>
 
                                 {/* Delete — hover */}
