@@ -531,3 +531,63 @@ export function useActiveTimerIds() {
 
   return timerMap;
 }
+
+/**
+ * Auto-start a timer for a ticket or marketing task (used when moving to in_progress).
+ * Only starts if no active timer exists for that entity.
+ */
+export async function autoStartTimer(entityId: string, type: "ticket" | "marketing") {
+  const column = type === "ticket" ? "ticket_id" : "marketing_task_id";
+  // Check if there's already an active timer
+  const { data: existing } = await supabase
+    .from("timesheet_logs")
+    .select("id")
+    .eq(column, entityId as any)
+    .is("end_time", null)
+    .limit(1);
+
+  if (existing && existing.length > 0) return; // already running
+
+  await supabase
+    .from("timesheet_logs")
+    .insert({ [column]: entityId, start_time: new Date().toISOString(), duration_seconds: 0 } as any);
+}
+
+/**
+ * Auto-pause all active timers for a ticket or marketing task.
+ */
+export async function autoPauseTimer(entityId: string, type: "ticket" | "marketing") {
+  const column = type === "ticket" ? "ticket_id" : "marketing_task_id";
+  const { data: active } = await supabase
+    .from("timesheet_logs")
+    .select("id, start_time")
+    .eq(column, entityId as any)
+    .is("end_time", null);
+
+  if (!active || active.length === 0) return;
+
+  const now = new Date();
+  await Promise.all(
+    (active as any[]).map((log: any) => {
+      const durationSeconds = Math.floor((now.getTime() - new Date(log.start_time).getTime()) / 1000);
+      return supabase
+        .from("timesheet_logs")
+        .update({ end_time: now.toISOString(), duration_seconds: durationSeconds } as any)
+        .eq("id", log.id as any);
+    })
+  );
+}
+
+/**
+ * Check if there's an active timer for a given entity.
+ */
+export async function hasActiveTimer(entityId: string, type: "ticket" | "marketing"): Promise<boolean> {
+  const column = type === "ticket" ? "ticket_id" : "marketing_task_id";
+  const { data } = await supabase
+    .from("timesheet_logs")
+    .select("id")
+    .eq(column, entityId as any)
+    .is("end_time", null)
+    .limit(1);
+  return (data?.length ?? 0) > 0;
+}

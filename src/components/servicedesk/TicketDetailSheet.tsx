@@ -21,6 +21,7 @@ import { SlaIndicator } from "@/components/sla/SlaIndicator";
 import { AssetLinker } from "@/components/servicedesk/AssetLinker";
 import { supabase } from "@/integrations/supabase/client";
 import { useTimesheet, formatDuration } from "@/hooks/use-timesheet";
+import { TimerReminderBanner } from "@/components/shared/TimerReminderBanner";
 import { useTicketComments } from "@/hooks/use-ticket-comments";
 import { useTicketHistory } from "@/hooks/use-ticket-history";
 import { StatusCustom } from "@/hooks/use-custom-status";
@@ -367,6 +368,13 @@ export function TicketDetailSheet({
         {/* ─── LEFT: Main Content ─── */}
         <ScrollArea className="flex-1 min-w-0">
           <div className="p-6 space-y-1">
+            {/* Timer reminder banner */}
+            <TimerReminderBanner
+              entityId={ticket.id}
+              type="ticket"
+              isInProgress={currentStatus?.statusType === "in_progress" && !isCompleted}
+              onStartTimer={() => { startTimer(); }}
+            />
             {/* Top bar */}
             <div className="flex items-center gap-3 mb-2">
               <button

@@ -22,7 +22,7 @@ import {
 import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
 import { useMarketingTaskTypes } from "@/hooks/use-task-types";
 import { UserAvatar } from "@/components/ui/user-avatar";
-import { fetchMarketingTimesheetTotals, formatDuration, useActiveTimerIds } from "@/hooks/use-timesheet";
+import { fetchMarketingTimesheetTotals, formatDuration, useActiveTimerIds, autoStartTimer, autoPauseTimer } from "@/hooks/use-timesheet";
 import { format, isToday, isBefore, startOfDay } from "date-fns";
 import {
   MarketingStage,
@@ -184,6 +184,19 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
 
       if (sourceStageId !== destStageId) {
         const destStage = stages.find((s) => s.id === destStageId);
+        const sourceStage = stages.find((s) => s.id === sourceStageId);
+
+        // Auto-start timer when moving to in_progress stage
+        if (destStage?.meta_status === "in_progress") {
+          autoStartTimer(movedTask.id, "marketing");
+          toast.info("Timer iniciado automaticamente");
+        }
+        // Auto-pause timer when leaving in_progress stage
+        if (sourceStage?.meta_status === "in_progress" && destStage?.meta_status !== "in_progress") {
+          autoPauseTimer(movedTask.id, "marketing");
+          toast.info("Timer pausado automaticamente");
+        }
+
         if (destStage?.meta_status === "pending_approval") {
           notifyAdminsForApproval({ taskTitle: movedTask.title, taskId: movedTask.id, excludeUserId: user?.id });
         }

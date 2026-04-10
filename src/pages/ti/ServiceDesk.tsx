@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { autoStartTimer, autoPauseTimer } from "@/hooks/use-timesheet";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { NewTicketDialog } from "@/components/servicedesk/NewTicketDialog";
@@ -166,6 +167,17 @@ export default function ServiceDesk() {
 
       const isFinal = isFinalStatus(newStatusId);
       const completedAt = isFinal ? new Date().toISOString() : null;
+
+      // Auto-start/pause timer based on status type
+      const oldStatus = statuses.find((s) => s.id === oldStatusId);
+      const newStatus = statuses.find((s) => s.id === newStatusId);
+      if (newStatus?.statusType === "in_progress" && oldStatus?.statusType !== "in_progress") {
+        autoStartTimer(ticket.id, "ticket");
+        toast.info("Timer iniciado automaticamente");
+      } else if (oldStatus?.statusType === "in_progress" && newStatus?.statusType !== "in_progress") {
+        autoPauseTimer(ticket.id, "ticket");
+        toast.info("Timer pausado automaticamente");
+      }
 
       await updateTicket(ticket.id, {
         status_id: newStatusId,
