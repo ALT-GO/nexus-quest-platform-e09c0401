@@ -234,15 +234,6 @@ export function KanbanBoard({
                                     </div>
                                   </div>
 
-                                  {/* Active timer badge */}
-                                  {activeTimerMap[ticket.id] && (
-                                    <div className="py-0.5">
-                                      <span className="inline-flex items-center gap-1 text-[10px] font-semibold rounded px-2 py-0.5 leading-none bg-primary/10 text-primary animate-pulse">
-                                        <Timer className="h-3 w-3" />
-                                        {formatDuration(activeTimerMap[ticket.id].elapsed)}
-                                      </span>
-                                    </div>
-                                  )}
 
                                   {/* SLA */}
                                   {!isCompleted && (
