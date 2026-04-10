@@ -184,6 +184,19 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
 
       if (sourceStageId !== destStageId) {
         const destStage = stages.find((s) => s.id === destStageId);
+        const sourceStage = stages.find((s) => s.id === sourceStageId);
+
+        // Auto-start timer when moving to in_progress stage
+        if (destStage?.meta_status === "in_progress") {
+          autoStartTimer(movedTask.id, "marketing");
+          toast.info("Timer iniciado automaticamente");
+        }
+        // Auto-pause timer when leaving in_progress stage
+        if (sourceStage?.meta_status === "in_progress" && destStage?.meta_status !== "in_progress") {
+          autoPauseTimer(movedTask.id, "marketing");
+          toast.info("Timer pausado automaticamente");
+        }
+
         if (destStage?.meta_status === "pending_approval") {
           notifyAdminsForApproval({ taskTitle: movedTask.title, taskId: movedTask.id, excludeUserId: user?.id });
         }
