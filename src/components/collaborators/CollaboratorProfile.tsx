@@ -155,12 +155,21 @@ function AssetSection({
   onUnlink: (id: string) => void;
   onRefetch: () => void;
 }) {
+  const [singleTermAsset, setSingleTermAsset] = useState<CollaboratorAsset | null>(null);
+  const [singleTermType, setSingleTermType] = useState<"responsabilidade" | "devolucao">("responsabilidade");
+
   const config = categoryConfig[category];
   if (!config) return null;
   const Icon = config.icon;
   const columns = columnsByCategory[category] || [];
 
+  const openSingleTerm = (asset: CollaboratorAsset, type: "responsabilidade" | "devolucao") => {
+    setSingleTermAsset(asset);
+    setSingleTermType(type);
+  };
+
   return (
+    <>
     <Card>
       <CardHeader className="flex flex-row items-center justify-between pb-3">
         <CardTitle className="flex items-center gap-2 text-base font-semibold">
@@ -255,15 +264,27 @@ function AssetSection({
                   <TableCell>
                     <div className="flex items-center gap-1">
                       <StockDetailDialog asset={item} onUpdated={onRefetch} />
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="h-7 w-7 p-0 text-muted-foreground hover:text-orange-600"
-                        title="Desvincular"
-                        onClick={() => onUnlink(item.id)}
-                      >
-                        <Unlink className="h-3.5 w-3.5" />
-                      </Button>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="h-7 w-7 p-0">
+                            <MoreHorizontal className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => openSingleTerm(item, "responsabilidade")} className="gap-2">
+                            <FileDown className="h-3.5 w-3.5" />
+                            Termo de Responsabilidade
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => openSingleTerm(item, "devolucao")} className="gap-2">
+                            <FileUp className="h-3.5 w-3.5" />
+                            Termo de Devolução
+                          </DropdownMenuItem>
+                          <DropdownMenuItem onClick={() => onUnlink(item.id)} className="gap-2 text-orange-600">
+                            <Unlink className="h-3.5 w-3.5" />
+                            Desvincular
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                       <ConfirmDeleteDialog onConfirm={() => onDelete(item.id)} />
                     </div>
                   </TableCell>
@@ -281,6 +302,17 @@ function AssetSection({
         </div>
       </CardContent>
     </Card>
+
+    {singleTermAsset && (
+      <PrintableTermDialog
+        open={!!singleTermAsset}
+        onOpenChange={(v) => { if (!v) setSingleTermAsset(null); }}
+        collaboratorName={collaboratorName}
+        assets={[singleTermAsset]}
+        type={singleTermType}
+      />
+    )}
+    </>
   );
 }
 
