@@ -198,35 +198,44 @@
     print-color-adjust: exact !important;
   }
 
-  /* Hide app UI */
-  body > *:not([data-radix-portal]) {
+  /* Hide everything first */
+  body > * {
     display: none !important;
   }
 
-  /* Hide dialog backdrop */
-  [data-radix-portal] > [data-state] {
-    background: transparent !important;
-    animation: none !important;
+  /* Show portals */
+  body > [data-radix-portal] {
+    display: block !important;
   }
 
   .print\:hidden {
     display: none !important;
   }
 
-  /* Make dialog content visible */
+  /* Make all portal content visible */
   [data-radix-portal],
-  [data-radix-portal] *,
-  .print-term-dialog,
-  .print-term-dialog * {
+  [data-radix-portal] * {
     visibility: visible !important;
   }
 
-  /* Strip dialog chrome */
+  /* Remove overlay backdrop */
+  [data-radix-portal] > [data-state] {
+    background: transparent !important;
+    animation: none !important;
+  }
+
+  /* Strip dialog chrome - flatten everything to static */
+  [data-radix-portal] > *,
+  [data-radix-portal] > * > *,
+  [data-radix-portal] [role="dialog"],
   .print-term-dialog {
     position: static !important;
     inset: auto !important;
+    transform: none !important;
     width: 100% !important;
     height: auto !important;
+    max-height: none !important;
+    max-width: none !important;
     margin: 0 !important;
     padding: 0 !important;
     border: none !important;
@@ -234,29 +243,7 @@
     box-shadow: none !important;
     background: white !important;
     overflow: visible !important;
-    max-height: none !important;
-    max-width: none !important;
-    transform: none !important;
-  }
-
-  /* Remove Radix overlay/dialog positioning */
-  [data-radix-portal] > div {
-    position: static !important;
     display: block !important;
-    inset: auto !important;
-    overflow: visible !important;
-    background: transparent !important;
-  }
-
-  [data-radix-portal] [role="dialog"] {
-    position: static !important;
-    transform: none !important;
-    max-height: none !important;
-    max-width: none !important;
-    overflow: visible !important;
-    border: none !important;
-    box-shadow: none !important;
-    background: white !important;
   }
 
   /* Each .print-page = one printed page */
