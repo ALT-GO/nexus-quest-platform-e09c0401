@@ -15,7 +15,8 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Search, Package, UserPlus, Laptop, Smartphone, Phone, FileText, GripVertical, Tablet, Mouse } from "lucide-react";
+import { Loader2, Search, Package, UserPlus, Laptop, Smartphone, Phone, FileText, GripVertical, Tablet, Mouse, Trash2 } from "lucide-react";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { StockDetailDialog } from "./StockDetailDialog";
 import { format } from "date-fns";
 import { InlineStockCell } from "./InlineStockCell";
@@ -380,6 +381,7 @@ function CategoryStockTable({
   search,
   onAssigned,
   onCellSave,
+  onDelete,
   advancedFilters,
   stockSortKey,
   stockSortDir,
@@ -389,6 +391,7 @@ function CategoryStockTable({
   search: string;
   onAssigned: () => void;
   onCellSave: (id: string, field: string, value: string) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
   advancedFilters: Record<string, string>;
   stockSortKey: string;
   stockSortDir: "asc" | "desc";
@@ -471,6 +474,11 @@ function CategoryStockTable({
                     <div className="flex items-center gap-1">
                       <StockDetailDialog asset={item} onUpdated={onAssigned} />
                       <AssignDialog asset={item} onAssigned={onAssigned} />
+                      <ConfirmDeleteDialog
+                        onConfirm={() => onDelete(item.id)}
+                        title="Excluir item do estoque"
+                        description={`Tem certeza que deseja excluir "${item.model || item.licenca || item.numero || item.asset_code}" permanentemente?`}
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
@@ -573,6 +581,17 @@ export function StockTab({ onAssigned }: StockTabProps) {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("inventory").delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir item");
+    } else {
+      toast.success("Item excluído do estoque");
+      refetch();
+      fetchAllLicenses();
+    }
+  };
+
   if (loading || licensesLoading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -659,6 +678,7 @@ export function StockTab({ onAssigned }: StockTabProps) {
                 search={search}
                 onAssigned={handleAssigned}
                 onCellSave={handleCellSave}
+                onDelete={handleDelete}
                 advancedFilters={filtersByTab[tab.key] || {}}
                 stockSortKey={tabSort.sortKey}
                 stockSortDir={tabSort.sortDir as "asc" | "desc"}
