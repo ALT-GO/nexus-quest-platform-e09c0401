@@ -678,6 +678,7 @@ export function StockTab({ onAssigned }: StockTabProps) {
                 search={search}
                 onAssigned={handleAssigned}
                 onCellSave={handleCellSave}
+                onDelete={handleDelete}
                 advancedFilters={filtersByTab[tab.key] || {}}
                 stockSortKey={tabSort.sortKey}
                 stockSortDir={tabSort.sortDir as "asc" | "desc"}
