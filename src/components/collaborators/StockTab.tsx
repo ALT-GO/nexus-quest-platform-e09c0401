@@ -581,6 +581,17 @@ export function StockTab({ onAssigned }: StockTabProps) {
     }
   };
 
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("inventory").delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir item");
+    } else {
+      toast.success("Item excluído do estoque");
+      refetch();
+      fetchAllLicenses();
+    }
+  };
+
   if (loading || licensesLoading) {
     return (
       <div className="flex items-center justify-center py-20">
