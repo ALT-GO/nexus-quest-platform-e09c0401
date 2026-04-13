@@ -146,6 +146,7 @@ export function PrintableTermDialog({ open, onOpenChange, collaboratorName, asse
           </div>
         </div>
 
+        <div ref={contentRef}>
         {/* ===== PAGE 1 ===== */}
         <div className="print-page p-6 mx-auto w-full max-w-[210mm] min-h-[297mm] flex flex-col relative" style={{ fontFamily: "Inter, Arial, Helvetica, sans-serif", color: "#333", fontSize: "11pt", lineHeight: "1.4" }}>
           <div className="print-header-table mb-1">
