@@ -82,7 +82,48 @@ export function PrintableTermDialog({ open, onOpenChange, collaboratorName, asse
   const docCode = isDevolucao ? "FF.117" : "FF.164";
   const headerPrefix = isDevolucao ? "TERMO DE RESPONSABILIDADE DE" : "";
 
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [downloading, setDownloading] = useState(false);
+
   const handlePrint = () => window.print();
+
+  const handleDownloadPdf = async () => {
+    if (!contentRef.current) return;
+    setDownloading(true);
+    try {
+      const html2canvas = (await import("html2canvas-pro")).default;
+      const { jsPDF } = await import("jspdf");
+
+      const pages = contentRef.current.querySelectorAll<HTMLElement>(".print-page");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pdfW = 210;
+      const pdfH = 297;
+
+      for (let i = 0; i < pages.length; i++) {
+        const canvas = await html2canvas(pages[i], {
+          scale: 2,
+          useCORS: true,
+          backgroundColor: "#ffffff",
+          logging: false,
+        });
+
+        const imgData = canvas.toDataURL("image/jpeg", 0.95);
+        const imgW = pdfW;
+        const imgH = (canvas.height * pdfW) / canvas.width;
+
+        if (i > 0) pdf.addPage();
+        pdf.addImage(imgData, "JPEG", 0, 0, imgW, Math.min(imgH, pdfH));
+      }
+
+      const fileName = isDevolucao
+        ? `Termo_Devolucao_${collaboratorName.replace(/\s+/g, "_")}.pdf`
+        : `Termo_Responsabilidade_${collaboratorName.replace(/\s+/g, "_")}.pdf`;
+      pdf.save(fileName);
+    } catch (err) {
+      console.error("Erro ao gerar PDF:", err);
+    }
+    setDownloading(false);
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -91,9 +132,13 @@ export function PrintableTermDialog({ open, onOpenChange, collaboratorName, asse
         <div className="sticky top-0 z-10 flex items-center justify-between p-4 bg-background border-b shadow-sm print:hidden">
           <DialogTitle className="text-lg font-bold">{dialogTitle}</DialogTitle>
           <div className="flex items-center gap-2">
+            <Button onClick={handleDownloadPdf} disabled={downloading} variant="outline" className="gap-2">
+              {downloading ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />}
+              {downloading ? "Gerando..." : "Baixar PDF"}
+            </Button>
             <Button onClick={handlePrint} className="gap-2">
               <Printer className="h-4 w-4" />
-              Imprimir / Salvar PDF
+              Imprimir
             </Button>
             <Button variant="ghost" size="icon" onClick={() => onOpenChange(false)}>
               <X className="h-5 w-5" />
