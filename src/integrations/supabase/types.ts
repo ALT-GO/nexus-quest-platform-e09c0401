@@ -977,6 +977,30 @@ export type Database = {
         }
         Relationships: []
       }
+      sla_category_config: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          sla_hours: number
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          sla_hours?: number
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          sla_hours?: number
+          updated_at?: string
+        }
+        Relationships: []
+      }
       sla_settings: {
         Row: {
           business_end: string
