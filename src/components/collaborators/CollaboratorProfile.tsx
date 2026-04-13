@@ -13,6 +13,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PrintableTermDialog } from "@/components/collaborators/PrintableTermDialog";
+import { AssetSelectionDialog } from "@/components/collaborators/AssetSelectionDialog";
 import { LinkExistingAssetDialog } from "@/components/collaborators/LinkExistingAssetDialog";
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
@@ -319,7 +320,9 @@ function AssetSection({
 export function CollaboratorProfile({ name, onBack }: Props) {
   const { assets, loading, refetch, updateAsset, deleteAsset } = useCollaboratorDetail(name);
   const [termDialogOpen, setTermDialogOpen] = useState(false);
+  const [selectionDialogOpen, setSelectionDialogOpen] = useState(false);
   const [termType, setTermType] = useState<"responsabilidade" | "devolucao">("responsabilidade");
+  const [termAssets, setTermAssets] = useState<CollaboratorAsset[]>([]);
 
   const notebooks = assets.filter((a) => a.category === "notebooks" || a.category === "hardware");
   const celulares = assets.filter((a) => a.category === "celulares");
@@ -330,6 +333,11 @@ export function CollaboratorProfile({ name, onBack }: Props) {
 
   const openTermDialog = (type: "responsabilidade" | "devolucao") => {
     setTermType(type);
+    setSelectionDialogOpen(true);
+  };
+
+  const handleSelectionConfirm = (selected: CollaboratorAsset[]) => {
+    setTermAssets(selected);
     setTermDialogOpen(true);
   };
 
@@ -420,11 +428,19 @@ export function CollaboratorProfile({ name, onBack }: Props) {
         <AssetSection category="licencas" assets={licencas} collaboratorName={name} onUpdate={updateAsset} onDelete={handleDelete} onUnlink={handleUnlink} onRefetch={refetch} />
       </div>
 
+      <AssetSelectionDialog
+        open={selectionDialogOpen}
+        onOpenChange={setSelectionDialogOpen}
+        assets={assets}
+        type={termType}
+        onConfirm={handleSelectionConfirm}
+      />
+
       <PrintableTermDialog 
         open={termDialogOpen} 
         onOpenChange={setTermDialogOpen} 
         collaboratorName={name}
-        assets={assets}
+        assets={termAssets}
         type={termType}
       />
     </div>
