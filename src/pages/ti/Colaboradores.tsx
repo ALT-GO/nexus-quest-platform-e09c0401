@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
@@ -132,6 +132,50 @@ export default function Colaboradores() {
   const [selectedName, setSelectedName] = useState<string | null>(null);
   const [viewMode, setViewMode] = useViewPreference();
   const { sortKey, sortDir, setSort } = usePersistentSort("collab-sort", "name");
+  const [inventoryMatchNames, setInventoryMatchNames] = useState<Set<string>>(new Set());
+  const [inventorySearching, setInventorySearching] = useState(false);
+
+  // Search inventory items when query changes
+  useEffect(() => {
+    const q = search.trim().toLowerCase();
+    if (q.length < 2) {
+      setInventoryMatchNames(new Set());
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      setInventorySearching(true);
+      const searchPattern = `%${q}%`;
+      const { data } = await supabase
+        .from("inventory")
+        .select("collaborator")
+        .not("collaborator", "is", null)
+        .neq("collaborator", "")
+        .or([
+          `model.ilike.${searchPattern}`,
+          `asset_code.ilike.${searchPattern}`,
+          `service_tag.ilike.${searchPattern}`,
+          `service_tag_2.ilike.${searchPattern}`,
+          `marca.ilike.${searchPattern}`,
+          `numero.ilike.${searchPattern}`,
+          `operadora.ilike.${searchPattern}`,
+          `licenca.ilike.${searchPattern}`,
+          `contrato.ilike.${searchPattern}`,
+          `imei1.ilike.${searchPattern}`,
+          `imei2.ilike.${searchPattern}`,
+          `asset_type.ilike.${searchPattern}`,
+          `email_address.ilike.${searchPattern}`,
+        ].join(","));
+
+      if (data) {
+        const names = new Set(data.map((r: any) => (r.collaborator as string).trim()).filter(Boolean));
+        setInventoryMatchNames(names);
+      }
+      setInventorySearching(false);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [search]);
 
   const toggleSort = (key: SortKey) => {
     setSort(key);
@@ -140,10 +184,12 @@ export default function Colaboradores() {
   const filtered = applySorting(
     collaborators.filter((c) => {
       const q = search.toLowerCase();
+      if (!q) return true;
       return (
         c.name.toLowerCase().includes(q) ||
         c.cargo?.toLowerCase().includes(q) ||
-        c.sector?.toLowerCase().includes(q)
+        c.sector?.toLowerCase().includes(q) ||
+        inventoryMatchNames.has(c.name)
       );
     }),
     sortKey,
@@ -197,7 +243,7 @@ export default function Colaboradores() {
               <div className="relative max-w-md flex-1 min-w-[200px]">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input
-                  placeholder="Buscar colaborador..."
+                  placeholder="Buscar por colaborador, modelo, service tag, linha, licença..."
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
                   className="pl-10"
