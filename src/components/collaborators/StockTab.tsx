@@ -474,6 +474,11 @@ function CategoryStockTable({
                     <div className="flex items-center gap-1">
                       <StockDetailDialog asset={item} onUpdated={onAssigned} />
                       <AssignDialog asset={item} onAssigned={onAssigned} />
+                      <ConfirmDeleteDialog
+                        onConfirm={() => onDelete(item.id)}
+                        title="Excluir item do estoque"
+                        description={`Tem certeza que deseja excluir "${item.model || item.licenca || item.numero || item.asset_code}" permanentemente?`}
+                      />
                     </div>
                   </TableCell>
                 </TableRow>
