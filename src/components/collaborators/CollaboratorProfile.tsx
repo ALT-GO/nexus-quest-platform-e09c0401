@@ -7,9 +7,11 @@ import {
 } from "@/components/ui/table";
 import { InlineCellEditor } from "@/components/assets/InlineCellEditor";
 import { StatusSelectCell } from "@/components/collaborators/StatusSelectCell";
-import { ArrowLeft, FileDown, Laptop, Smartphone, Phone, FileText, Loader2, FileUp, Eye, Tablet, Mouse } from "lucide-react";
+import { ArrowLeft, FileDown, Laptop, Smartphone, Phone, FileText, Loader2, FileUp, Eye, Tablet, Mouse, MoreHorizontal, Unlink } from "lucide-react";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
-import { Unlink } from "lucide-react";
+import {
+  DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { PrintableTermDialog } from "@/components/collaborators/PrintableTermDialog";
 import { LinkExistingAssetDialog } from "@/components/collaborators/LinkExistingAssetDialog";
 import { cn } from "@/lib/utils";
