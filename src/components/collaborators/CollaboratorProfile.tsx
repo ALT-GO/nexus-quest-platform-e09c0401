@@ -320,7 +320,9 @@ function AssetSection({
 export function CollaboratorProfile({ name, onBack }: Props) {
   const { assets, loading, refetch, updateAsset, deleteAsset } = useCollaboratorDetail(name);
   const [termDialogOpen, setTermDialogOpen] = useState(false);
+  const [selectionDialogOpen, setSelectionDialogOpen] = useState(false);
   const [termType, setTermType] = useState<"responsabilidade" | "devolucao">("responsabilidade");
+  const [termAssets, setTermAssets] = useState<CollaboratorAsset[]>([]);
 
   const notebooks = assets.filter((a) => a.category === "notebooks" || a.category === "hardware");
   const celulares = assets.filter((a) => a.category === "celulares");
@@ -331,6 +333,11 @@ export function CollaboratorProfile({ name, onBack }: Props) {
 
   const openTermDialog = (type: "responsabilidade" | "devolucao") => {
     setTermType(type);
+    setSelectionDialogOpen(true);
+  };
+
+  const handleSelectionConfirm = (selected: CollaboratorAsset[]) => {
+    setTermAssets(selected);
     setTermDialogOpen(true);
   };
 
