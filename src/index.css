@@ -395,10 +395,6 @@
     content: none !important;
   }
 }
-
-  /* 2. Hide ALL UI elements - clean document only */
-  html, body {
-    visibility: visible !important;
     background: white !important;
     margin: 0 !important;
     padding: 0 !important;
