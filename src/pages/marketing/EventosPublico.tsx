@@ -67,9 +67,11 @@ export default function EventosPublico() {
   }, [events]);
 
   // Calendar helpers
+  const calendarEvents = useMemo(() => events.filter(e => e.event_type !== "campanha"), [events]);
+
   const eventDays = useMemo(() => {
     const days = new Set<string>();
-    events.forEach((e) => {
+    calendarEvents.forEach((e) => {
       const start = new Date(e.start_date);
       const end = new Date(e.end_date);
       const current = new Date(start);
@@ -79,7 +81,7 @@ export default function EventosPublico() {
       }
     });
     return days;
-  }, [events]);
+  }, [calendarEvents]);
 
   const modifiers = useMemo(() => ({
     event: (date: Date) => eventDays.has(format(date, "yyyy-MM-dd")),
