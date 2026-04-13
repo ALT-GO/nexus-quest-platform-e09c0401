@@ -53,7 +53,7 @@ export default function ChamadoPublico() {
     setIsSubmitting(true);
 
     const result = await createTicket({
-      title: formData.category,
+      title: formData.name,
       category: formData.category,
       description: formData.description,
       requester: formData.name,
