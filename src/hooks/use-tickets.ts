@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { slaByCategory } from "@/hooks/use-sla";
+import { fetchSlaCategoryMap } from "@/hooks/use-sla-categories";
 import { logAuditEvent } from "@/lib/audit";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notifications";
@@ -216,7 +217,8 @@ export async function createTicket(data: {
   priority?: "low" | "medium" | "high";
   parent_ticket_id?: string;
 }): Promise<{ success: boolean; ticketNumber?: string; ticketId?: string }> {
-  const slaHours = slaByCategory[data.category] ?? 24;
+  const dynamicMap = await fetchSlaCategoryMap();
+  const slaHours = (dynamicMap[data.category] ?? slaByCategory[data.category]) ?? 24;
   const now = new Date();
   const slaDeadline = new Date(now.getTime() + slaHours * 3600000);
 

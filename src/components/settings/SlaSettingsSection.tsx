@@ -8,6 +8,7 @@ import { Separator } from "@/components/ui/separator";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Save } from "lucide-react";
 import { useSlaSettings } from "@/hooks/use-sla-settings";
+import { SlaCategorySettings } from "./SlaCategorySettings";
 import { toast } from "sonner";
 
 const WEEKDAYS = [
@@ -52,6 +53,7 @@ export function SlaSettingsSection() {
   };
 
   return (
+    <div className="space-y-6">
     <Card>
       <CardHeader>
         <CardTitle>Horário Comercial & SLA</CardTitle>
@@ -101,5 +103,7 @@ export function SlaSettingsSection() {
         </div>
       </CardContent>
     </Card>
+    <SlaCategorySettings />
+    </div>
   );
 }
