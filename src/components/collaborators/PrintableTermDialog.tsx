@@ -184,17 +184,14 @@ export function PrintableTermDialog({ open, onOpenChange, collaboratorName, asse
                 <th className="p-1.5 border border-[#999] text-left font-bold" style={{ fontSize: "8pt" }}>VALOR PAGO</th>
                 <th className="p-1.5 border border-[#999] text-left font-bold" style={{ fontSize: "8pt" }}>VALOR CONTÁBIL ATUAL</th>
                 {!isDevolucao && (
-                  <>
-                    <th className="p-1.5 border border-[#999] text-left font-bold" style={{ fontSize: "8pt" }}>ESTADO</th>
-                    <th className="p-1.5 border border-[#999] text-left font-bold" style={{ fontSize: "8pt" }}>OBSERVAÇÃO</th>
-                  </>
+                  <th className="p-1.5 border border-[#999] text-left font-bold" style={{ fontSize: "8pt" }}>ESTADO</th>
                 )}
               </tr>
             </thead>
             <tbody>
               {assets.length === 0 ? (
                 <tr>
-                  <td colSpan={isDevolucao ? 4 : 6} className="p-2 border border-[#999] text-center" style={{ color: "#999" }}>
+                  <td colSpan={isDevolucao ? 4 : 5} className="p-2 border border-[#999] text-center" style={{ color: "#999" }}>
                     Nenhum ativo vinculado
                   </td>
                 </tr>
@@ -215,17 +212,14 @@ export function PrintableTermDialog({ open, onOpenChange, collaboratorName, asse
                       <td className="p-1.5 border border-[#999]" style={{ fontSize: "9pt" }}>{valorPagoDisplay}</td>
                       <td className="p-1.5 border border-[#999]" style={{ fontSize: "9pt" }}>{valorContabilDisplay}</td>
                       {!isDevolucao && (
-                        <>
-                          <td className="p-1.5 border border-[#999]" style={{ fontSize: "9pt" }}>{asset.status || "—"}</td>
-                          <td className="p-1.5 border border-[#999]" style={{ fontSize: "9pt" }}>{asset.notes || ""}</td>
-                        </>
+                        <td className="p-1.5 border border-[#999]" style={{ fontSize: "9pt" }}>{asset.status || "—"}</td>
                       )}
                     </tr>
                   );
                 })
               )}
               <tr>
-                <td colSpan={isDevolucao ? 4 : 6} className="p-1.5 border border-[#999] font-bold" style={{ color: "#666", fontSize: "9pt" }}>
+                <td colSpan={isDevolucao ? 4 : 5} className="p-1.5 border border-[#999] font-bold" style={{ color: "#666", fontSize: "9pt" }}>
                   OBS:
                 </td>
               </tr>
