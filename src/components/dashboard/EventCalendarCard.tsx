@@ -41,7 +41,7 @@ export function EventCalendarCard({ events }: Props) {
   // Days that have events (for highlighting in calendar)
   const eventDays = useMemo(() => {
     const days = new Set<string>();
-    events.forEach((e) => {
+    events.filter(e => (e as any).event_type !== "campanha").forEach((e) => {
       const start = new Date(e.start_date);
       const end = new Date(e.end_date);
       const current = new Date(start);

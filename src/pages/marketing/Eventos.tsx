@@ -233,6 +233,11 @@ export default function Eventos() {
                   </div>
 
                   <div className="flex items-center gap-2">
+                    {event.event_type === "campanha" && (
+                      <Badge variant="outline" className="text-[10px] font-medium bg-accent text-accent-foreground">
+                        Campanha
+                      </Badge>
+                    )}
                     <Badge variant="outline" className={cn("text-[10px] font-medium", st.color)}>
                       {st.label}
                     </Badge>
