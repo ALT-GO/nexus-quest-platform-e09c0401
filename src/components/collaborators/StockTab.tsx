@@ -381,6 +381,7 @@ function CategoryStockTable({
   search,
   onAssigned,
   onCellSave,
+  onDelete,
   advancedFilters,
   stockSortKey,
   stockSortDir,
@@ -390,6 +391,7 @@ function CategoryStockTable({
   search: string;
   onAssigned: () => void;
   onCellSave: (id: string, field: string, value: string) => Promise<void>;
+  onDelete: (id: string) => Promise<void>;
   advancedFilters: Record<string, string>;
   stockSortKey: string;
   stockSortDir: "asc" | "desc";
