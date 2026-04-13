@@ -125,6 +125,9 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
               <div className="flex items-center gap-3">
                 <SheetTitle className="text-xl">{event.name}</SheetTitle>
                 <Badge variant="outline" className={cn("text-xs", st.color)}>{st.label}</Badge>
+                {event.event_type === "campanha" && (
+                  <Badge variant="secondary" className="text-xs">Campanha</Badge>
+                )}
               </div>
               <Button
                 size="sm"
