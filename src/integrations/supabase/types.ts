@@ -323,6 +323,7 @@ export type Database = {
           checklist: Json | null
           created_at: string
           end_date: string
+          event_type: string
           id: string
           leads_gerados: number | null
           location: string | null
@@ -340,6 +341,7 @@ export type Database = {
           checklist?: Json | null
           created_at?: string
           end_date: string
+          event_type?: string
           id?: string
           leads_gerados?: number | null
           location?: string | null
@@ -357,6 +359,7 @@ export type Database = {
           checklist?: Json | null
           created_at?: string
           end_date?: string
+          event_type?: string
           id?: string
           leads_gerados?: number | null
           location?: string | null
