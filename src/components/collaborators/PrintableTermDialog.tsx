@@ -8,7 +8,6 @@ import type { CollaboratorAsset } from "@/hooks/use-collaborators";
 import { HeaderTimbrado } from "./HeaderTimbrado";
 import { FooterTimbrado } from "./FooterTimbrado";
 import { calcDepreciation, formatBRL } from "@/lib/depreciation";
-import { calcDepreciation, formatBRL } from "@/lib/depreciation";
 
 interface Props {
   open: boolean;
