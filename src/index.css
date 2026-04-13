@@ -180,56 +180,52 @@
    ======================================== */
 
 @media print {
-  /* 1. Force A4 page size with 20mm margins */
   @page {
     size: A4 portrait;
-    margin: 20mm;
+    margin: 15mm 20mm;
   }
 
-  /* 2. Hide ALL UI elements - clean document only */
   html, body {
     visibility: visible !important;
     background: white !important;
     margin: 0 !important;
     padding: 0 !important;
-    width: 210mm !important;
-    min-height: 297mm !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
     overflow: visible !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  /* Hide everything by default */
-  body * {
-    visibility: hidden;
-  }
-
-  /* Hide specific UI elements completely */
-  nav,
-  aside,
-  header:not(.print-header),
-  footer:not(.print-footer),
-  .sidebar,
-  [data-sidebar],
-  [role="navigation"],
-  [role="menubar"],
-  button:not(.print-keep),
-  .print\\:hidden,
-  [data-radix-portal] > div[data-state="open"]:first-child {
+  /* Hide app UI */
+  body > *:not([data-radix-portal]) {
     display: none !important;
-    visibility: hidden !important;
   }
 
-  /* 3. Show only the printable document */
+  /* Hide dialog backdrop */
+  [data-radix-portal] > [data-state] {
+    background: transparent !important;
+    animation: none !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Make dialog content visible */
+  [data-radix-portal],
+  [data-radix-portal] *,
   .print-term-dialog,
   .print-term-dialog * {
     visibility: visible !important;
   }
 
+  /* Strip dialog chrome */
   .print-term-dialog {
-    position: absolute !important;
-    inset: 0 !important;
-    width: 210mm !important;
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
     height: auto !important;
     margin: 0 !important;
     padding: 0 !important;
@@ -243,27 +239,47 @@
     transform: none !important;
   }
 
-  /* 4. Page styling - A4 dimensions */
+  /* Remove Radix overlay/dialog positioning */
+  [data-radix-portal] > div {
+    position: static !important;
+    display: block !important;
+    inset: auto !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+
+  [data-radix-portal] [role="dialog"] {
+    position: static !important;
+    transform: none !important;
+    max-height: none !important;
+    max-width: none !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+
+  /* Each .print-page = one printed page */
   .print-page {
-    width: 170mm !important;
-    height: 257mm !important; /* 297mm - 40mm margins */
-    min-height: 257mm !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 267mm !important;
     max-width: none !important;
     padding: 0 !important;
-    margin: 0 auto !important;
+    margin: 0 !important;
     background: white !important;
     color: #000 !important;
     position: relative !important;
     display: flex !important;
     flex-direction: column !important;
-    
+
     font-family: Arial, Helvetica, sans-serif !important;
     font-size: 11pt !important;
     line-height: 1.4 !important;
-    
+
     page-break-after: always;
     break-after: page;
-    overflow: hidden !important;
+    overflow: visible !important;
     print-color-adjust: exact !important;
     -webkit-print-color-adjust: exact !important;
   }
@@ -273,18 +289,16 @@
     break-after: auto;
   }
 
-  /* Content area grows to fill space */
   .print-content-area {
     flex: 1 !important;
   }
 
-  /* 5. Force page break before second page */
   .break-before-page {
     page-break-before: always !important;
     break-before: page !important;
   }
 
-  /* 6. Table styling - prevent breaks inside rows */
+  /* Tables */
   .print-page table {
     width: 100% !important;
     border-collapse: collapse !important;
@@ -292,13 +306,8 @@
     font-size: 10pt !important;
   }
 
-  .print-page thead {
-    display: table-header-group !important;
-  }
-
-  .print-page tbody {
-    display: table-row-group !important;
-  }
+  .print-page thead { display: table-header-group !important; }
+  .print-page tbody { display: table-row-group !important; }
 
   .print-page tr {
     page-break-inside: avoid !important;
@@ -318,25 +327,23 @@
     font-size: 9pt !important;
   }
 
-  /* 7. Header timbrado - top of each page */
+  /* Header */
   .print-header-table {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     margin-bottom: 15px !important;
   }
 
-  /* 8. Footer - fixed at bottom of page */
+  /* Footer pinned to bottom */
   .print-footer-container {
     position: absolute !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
+    bottom: -15mm !important;
+    left: -20mm !important;
+    right: -20mm !important;
     margin-top: auto !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     width: calc(100% + 40mm) !important;
-    margin-left: -20mm !important;
-    margin-bottom: -20mm !important;
     line-height: 0 !important;
   }
 
@@ -347,14 +354,14 @@
     -webkit-print-color-adjust: exact !important;
   }
 
-  /* 9. Signature section - keep together */
+  /* Signatures */
   .print-signatures {
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     margin-top: 30px !important;
   }
 
-  /* 10. Text styling for professional look */
+  /* Typography */
   .print-page p,
   .print-page li,
   .print-page span {
@@ -364,18 +371,13 @@
     color: #000 !important;
   }
 
-  .print-page h1,
-  .print-page h2,
-  .print-page h3 {
+  .print-page h1, .print-page h2, .print-page h3 {
     font-family: Arial, Helvetica, sans-serif !important;
     color: #000 !important;
   }
 
-  .print-page strong {
-    font-weight: bold !important;
-  }
+  .print-page strong { font-weight: bold !important; }
 
-  /* 11. Images */
   .print-page img {
     max-width: 100% !important;
     page-break-inside: avoid !important;
@@ -383,12 +385,6 @@
     -webkit-print-color-adjust: exact !important;
   }
 
-  /* 12. Hide dialog overlay completely */
-  [data-radix-portal] > [data-state] {
-    background: transparent !important;
-  }
-
-  /* 13. Ensure links don't show URL */
   .print-page a {
     text-decoration: none !important;
     color: inherit !important;
