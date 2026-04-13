@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { slaByCategory } from "@/hooks/use-sla";
+import { fetchSlaCategoryMap } from "@/hooks/use-sla-categories";
 import { logAuditEvent } from "@/lib/audit";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notifications";
