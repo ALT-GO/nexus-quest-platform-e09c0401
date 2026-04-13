@@ -33,6 +33,7 @@ export function EventDialog({ open, onOpenChange, event }: Props) {
   const [status, setStatus] = useState("planning");
   const [notes, setNotes] = useState("");
   const [leadsGerados, setLeadsGerados] = useState("");
+  const [eventType, setEventType] = useState("evento");
 
   useEffect(() => {
     if (event) {
@@ -45,9 +46,11 @@ export function EventDialog({ open, onOpenChange, event }: Props) {
       setStatus(event.status);
       setNotes(event.notes || "");
       setLeadsGerados(event.leads_gerados != null ? String(event.leads_gerados) : "");
+      setEventType(event.event_type || "evento");
     } else {
       setName(""); setLocation(""); setStartDate(undefined); setEndDate(undefined);
       setBudget(""); setPriority("medium"); setStatus("planning"); setNotes(""); setLeadsGerados("");
+      setEventType("evento");
     }
   }, [event, open]);
 
@@ -64,6 +67,7 @@ export function EventDialog({ open, onOpenChange, event }: Props) {
       status,
       notes,
       leads_gerados: leadsGerados.trim() !== "" ? parseInt(leadsGerados) : null,
+      event_type: eventType,
       checklist: event?.checklist ?? [],
     };
 
@@ -87,9 +91,21 @@ export function EventDialog({ open, onOpenChange, event }: Props) {
             <Input value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Evento de lançamento" />
           </div>
 
-          <div className="space-y-1.5">
-            <Label className="text-xs font-medium">Local</Label>
-            <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Ex: São Paulo - SP" />
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Tipo</Label>
+              <Select value={eventType} onValueChange={setEventType}>
+                <SelectTrigger className="text-sm"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="evento">Evento</SelectItem>
+                  <SelectItem value="campanha">Campanha</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-xs font-medium">Local</Label>
+              <Input value={location} onChange={(e) => setLocation(e.target.value)} placeholder="Ex: São Paulo - SP" />
+            </div>
           </div>
 
           <div className="grid grid-cols-2 gap-3">
