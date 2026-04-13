@@ -428,11 +428,19 @@ export function CollaboratorProfile({ name, onBack }: Props) {
         <AssetSection category="licencas" assets={licencas} collaboratorName={name} onUpdate={updateAsset} onDelete={handleDelete} onUnlink={handleUnlink} onRefetch={refetch} />
       </div>
 
+      <AssetSelectionDialog
+        open={selectionDialogOpen}
+        onOpenChange={setSelectionDialogOpen}
+        assets={assets}
+        type={termType}
+        onConfirm={handleSelectionConfirm}
+      />
+
       <PrintableTermDialog 
         open={termDialogOpen} 
         onOpenChange={setTermDialogOpen} 
         collaboratorName={name}
-        assets={assets}
+        assets={termAssets}
         type={termType}
       />
     </div>
