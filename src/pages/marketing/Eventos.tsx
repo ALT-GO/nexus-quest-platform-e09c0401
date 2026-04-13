@@ -9,7 +9,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Plus, Search, CalendarIcon, MapPin, Users, DollarSign,
   MoreVertical, Trash2, Pencil, AlertTriangle, CheckCircle2, Clock,
-  Flag,
+  Flag, Share2, Copy,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -18,6 +18,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
+import { toast } from "sonner";
 import { useMarketingEvents, MarketingEvent, useDeleteEvent } from "@/hooks/use-events";
 import { useMarketingTasks } from "@/hooks/use-marketing";
 import { EventDialog } from "@/components/events/EventDialog";
@@ -107,9 +108,22 @@ export default function Eventos() {
           title="Gestão de Eventos"
           description="Gerencie eventos de marketing, budget e tarefas associadas"
         />
-        <Button onClick={() => { setEditingEvent(null); setDialogOpen(true); }}>
-          <Plus className="h-4 w-4 mr-2" /> Novo Evento
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              const url = `${window.location.origin}/eventos-publico`;
+              navigator.clipboard.writeText(url);
+              toast.success("Link público copiado!");
+            }}
+          >
+            <Share2 className="h-4 w-4 mr-2" /> Compartilhar
+          </Button>
+          <Button onClick={() => { setEditingEvent(null); setDialogOpen(true); }}>
+            <Plus className="h-4 w-4 mr-2" /> Novo Evento
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
