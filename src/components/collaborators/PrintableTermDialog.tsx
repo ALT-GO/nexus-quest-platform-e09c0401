@@ -247,6 +247,7 @@ export function PrintableTermDialog({ open, onOpenChange, collaboratorName, asse
 
           <FooterTimbrado />
         </div>
+        </div>
       </DialogContent>
     </Dialog>
   );
