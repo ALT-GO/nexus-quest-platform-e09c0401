@@ -1,11 +1,13 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
+import { useRef, useState } from "react";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
-import { Printer, X } from "lucide-react";
+import { Printer, X, Download, Loader2 } from "lucide-react";
 import type { CollaboratorAsset } from "@/hooks/use-collaborators";
 import { HeaderTimbrado } from "./HeaderTimbrado";
 import { FooterTimbrado } from "./FooterTimbrado";
+import { calcDepreciation, formatBRL } from "@/lib/depreciation";
 import { calcDepreciation, formatBRL } from "@/lib/depreciation";
 
 interface Props {
