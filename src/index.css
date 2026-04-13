@@ -180,11 +180,221 @@
    ======================================== */
 
 @media print {
-  /* 1. Force A4 page size with 20mm margins */
   @page {
     size: A4 portrait;
-    margin: 20mm;
+    margin: 15mm 20mm;
   }
+
+  /* Reset everything */
+  html, body {
+    visibility: visible !important;
+    background: white !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    overflow: visible !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  /* Hide everything outside portals */
+  body > *:not([data-radix-portal]) {
+    display: none !important;
+  }
+
+  /* Hide dialog overlay/backdrop */
+  [data-radix-portal] > [data-state] {
+    background: transparent !important;
+    animation: none !important;
+  }
+
+  .print\:hidden {
+    display: none !important;
+  }
+
+  /* Make portal and dialog content fully visible */
+  [data-radix-portal],
+  [data-radix-portal] *,
+  .print-term-dialog,
+  .print-term-dialog * {
+    visibility: visible !important;
+  }
+
+  /* Strip dialog chrome completely */
+  .print-term-dialog {
+    position: static !important;
+    inset: auto !important;
+    width: 100% !important;
+    height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    background: white !important;
+    overflow: visible !important;
+    max-height: none !important;
+    max-width: none !important;
+    transform: none !important;
+  }
+
+  /* Remove Radix overlay/dialog positioning */
+  [data-radix-portal] > div {
+    position: static !important;
+    display: block !important;
+    inset: auto !important;
+    overflow: visible !important;
+    background: transparent !important;
+  }
+
+  [data-radix-portal] [role="dialog"] {
+    position: static !important;
+    transform: none !important;
+    max-height: none !important;
+    max-width: none !important;
+    overflow: visible !important;
+    border: none !important;
+    box-shadow: none !important;
+    background: white !important;
+  }
+
+  /* Each .print-page = one printed page */
+  .print-page {
+    width: 100% !important;
+    height: auto !important;
+    min-height: 267mm !important;
+    max-width: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    background: white !important;
+    color: #000 !important;
+    position: relative !important;
+    display: flex !important;
+    flex-direction: column !important;
+
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+
+    page-break-after: always;
+    break-after: page;
+    overflow: visible !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  .print-page:last-child {
+    page-break-after: auto;
+    break-after: auto;
+  }
+
+  .print-content-area {
+    flex: 1 !important;
+  }
+
+  .break-before-page {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  /* Table styling */
+  .print-page table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto !important;
+    font-size: 10pt !important;
+  }
+
+  .print-page thead { display: table-header-group !important; }
+  .print-page tbody { display: table-row-group !important; }
+
+  .print-page tr {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+  }
+
+  .print-page th,
+  .print-page td {
+    padding: 6px 8px !important;
+    border: 1px solid #999 !important;
+    font-family: Arial, Helvetica, sans-serif !important;
+  }
+
+  .print-page th {
+    background-color: #f0f0f0 !important;
+    font-weight: bold !important;
+    font-size: 9pt !important;
+  }
+
+  /* Header */
+  .print-header-table {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-bottom: 15px !important;
+  }
+
+  /* Footer pinned to bottom of each page */
+  .print-footer-container {
+    position: absolute !important;
+    bottom: -15mm !important;
+    left: -20mm !important;
+    right: -20mm !important;
+    margin-top: auto !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    width: calc(100% + 40mm) !important;
+    line-height: 0 !important;
+  }
+
+  .print-footer-img {
+    width: 100% !important;
+    display: block !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  /* Signatures */
+  .print-signatures {
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    margin-top: 30px !important;
+  }
+
+  /* Typography */
+  .print-page p,
+  .print-page li,
+  .print-page span {
+    font-family: Arial, Helvetica, sans-serif !important;
+    font-size: 11pt !important;
+    line-height: 1.4 !important;
+    color: #000 !important;
+  }
+
+  .print-page h1, .print-page h2, .print-page h3 {
+    font-family: Arial, Helvetica, sans-serif !important;
+    color: #000 !important;
+  }
+
+  .print-page strong { font-weight: bold !important; }
+
+  .print-page img {
+    max-width: 100% !important;
+    page-break-inside: avoid !important;
+    print-color-adjust: exact !important;
+    -webkit-print-color-adjust: exact !important;
+  }
+
+  .print-page a {
+    text-decoration: none !important;
+    color: inherit !important;
+  }
+
+  .print-page a::after {
+    content: none !important;
+  }
+}
 
   /* 2. Hide ALL UI elements - clean document only */
   html, body {
