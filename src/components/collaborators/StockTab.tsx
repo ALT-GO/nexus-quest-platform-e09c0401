@@ -15,7 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Search, Package, UserPlus, Laptop, Smartphone, Phone, FileText, GripVertical, Tablet, Mouse, Trash2 } from "lucide-react";
+import { Loader2, Search, Package, UserPlus, Laptop, Smartphone, Phone, FileText, GripVertical, Tablet, Mouse, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { StockDetailDialog } from "./StockDetailDialog";
 import { format } from "date-fns";
@@ -344,20 +344,27 @@ function useColumnOrder(category: string, defaultCols: ColDef[]): [ColDef[], (fr
   return [ordered, reorder];
 }
 
-/* ── Draggable Header ──────────────────────────────────────── */
+/* ── Sortable Draggable Header ──────────────────────────────── */
 function DraggableHeader({
   col,
   index,
   onDragStart,
   onDragOver,
   onDrop,
+  sortKey,
+  sortDir,
+  onSort,
 }: {
   col: ColDef;
   index: number;
   onDragStart: (idx: number) => void;
   onDragOver: (e: React.DragEvent, idx: number) => void;
   onDrop: (idx: number) => void;
+  sortKey: string | null;
+  sortDir: "asc" | "desc";
+  onSort: (colId: string) => void;
 }) {
+  const isSorted = sortKey === col.id;
   return (
     <TableHead
       className="whitespace-nowrap select-none cursor-grab active:cursor-grabbing"
@@ -366,9 +373,17 @@ function DraggableHeader({
       onDragOver={(e) => onDragOver(e, index)}
       onDrop={() => onDrop(index)}
     >
-      <span className="inline-flex items-center gap-1">
+      <span
+        className="inline-flex items-center gap-1 cursor-pointer hover:text-foreground transition-colors"
+        onClick={(e) => { e.stopPropagation(); onSort(col.id); }}
+      >
         <GripVertical className="h-3 w-3 opacity-30" />
         {col.header}
+        {isSorted ? (
+          sortDir === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-20" />
+        )}
       </span>
     </TableHead>
   );
@@ -399,22 +414,43 @@ function CategoryStockTable({
   const [columns, reorderColumns] = useColumnOrder(category, defaultColsByCat[category]);
   const dragIdx = useRef<number | null>(null);
 
-  const filtered = applySorting(
-    items.filter((i) => {
-      if (search) {
-        const q = search.toLowerCase();
-        if (!columns.some((col) => col.accessor(i).toLowerCase().includes(q))) return false;
-      }
-      for (const [field, val] of Object.entries(advancedFilters)) {
-        if (!val) continue;
-        const itemVal = ((i as any)[field] ?? "").toString().toLowerCase();
-        if (!itemVal.includes(val.toLowerCase())) return false;
-      }
-      return true;
-    }),
-    stockSortKey,
-    stockSortDir,
-  );
+  const [colSortKey, setColSortKey] = useState<string | null>(null);
+  const [colSortDir, setColSortDir] = useState<"asc" | "desc">("asc");
+
+  const handleColSort = (colId: string) => {
+    if (colSortKey === colId) {
+      setColSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setColSortKey(colId);
+      setColSortDir("asc");
+    }
+  };
+
+  // Find accessor for the column being sorted
+  const sortedCol = colSortKey ? columns.find((c) => c.id === colSortKey) : null;
+
+  const filtered = items.filter((i) => {
+    if (search) {
+      const q = search.toLowerCase();
+      if (!columns.some((col) => col.accessor(i).toLowerCase().includes(q))) return false;
+    }
+    for (const [field, val] of Object.entries(advancedFilters)) {
+      if (!val) continue;
+      const itemVal = ((i as any)[field] ?? "").toString().toLowerCase();
+      if (!itemVal.includes(val.toLowerCase())) return false;
+    }
+    return true;
+  });
+
+  // Apply column header sort first, then fall back to dropdown sort
+  const sorted = sortedCol
+    ? [...filtered].sort((a, b) => {
+        const aVal = sortedCol.accessor(a).toLowerCase();
+        const bVal = sortedCol.accessor(b).toLowerCase();
+        const cmp = aVal.localeCompare(bVal, "pt-BR");
+        return colSortDir === "asc" ? cmp : -cmp;
+      })
+    : applySorting(filtered, stockSortKey, stockSortDir);
 
   const handleDragStart = (idx: number) => { dragIdx.current = idx; };
   const handleDragOver = (e: React.DragEvent, _idx: number) => { e.preventDefault(); };
@@ -440,13 +476,16 @@ function CategoryStockTable({
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
+                    sortKey={colSortKey}
+                    sortDir={colSortDir}
+                    onSort={handleColSort}
                   />
                 ))}
                 <TableHead className="w-[100px]">Ações</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((item) => (
+              {sorted.map((item) => (
                 <TableRow key={item.id}>
                   {columns.map((col) => (
                     <TableCell key={col.id} className="whitespace-nowrap p-1.5">
@@ -483,7 +522,7 @@ function CategoryStockTable({
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && (
+              {sorted.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={columns.length + 1} className="text-center py-8 text-muted-foreground">
                     <Package className="mx-auto mb-2 h-8 w-8" />
