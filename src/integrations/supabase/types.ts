@@ -287,6 +287,36 @@ export type Database = {
         }
         Relationships: []
       }
+      inventory_status_config: {
+        Row: {
+          category_group: string
+          color: string
+          created_at: string
+          id: string
+          is_active: boolean
+          name: string
+          order_index: number
+        }
+        Insert: {
+          category_group?: string
+          color?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name: string
+          order_index?: number
+        }
+        Update: {
+          category_group?: string
+          color?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          name?: string
+          order_index?: number
+        }
+        Relationships: []
+      }
       marketing_event_participants: {
         Row: {
           created_at: string
