@@ -15,7 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Search, Package, UserPlus, Laptop, Smartphone, Phone, FileText, GripVertical, Tablet, Mouse, Trash2 } from "lucide-react";
+import { Loader2, Search, Package, UserPlus, Laptop, Smartphone, Phone, FileText, GripVertical, Tablet, Mouse, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { StockDetailDialog } from "./StockDetailDialog";
 import { format } from "date-fns";
@@ -344,20 +344,27 @@ function useColumnOrder(category: string, defaultCols: ColDef[]): [ColDef[], (fr
   return [ordered, reorder];
 }
 
-/* ── Draggable Header ──────────────────────────────────────── */
+/* ── Sortable Draggable Header ──────────────────────────────── */
 function DraggableHeader({
   col,
   index,
   onDragStart,
   onDragOver,
   onDrop,
+  sortKey,
+  sortDir,
+  onSort,
 }: {
   col: ColDef;
   index: number;
   onDragStart: (idx: number) => void;
   onDragOver: (e: React.DragEvent, idx: number) => void;
   onDrop: (idx: number) => void;
+  sortKey: string | null;
+  sortDir: "asc" | "desc";
+  onSort: (colId: string) => void;
 }) {
+  const isSorted = sortKey === col.id;
   return (
     <TableHead
       className="whitespace-nowrap select-none cursor-grab active:cursor-grabbing"
@@ -366,9 +373,17 @@ function DraggableHeader({
       onDragOver={(e) => onDragOver(e, index)}
       onDrop={() => onDrop(index)}
     >
-      <span className="inline-flex items-center gap-1">
+      <span
+        className="inline-flex items-center gap-1 cursor-pointer hover:text-foreground transition-colors"
+        onClick={(e) => { e.stopPropagation(); onSort(col.id); }}
+      >
         <GripVertical className="h-3 w-3 opacity-30" />
         {col.header}
+        {isSorted ? (
+          sortDir === "asc" ? <ArrowUp className="h-3 w-3 text-primary" /> : <ArrowDown className="h-3 w-3 text-primary" />
+        ) : (
+          <ArrowUpDown className="h-3 w-3 opacity-20" />
+        )}
       </span>
     </TableHead>
   );
