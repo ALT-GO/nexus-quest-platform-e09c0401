@@ -184,7 +184,7 @@ export function TicketDetailSheet({
   const [submitting, setSubmitting] = useState(false);
   const [showDevolutionChecklist, setShowDevolutionChecklist] = useState(false);
   const [hideEmpty, setHideEmpty] = useState(false);
-  const [activityTab, setActivityTab] = useState<"activity" | "comments">("activity");
+  const [activityTab, setActivityTab] = useState<"activity" | "comments">("comments");
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const [technicians, setTechnicians] = useState<{ name: string; avatar_url: string | null }[]>([]);
   const [currentUserName, setCurrentUserName] = useState("Admin");
