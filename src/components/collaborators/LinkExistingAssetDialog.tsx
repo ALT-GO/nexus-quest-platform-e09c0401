@@ -136,7 +136,6 @@ export function LinkExistingAssetDialog({ collaboratorName, category, onLinked }
                     )}
                   >
                     <div className="flex items-center justify-between mb-1.5">
-                      <span className="font-mono text-xs text-muted-foreground">{item.asset_code}</span>
                       {isNotebookOrCelular && (
                         <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", cond.color)}>
                           {cond.label}

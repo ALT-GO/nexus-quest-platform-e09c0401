@@ -32,7 +32,7 @@ interface EditableField {
 
 function getFieldsForCategory(category: string): EditableField[] {
   const base: EditableField[] = [
-    { label: "Código", key: "asset_code", readOnly: true },
+    
     { label: "Categoria", key: "category", readOnly: true },
     { label: "Status", key: "status" },
     { label: "Colaborador", key: "collaborator" },

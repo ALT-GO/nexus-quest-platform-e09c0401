@@ -191,7 +191,6 @@ function AssetSection({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Id</TableHead>
                 {columns.map((col) => (
                   <TableHead key={col.key} className="whitespace-nowrap">{col.label}</TableHead>
                 ))}
@@ -201,7 +200,7 @@ function AssetSection({
             <TableBody>
               {assets.map((item) => (
                 <TableRow key={item.id}>
-                  <TableCell className="font-mono text-xs">{item.asset_code}</TableCell>
+                  
                   {columns.map((col) => {
                     if (col.key === "valor_pago") {
                       const val = (item as any).valor_pago;
