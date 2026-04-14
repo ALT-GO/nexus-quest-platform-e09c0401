@@ -163,6 +163,7 @@ export function CategoryTable({ category, label }: Props) {
     addField, updateField, deleteField,
     getFieldValue, setFieldValue,
   } = useInventory(category);
+  const { getStatusesForCategory, statusColorMap } = useInventoryStatuses();
 
   const columns = columnsByCategory[category] || [];
 
@@ -286,7 +287,7 @@ export function CategoryTable({ category, label }: Props) {
     }
   };
 
-  const getStatusOptions = () => category === "licencas" ? statusOptionsLicenca : statusOptionsDefault;
+  const getStatusOptions = () => getStatusesForCategory(category);
 
   const getCellValue = (item: any, key: string): string => {
     if (key === "created_at") {
