@@ -64,9 +64,11 @@ export default function ChamadoPublico() {
     setIsSubmitting(false);
 
     if (result.success && result.ticketNumber) {
-      // Run automations for the newly created ticket
+      // Run automations (ignore errors for anonymous users)
       if (result.ticketId) {
-        await runTicketCreatedAutomations(result.ticketId, formData.category);
+        try {
+          await runTicketCreatedAutomations(result.ticketId, formData.category);
+        } catch {}
       }
       setTicketId(result.ticketNumber);
       setIsSubmitted(true);
