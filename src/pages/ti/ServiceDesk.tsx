@@ -61,6 +61,7 @@ export default function ServiceDesk() {
   const [searchTerm, setSearchTerm] = useState("");
   const [filterCategory, setFilterCategory] = useState("all");
   const [filterStatus, setFilterStatus] = useState("all");
+  const [filterAssignee, setFilterAssignee] = useState("all");
   const [viewMode, setViewMode] = useState<ViewMode>("kanban");
   const [selectedTicketId, setSelectedTicketId] = useState<string | null>(null);
   const [hideCompleted, setHideCompleted] = useState(true);
@@ -304,6 +305,21 @@ export default function ServiceDesk() {
     [tickets]
   );
 
+  // Build unique assignee list for filter
+  const assigneeOptions = useMemo(() => {
+    const set = new Set<string>();
+    tickets.forEach((t) => {
+      if (!t.parent_ticket_id) {
+        set.add(t.assignee || "");
+      }
+    });
+    return Array.from(set).sort((a, b) => {
+      if (!a) return 1;
+      if (!b) return -1;
+      return a.localeCompare(b);
+    });
+  }, [tickets]);
+
   // Filters - exclude subtasks from main list
   const filteredTickets = tickets
     .filter((ticket) => {
@@ -316,7 +332,10 @@ export default function ServiceDesk() {
         filterCategory === "all" || ticket.category === filterCategory;
       const matchesStatus =
         filterStatus === "all" || ticket.status_id === filterStatus;
-      return matchesSearch && matchesCategory && matchesStatus;
+      const matchesAssignee =
+        filterAssignee === "all" ||
+        (filterAssignee === "__none__" ? !ticket.assignee : ticket.assignee === filterAssignee);
+      return matchesSearch && matchesCategory && matchesStatus && matchesAssignee;
     })
     // Sort: completed tickets go to the bottom
     .sort((a, b) => {
@@ -371,6 +390,19 @@ export default function ServiceDesk() {
             <SelectItem value="all">Todos os Status</SelectItem>
             {activeStatuses.map((s) => (
               <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        <Select value={filterAssignee} onValueChange={setFilterAssignee}>
+          <SelectTrigger className="w-full sm:w-[200px]">
+            <User className="mr-2 h-4 w-4" />
+            <SelectValue placeholder="Responsável" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos os Responsáveis</SelectItem>
+            <SelectItem value="__none__">Sem atribuição</SelectItem>
+            {assigneeOptions.filter(Boolean).map((name) => (
+              <SelectItem key={name} value={name}>{name}</SelectItem>
             ))}
           </SelectContent>
         </Select>
