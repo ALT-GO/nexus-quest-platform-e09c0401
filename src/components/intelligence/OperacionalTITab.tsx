@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { ActiveTimersCard } from "@/components/dashboard/ActiveTimersCard";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchTimesheetByDateRange, formatDuration } from "@/hooks/use-timesheet";
@@ -25,6 +25,7 @@ import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
+import { TicketDrilldownDialog } from "./TicketDrilldownDialog";
 
 import type { CostCenterFilter } from "@/pages/CentralInteligencia";
 
@@ -91,6 +92,11 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
   const { tickets: allTickets, loading } = useTickets();
   const [techFilter, setTechFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+
+  // Drilldown dialog state
+  const [drilldownOpen, setDrilldownOpen] = useState(false);
+  const [drilldownTitle, setDrilldownTitle] = useState("");
+  const [drilldownTickets, setDrilldownTickets] = useState<any[]>([]);
   
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [allTimesheetData, setAllTimesheetData] = useState<{ ticket_id: string; start_time: string; end_time: string | null; duration_seconds: number }[]>([]);
@@ -325,6 +331,36 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
 
   const categories = useMemo(() => [...new Set(mainTickets.map((t) => t.category))], [mainTickets]);
 
+  const openDrilldown = useCallback((title: string, ticketList: any[]) => {
+    setDrilldownTitle(title);
+    setDrilldownTickets(ticketList);
+    setDrilldownOpen(true);
+  }, []);
+
+  const handleTechBarClick = useCallback((data: any) => {
+    if (!data?.name) return;
+    const name = data.name;
+    const techTickets = filtered.filter((t) =>
+      name === "Sem atribuição" ? !t.assignee : t.assignee === name
+    );
+    openDrilldown(`Chamados — ${name}`, techTickets);
+  }, [filtered, openDrilldown]);
+
+  const handleCategoryClick = useCallback((data: any) => {
+    if (!data?.fullName) return;
+    const catTickets = filtered.filter((t) => t.category === data.fullName);
+    openDrilldown(`Chamados — ${data.fullName}`, catTickets);
+  }, [filtered, openDrilldown]);
+
+  const handleHoursBarClick = useCallback((data: any) => {
+    if (!data?.name) return;
+    const name = data.name;
+    const techTickets = filtered.filter((t) =>
+      name === "Sem atribuição" ? !t.assignee : t.assignee === name
+    );
+    openDrilldown(`Horas — ${name}`, techTickets);
+  }, [filtered, openDrilldown]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -383,13 +419,13 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={ticketsByTech} layout="vertical">
+                <BarChart data={ticketsByTech} layout="vertical" className="cursor-pointer">
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))" }} />
                   <YAxis dataKey="name" type="category" width={120} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
                   <Tooltip contentStyle={tooltipStyle} />
-                  <Bar dataKey="completed" name="Concluídos" fill="hsl(var(--success))" radius={[0, 4, 4, 0]} stackId="a" />
-                  <Bar dataKey="pending" name="Pendentes" fill="hsl(var(--warning))" radius={[0, 4, 4, 0]} stackId="a" />
+                  <Bar dataKey="completed" name="Concluídos" fill="hsl(var(--success))" radius={[0, 4, 4, 0]} stackId="a" onClick={(_: any, idx: number) => handleTechBarClick(ticketsByTech[idx])} />
+                  <Bar dataKey="pending" name="Pendentes" fill="hsl(var(--warning))" radius={[0, 4, 4, 0]} stackId="a" onClick={(_: any, idx: number) => handleTechBarClick(ticketsByTech[idx])} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
@@ -407,7 +443,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
               <div className="h-[220px] w-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={ticketsByCategory} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
+                    <Pie data={ticketsByCategory} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value" className="cursor-pointer" onClick={(_: any, idx: number) => handleCategoryClick(ticketsByCategory[idx])}>
                       {ticketsByCategory.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                     </Pie>
                     <Tooltip contentStyle={tooltipStyle} formatter={(value: number, _: string, props: any) => [value, props.payload.fullName]} />
@@ -416,7 +452,11 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
               </div>
               <div className="max-h-[300px] space-y-2 overflow-y-auto pr-2">
                 {ticketsByCategory.map((item) => (
-                  <div key={item.fullName} className="flex items-center gap-2 text-sm">
+                  <div
+                    key={item.fullName}
+                    className="flex items-center gap-2 text-sm cursor-pointer hover:bg-accent rounded px-1.5 py-1 transition-colors"
+                    onClick={() => handleCategoryClick(item)}
+                  >
                     <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
                     <span className="text-muted-foreground truncate max-w-[140px]" title={item.fullName}>{item.name}</span>
                     <span className="ml-auto font-medium">{item.value}</span>
@@ -470,7 +510,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
                     <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))" }} unit="h" />
                     <YAxis dataKey="name" type="category" width={120} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
                     <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => `${value}h`} />
-                    <Bar dataKey="hours" name="Horas" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="hours" name="Horas" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} className="cursor-pointer" onClick={(_: any, idx: number) => handleHoursBarClick(hoursByAssignee[idx])} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
@@ -663,6 +703,12 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           )}
         </CardContent>
       </Card>
+      <TicketDrilldownDialog
+        open={drilldownOpen}
+        onOpenChange={setDrilldownOpen}
+        title={drilldownTitle}
+        tickets={drilldownTickets}
+      />
     </div>
   );
 }
