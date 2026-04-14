@@ -355,10 +355,10 @@ export function TicketDetailSheet({
   const handleSendComment = async () => {
     if (!newComment.trim()) return;
     setSubmitting(true);
-    const success = await addComment("Admin", newComment.trim());
+    const success = await addComment(currentUserName, newComment.trim(), currentUserAvatar);
     if (success) {
       setNewComment("");
-      await logHistory("comment", "Comentário adicionado", "Admin");
+      await logHistory("comment", "Comentário adicionado", currentUserName);
     }
     setSubmitting(false);
   };
