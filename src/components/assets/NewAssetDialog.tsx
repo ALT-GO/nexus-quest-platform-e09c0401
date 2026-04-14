@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { useInventoryStatuses } from "@/hooks/use-inventory-statuses";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import {
@@ -27,8 +28,6 @@ interface FieldConfig {
   placeholder?: string;
 }
 
-const statusOptionsDefault = ["Disponível", "Em uso", "Manutenção", "Reservado", "Baixado"];
-const statusOptionsLicenca = ["Ativo", "Desligado"];
 const tipoNotebook = ["Administrativo", "Campo"];
 
 const fieldsByCategory: Record<string, FieldConfig[]> = {
@@ -91,7 +90,7 @@ const fieldsByCategory: Record<string, FieldConfig[]> = {
     { key: "notes", label: "Notas", type: "textarea" },
   ],
   licencas: [
-    { key: "status", label: "Status", type: "select", options: statusOptionsLicenca },
+    { key: "status", label: "Status", type: "select", options: [] },
     { key: "collaborator", label: "Colaborador" },
     { key: "cargo", label: "Cargo" },
     { key: "email_address", label: "E-mail", placeholder: "colaborador@empresa.com" },
@@ -117,10 +116,16 @@ export function NewAssetDialog({ category, fields, onSave }: NewAssetDialogProps
   const [saving, setSaving] = useState(false);
   const [form, setForm] = useState<Record<string, string>>({});
   const [customValues, setCustomValues] = useState<Record<string, string>>({});
+  const { getStatusesForCategory } = useInventoryStatuses();
 
   const set = (key: string, val: string) => setForm((p) => ({ ...p, [key]: val }));
 
-  const catFields = fieldsByCategory[category] || [];
+  const catFields = (fieldsByCategory[category] || []).map((f) => {
+    if (f.key === "status" && f.type === "select") {
+      return { ...f, options: getStatusesForCategory(category) };
+    }
+    return f;
+  });
   const requiredKey = catFields.find((f) => f.required)?.key || "model";
 
   const handleSave = async () => {

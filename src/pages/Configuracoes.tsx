@@ -15,9 +15,10 @@ import { MarketingImportTab } from "@/components/settings/MarketingImportTab";
 import { IntegrityAuditorTab } from "@/components/settings/IntegrityAuditorTab";
 import { DangerZoneTab } from "@/components/settings/DangerZoneTab";
 import { SlaSettingsSection } from "@/components/settings/SlaSettingsSection";
+import { InventoryStatusTab } from "@/components/settings/InventoryStatusTab";
 import { AuditLogSection } from "@/components/settings/AuditLogSection";
 import {
-  User, Users, Upload,
+  User, Users, Upload, Package,
   ListChecks, Zap, Clock, Shapes, ScrollText, Search, AlertTriangle, Megaphone, FileSpreadsheet,
 } from "lucide-react";
 
@@ -27,6 +28,7 @@ type Section =
   | "sd-status"
   | "sd-sla"
   | "sd-automations"
+  | "inv-status"
   | "mkt-workflow"
   | "mkt-types"
   | "import-assets"
@@ -63,6 +65,12 @@ const navGroups: NavGroup[] = [
       { id: "sd-status", label: "Status dos Chamados", icon: ListChecks, roles: ["admin", "ti"] },
       { id: "sd-sla", label: "Horário & SLA", icon: Clock, roles: ["admin", "ti"] },
       { id: "sd-automations", label: "Automações", icon: Zap, roles: ["admin", "ti"] },
+    ],
+  },
+  {
+    title: "Inventário",
+    items: [
+      { id: "inv-status", label: "Status de Ativos", icon: Package, roles: ["admin", "ti"] },
     ],
   },
   {
@@ -170,6 +178,7 @@ export default function Configuracoes() {
           {currentSection === "sd-status" && <StatusManagerTab />}
           {currentSection === "sd-sla" && <SlaSettingsSection />}
           {currentSection === "sd-automations" && <AutomationsTab />}
+          {currentSection === "inv-status" && <InventoryStatusTab />}
           {currentSection === "mkt-workflow" && <MarketingWorkflowTab />}
           {currentSection === "mkt-types" && <TaskTypesManagerTab />}
           {currentSection === "import-assets" && <CsvImportTab />}
