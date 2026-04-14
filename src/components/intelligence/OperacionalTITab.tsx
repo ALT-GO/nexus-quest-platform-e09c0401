@@ -419,13 +419,13 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           <CardContent>
             <div className="h-[300px]">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={ticketsByTech} layout="vertical">
+                <BarChart data={ticketsByTech} layout="vertical" className="cursor-pointer">
                   <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                   <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))" }} />
                   <YAxis dataKey="name" type="category" width={120} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
                   <Tooltip contentStyle={tooltipStyle} />
-                  <Bar dataKey="completed" name="Concluídos" fill="hsl(var(--success))" radius={[0, 4, 4, 0]} stackId="a" />
-                  <Bar dataKey="pending" name="Pendentes" fill="hsl(var(--warning))" radius={[0, 4, 4, 0]} stackId="a" />
+                  <Bar dataKey="completed" name="Concluídos" fill="hsl(var(--success))" radius={[0, 4, 4, 0]} stackId="a" onClick={(_: any, idx: number) => handleTechBarClick(ticketsByTech[idx])} />
+                  <Bar dataKey="pending" name="Pendentes" fill="hsl(var(--warning))" radius={[0, 4, 4, 0]} stackId="a" onClick={(_: any, idx: number) => handleTechBarClick(ticketsByTech[idx])} />
                 </BarChart>
               </ResponsiveContainer>
             </div>
