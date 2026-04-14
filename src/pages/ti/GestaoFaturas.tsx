@@ -162,8 +162,6 @@ function MensalidadeTab({ category }: { category: "linhas" | "licencas" }) {
     );
   }
 
-  const { getStatusesForCategory } = useInventoryStatuses();
-  const statusList = getStatusesForCategory(category);
 
   return (
     <Card>
