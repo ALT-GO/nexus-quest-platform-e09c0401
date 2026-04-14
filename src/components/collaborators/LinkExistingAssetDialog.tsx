@@ -54,7 +54,7 @@ export function LinkExistingAssetDialog({ collaboratorName, category, onLinked }
   const filtered = available.filter((item) => {
     if (!search) return true;
     const q = search.toLowerCase();
-    const searchable = [item.asset_code, item.marca, item.model, item.service_tag, item.numero, item.licenca]
+    const searchable = [item.asset_code, item.marca, item.model, item.service_tag, item.service_tag_2, item.numero, item.licenca]
       .filter(Boolean).join(" ").toLowerCase();
     return searchable.includes(q);
   });
