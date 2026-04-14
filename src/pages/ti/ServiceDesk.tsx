@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { autoStartTimer, autoPauseTimer } from "@/hooks/use-timesheet";
@@ -25,6 +25,7 @@ import {
   Kanban,
   Loader2,
   GanttChart as GanttChartIcon,
+  User,
 } from "lucide-react";
 import { useSlaTimer, slaByCategory } from "@/hooks/use-sla";
 import { useCustomStatuses } from "@/hooks/use-custom-status";
