@@ -417,7 +417,7 @@ export function CategoryTable({ category, label }: Props) {
                             onSave={(v) => updateItem(item.id, { [col.key]: v } as any)}
                             type="select"
                             options={getStatusOptions()}
-                            displayRender={(v) => <StatusBadge status={v} />}
+                            displayRender={(v) => <StatusBadge status={v} colorMap={statusColorMap} />}
                           />
                         </TableCell>
                       );
