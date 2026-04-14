@@ -533,7 +533,14 @@ export function TicketDetailSheet({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="unassigned">Sem responsável</SelectItem>
-                    {technicians.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    {technicians.map((t) => (
+                      <SelectItem key={t.name} value={t.name}>
+                        <span className="flex items-center gap-1.5">
+                          <UserAvatar name={t.name} avatarUrl={t.avatar_url || undefined} className="h-5 w-5" fallbackClassName="text-[9px]" />
+                          {t.name}
+                        </span>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </PropRow>
