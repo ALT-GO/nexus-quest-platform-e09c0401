@@ -99,7 +99,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
   const [drilldownTickets, setDrilldownTickets] = useState<any[]>([]);
   
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
-  const [allTimesheetData, setAllTimesheetData] = useState<{ ticket_id: string; start_time: string; end_time: string | null; duration_seconds: number }[]>([]);
+  const [allTimesheetData, setAllTimesheetData] = useState<{ ticket_id: string | null; start_time: string; end_time: string | null; duration_seconds: number }[]>([]);
 
   // Fetch inventory from Supabase
   useEffect(() => {
@@ -225,15 +225,19 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
 
   // ---- Horas Trabalhadas por Colaborador (date-range filtered) ----
   const hoursByAssignee = useMemo(() => {
-    // Build a map of ticket_id -> assignee from tickets
+    // Build a map only from the same filtered tickets used by the drilldown
     const ticketAssigneeMap = new Map<string, string>();
-    mainTickets.forEach((t) => {
+    filtered.forEach((t) => {
       ticketAssigneeMap.set(t.id, t.assignee || "Sem atribuição");
     });
 
     const map: Record<string, number> = {};
     allTimesheetData.forEach((log) => {
-      const assignee = ticketAssigneeMap.get(log.ticket_id) || "Sem atribuição";
+      if (!log.ticket_id) return;
+
+      const assignee = ticketAssigneeMap.get(log.ticket_id);
+      if (!assignee) return;
+
       let secs = 0;
       if (log.end_time) {
         secs = log.duration_seconds;
@@ -249,7 +253,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     return Object.entries(map)
       .map(([name, seconds]) => ({ name, hours: Math.round((seconds / 3600) * 10) / 10 }))
       .sort((a, b) => b.hours - a.hours);
-  }, [allTimesheetData, mainTickets]);
+  }, [allTimesheetData, filtered]);
 
   // ---- NEW: Volume de Chamados por Dia da Semana ----
   const ticketsByDayOfWeek = useMemo(() => {
