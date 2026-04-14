@@ -11,18 +11,20 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, Monitor, Megaphone, Building2 } from "lucide-react";
-import { format } from "date-fns";
+import { format, startOfWeek, startOfMonth, endOfWeek, endOfMonth, subWeeks, subMonths } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 import { OperacionalTITab } from "@/components/intelligence/OperacionalTITab";
 import { MarketingTab } from "@/components/intelligence/MarketingTab";
 
-type PeriodFilter = "7d" | "30d" | "90d" | "custom";
+type PeriodFilter = "this_week" | "last_week" | "this_month" | "last_month" | "custom";
 
 const periodOptions: { value: PeriodFilter; label: string }[] = [
-  { value: "7d", label: "Últimos 7 dias" },
-  { value: "30d", label: "Últimos 30 dias" },
-  { value: "90d", label: "Últimos 90 dias" },
+  { value: "this_week", label: "Essa semana" },
+  { value: "last_week", label: "Semana anterior" },
+  { value: "this_month", label: "Esse mês" },
+  { value: "last_month", label: "Mês anterior" },
   { value: "custom", label: "Personalizado" },
 ];
 
@@ -30,29 +32,51 @@ export type CostCenterFilter = "all" | "eng" | "man";
 
 export default function CentralInteligencia() {
   const [activeTab, setActiveTab] = useState("ti");
-  const [period, setPeriod] = useState<PeriodFilter>("30d");
+  const [period, setPeriod] = useState<PeriodFilter>("this_month");
   const [customFrom, setCustomFrom] = useState<Date | undefined>();
   const [customTo, setCustomTo] = useState<Date | undefined>();
   const [costCenter, setCostCenter] = useState<CostCenterFilter>("all");
 
   const dateRange = useMemo(() => {
-    const end = new Date();
+    const now = new Date();
     let start: Date;
-    if (period === "7d") {
-      start = new Date(end.getTime() - 7 * 86400000);
-    } else if (period === "90d") {
-      start = new Date(end.getTime() - 90 * 86400000);
-    } else if (period === "custom" && customFrom) {
-      start = customFrom;
-      if (customTo) {
-        const customEnd = new Date(customTo);
-        customEnd.setHours(23, 59, 59, 999);
-        return { start, end: customEnd };
+    let end: Date;
+
+    switch (period) {
+      case "this_week":
+        start = startOfWeek(now, { weekStartsOn: 1, locale: ptBR });
+        end = now;
+        break;
+      case "last_week": {
+        const lastW = subWeeks(now, 1);
+        start = startOfWeek(lastW, { weekStartsOn: 1, locale: ptBR });
+        end = endOfWeek(lastW, { weekStartsOn: 1, locale: ptBR });
+        break;
       }
-    } else {
-      start = new Date(end.getTime() - 30 * 86400000);
+      case "this_month":
+        start = startOfMonth(now);
+        end = now;
+        break;
+      case "last_month": {
+        const lastM = subMonths(now, 1);
+        start = startOfMonth(lastM);
+        end = endOfMonth(lastM);
+        break;
+      }
+      case "custom":
+        start = customFrom || now;
+        if (customTo) {
+          end = new Date(customTo);
+          end.setHours(23, 59, 59, 999);
+        } else {
+          end = now;
+        }
+        break;
+      default:
+        start = startOfMonth(now);
+        end = now;
     }
-    return { start: start!, end };
+    return { start, end };
   }, [period, customFrom, customTo]);
 
   return (
