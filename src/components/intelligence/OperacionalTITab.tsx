@@ -703,6 +703,12 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           )}
         </CardContent>
       </Card>
+      <TicketDrilldownDialog
+        open={drilldownOpen}
+        onOpenChange={setDrilldownOpen}
+        title={drilldownTitle}
+        tickets={drilldownTickets}
+      />
     </div>
   );
 }
