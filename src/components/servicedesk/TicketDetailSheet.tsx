@@ -471,7 +471,7 @@ export function TicketDetailSheet({
             <div className="mt-4 space-y-0 divide-y divide-border/50">
               {/* Status */}
               <PropRow icon={Target} label="Status">
-                <Select value={ticket.status_id} onValueChange={handleStatusChange} disabled={isCompleted}>
+                <Select value={ticket.status_id} onValueChange={handleStatusChange}>
                   <SelectTrigger className="w-auto h-7 border-none shadow-none gap-1 px-0">
                     {currentStatus && (
                       <span className="inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold uppercase tracking-wide text-white"
@@ -497,7 +497,7 @@ export function TicketDetailSheet({
               <PropRow icon={Hash} label="Progresso">
                 <Select value={ticket.progress || "not_started"} onValueChange={async (v) => {
                   await supabase.from("tickets").update({ progress: v, updated_at: new Date().toISOString() } as any).eq("id", ticket.id as any);
-                }} disabled={isCompleted}>
+                }}>
                   <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
                     <span className={cn("inline-flex items-center gap-1.5 rounded-md px-2 py-0.5 text-xs font-bold tracking-wide text-white", currentProgress.color)}>
                       {currentProgress.label}
@@ -520,7 +520,7 @@ export function TicketDetailSheet({
               <PropRow icon={User} label="Responsável">
                 <Select value={ticket.assignee || "unassigned"}
                   onValueChange={(v) => handleFieldChange("assignee", v === "unassigned" ? "" : v, "Responsável")}
-                  disabled={isCompleted}>
+                 >
                   <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
                     {ticket.assignee ? (
                       <span className="flex items-center gap-1.5">
@@ -547,7 +547,7 @@ export function TicketDetailSheet({
 
               {/* Priority */}
               <PropRow icon={Flag} label="Prioridade">
-                <Select value={ticket.priority} onValueChange={(v) => handleFieldChange("priority", v, "Prioridade")} disabled={isCompleted}>
+                <Select value={ticket.priority} onValueChange={(v) => handleFieldChange("priority", v, "Prioridade")}>
                   <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
                     <span className={cn("flex items-center gap-1.5",
                       ticket.priority === "high" ? "text-destructive" : ticket.priority === "medium" ? "text-warning" : "text-muted-foreground"
@@ -566,7 +566,7 @@ export function TicketDetailSheet({
 
               {/* Category */}
               <PropRow icon={Tag} label="Categoria">
-                <Select value={ticket.category} onValueChange={(v) => handleFieldChange("category", v, "Categoria")} disabled={isCompleted}>
+                <Select value={ticket.category} onValueChange={(v) => handleFieldChange("category", v, "Categoria")}>
                   <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
                     <SelectValue />
                   </SelectTrigger>
