@@ -331,6 +331,36 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
 
   const categories = useMemo(() => [...new Set(mainTickets.map((t) => t.category))], [mainTickets]);
 
+  const openDrilldown = useCallback((title: string, ticketList: any[]) => {
+    setDrilldownTitle(title);
+    setDrilldownTickets(ticketList);
+    setDrilldownOpen(true);
+  }, []);
+
+  const handleTechBarClick = useCallback((data: any) => {
+    if (!data?.name) return;
+    const name = data.name;
+    const techTickets = filtered.filter((t) =>
+      name === "Sem atribuição" ? !t.assignee : t.assignee === name
+    );
+    openDrilldown(`Chamados — ${name}`, techTickets);
+  }, [filtered, openDrilldown]);
+
+  const handleCategoryClick = useCallback((data: any) => {
+    if (!data?.fullName) return;
+    const catTickets = filtered.filter((t) => t.category === data.fullName);
+    openDrilldown(`Chamados — ${data.fullName}`, catTickets);
+  }, [filtered, openDrilldown]);
+
+  const handleHoursBarClick = useCallback((data: any) => {
+    if (!data?.name) return;
+    const name = data.name;
+    const techTickets = filtered.filter((t) =>
+      name === "Sem atribuição" ? !t.assignee : t.assignee === name
+    );
+    openDrilldown(`Horas — ${name}`, techTickets);
+  }, [filtered, openDrilldown]);
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
