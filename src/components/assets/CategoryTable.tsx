@@ -322,13 +322,6 @@ export function CategoryTable({ category, label }: Props) {
               {items.map((item) => (
                 <TableRow key={item.id}>
                   {columns.map((col) => {
-                    if (col.key === "asset_code") {
-                      return (
-                        <TableCell key={col.key} className="font-mono text-xs">
-                          {item.asset_code}
-                        </TableCell>
-                      );
-                    }
                     // Editable date columns (delivered_at, data_aquisicao, created_at readonly)
                     if (col.type === "date" && (col.key === "delivered_at" || col.key === "data_aquisicao" || col.key === "created_at")) {
                       if (col.key === "created_at") {
