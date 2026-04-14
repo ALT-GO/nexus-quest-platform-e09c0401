@@ -195,9 +195,17 @@ export function TicketDetailSheet({
   const { running: timerRunning, totalSeconds, start: startTimer, pause: pauseTimer, stop: stopTimer } = useTimesheet(ticket?.id ?? null);
 
   useEffect(() => {
-    supabase.from("profiles").select("full_name").then(({ data }) => {
-      if (data) setTechnicians(data.map((p) => p.full_name).filter(Boolean).sort());
-    });
+    const fetchTechnicians = async () => {
+      // Fetch TI + admin members using the role-filtered function
+      const [{ data: ti }, { data: adm }] = await Promise.all([
+        supabase.rpc("get_profiles_by_role", { _role: "ti" }),
+        supabase.rpc("get_profiles_by_role", { _role: "admin" }),
+      ]);
+      const all = [...(ti || []), ...(adm || [])];
+      const unique = Array.from(new Map(all.map(p => [p.id, p])).values());
+      setTechnicians(unique.map(p => p.full_name).filter(Boolean).sort());
+    };
+    fetchTechnicians();
     // Fetch current user profile
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {

@@ -58,9 +58,18 @@ export default function Solicitacoes() {
   const [filterTaskType, setFilterTaskType] = useState("all");
   const [hideCompleted, setHideCompleted] = useState(true);
   useEffect(() => {
-    supabase.from("profiles").select("id, full_name").then(({ data }) => {
-      if (data) setTeamMembers(data.map(p => ({ id: p.id, name: p.full_name })));
-    });
+    const fetchMembers = async () => {
+      // Fetch marketing + admin members using the role-filtered function
+      const [{ data: mkt }, { data: adm }] = await Promise.all([
+        supabase.rpc("get_profiles_by_role", { _role: "marketing" }),
+        supabase.rpc("get_profiles_by_role", { _role: "admin" }),
+      ]);
+      const all = [...(mkt || []), ...(adm || [])];
+      // Deduplicate by id
+      const unique = Array.from(new Map(all.map(p => [p.id, p])).values());
+      setTeamMembers(unique.map(p => ({ id: p.id, name: p.full_name })));
+    };
+    fetchMembers();
   }, []);
 
   // Auto-open task from URL query param (e.g. from notification click)

@@ -1322,6 +1322,14 @@ export type Database = {
         Args: never
         Returns: Database["public"]["Enums"]["app_role"][]
       }
+      get_profiles_by_role: {
+        Args: { _role: Database["public"]["Enums"]["app_role"] }
+        Returns: {
+          avatar_url: string
+          full_name: string
+          id: string
+        }[]
+      }
       get_ti_admin_user_ids: { Args: never; Returns: string[] }
       get_user_emails: {
         Args: never
