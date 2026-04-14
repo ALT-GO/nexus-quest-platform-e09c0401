@@ -206,7 +206,6 @@ export function TicketDetailSheet({
       setTechnicians(unique.map(p => p.full_name).filter(Boolean).sort());
     };
     fetchTechnicians();
-  }, []);
     // Fetch current user profile
     supabase.auth.getUser().then(({ data: { user } }) => {
       if (user) {
