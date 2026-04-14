@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/table";
 import { InlineCellEditor } from "@/components/assets/InlineCellEditor";
 import { StatusSelectCell } from "@/components/collaborators/StatusSelectCell";
-import { ArrowLeft, FileDown, Laptop, Smartphone, Phone, FileText, Loader2, FileUp, Eye, Tablet, Mouse, MoreHorizontal, Unlink } from "lucide-react";
+import { ArrowLeft, FileDown, Laptop, Smartphone, Phone, FileText, Loader2, FileUp, Eye, Tablet, Mouse, MoreHorizontal, Unlink, Pencil } from "lucide-react";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -20,10 +20,12 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
 import { StockDetailDialog } from "@/components/collaborators/StockDetailDialog";
+import { EditCollaboratorDialog } from "@/components/collaborators/EditCollaboratorDialog";
 
 interface Props {
   name: string;
   onBack: () => void;
+  onNameChange?: (newName: string) => void;
 }
 
 const statusColors: Record<string, string> = {
@@ -317,10 +319,11 @@ function AssetSection({
   );
 }
 
-export function CollaboratorProfile({ name, onBack }: Props) {
+export function CollaboratorProfile({ name, onBack, onNameChange }: Props) {
   const { assets, loading, refetch, updateAsset, deleteAsset } = useCollaboratorDetail(name);
   const [termDialogOpen, setTermDialogOpen] = useState(false);
   const [selectionDialogOpen, setSelectionDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [termType, setTermType] = useState<"responsabilidade" | "devolucao">("responsabilidade");
   const [termAssets, setTermAssets] = useState<CollaboratorAsset[]>([]);
 
@@ -386,6 +389,12 @@ export function CollaboratorProfile({ name, onBack }: Props) {
     );
   }
 
+  // Extract current collaborator info from first asset
+  const firstAsset = assets[0];
+  const currentCargo = (firstAsset as any)?.cargo || "";
+  const currentDepartamento = (firstAsset as any)?.sector || "";
+  const currentGestor = (firstAsset as any)?.gestor || "";
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -397,6 +406,10 @@ export function CollaboratorProfile({ name, onBack }: Props) {
             <h2 className="text-xl font-bold">{name}</h2>
             <p className="text-sm text-muted-foreground">{assets.length} ativo(s) vinculado(s)</p>
           </div>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditDialogOpen(true)}>
+            <Pencil className="h-3.5 w-3.5" />
+            Editar dados
+          </Button>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => openTermDialog("devolucao")} className="gap-2">
@@ -442,6 +455,23 @@ export function CollaboratorProfile({ name, onBack }: Props) {
         collaboratorName={name}
         assets={termAssets}
         type={termType}
+      />
+
+      <EditCollaboratorDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        currentName={name}
+        currentCargo={currentCargo}
+        currentDepartamento={currentDepartamento}
+        currentGestor={currentGestor}
+        onSaved={(newName) => {
+          refetch();
+          if (onNameChange && newName !== name) {
+            onNameChange(newName);
+          } else {
+            refetch();
+          }
+        }}
       />
     </div>
   );

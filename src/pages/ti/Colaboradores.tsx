@@ -256,6 +256,7 @@ export default function Colaboradores() {
         <CollaboratorProfile
           name={selectedName}
           onBack={() => { setSelectedName(null); refetch(); }}
+          onNameChange={(newName) => { setSelectedName(newName); refetch(); }}
         />
       </AppLayout>
     );
