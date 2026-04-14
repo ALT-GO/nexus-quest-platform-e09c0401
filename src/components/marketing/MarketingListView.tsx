@@ -41,7 +41,7 @@ const priorityColors: Record<string, string> = {
 interface Props {
   tasks: MarketingTask[];
   stages: MarketingStage[];
-  teamMembers: { id: string; name: string }[];
+  teamMembers: { id: string; name: string; avatar_url?: string | null }[];
   onTaskClick: (task: MarketingTask) => void;
   filterStage: string;
   filterPriority: string;

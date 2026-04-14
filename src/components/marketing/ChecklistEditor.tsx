@@ -84,7 +84,7 @@ function ensureGroups(raw: any): ChecklistGroup[] {
 interface ChecklistEditorProps {
   value: any; // raw JSONB
   onChange: (groups: ChecklistGroup[]) => void;
-  teamMembers: { id: string; name: string }[];
+  teamMembers: { id: string; name: string; avatar_url?: string | null }[];
 }
 
 export function ChecklistEditor({ value, onChange, teamMembers }: ChecklistEditorProps) {
@@ -431,7 +431,7 @@ function ChecklistItemRow({
   depth: number;
   gIdx: number;
   iIdx: number;
-  teamMembers: { id: string; name: string }[];
+  teamMembers: { id: string; name: string; avatar_url?: string | null }[];
   collapsedItems: Set<string>;
   onToggle: (gIdx: number, id: string) => void;
   onRemove: (gIdx: number, id: string) => void;

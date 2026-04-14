@@ -186,7 +186,7 @@ export function TicketDetailSheet({
   const [hideEmpty, setHideEmpty] = useState(false);
   const [activityTab, setActivityTab] = useState<"activity" | "comments">("activity");
   const commentsEndRef = useRef<HTMLDivElement>(null);
-  const [technicians, setTechnicians] = useState<string[]>([]);
+  const [technicians, setTechnicians] = useState<{ name: string; avatar_url: string | null }[]>([]);
   const [currentUserName, setCurrentUserName] = useState("Admin");
   const [currentUserAvatar, setCurrentUserAvatar] = useState<string | null>(null);
 
@@ -203,7 +203,7 @@ export function TicketDetailSheet({
       ]);
       const all = [...(ti || []), ...(adm || [])];
       const unique = Array.from(new Map(all.map(p => [p.id, p])).values());
-      setTechnicians(unique.map(p => p.full_name).filter(Boolean).sort());
+      setTechnicians(unique.filter(p => p.full_name).map(p => ({ name: p.full_name, avatar_url: p.avatar_url })).sort((a, b) => a.name.localeCompare(b.name)));
     };
     fetchTechnicians();
     // Fetch current user profile
@@ -524,7 +524,7 @@ export function TicketDetailSheet({
                   <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
                     {ticket.assignee ? (
                       <span className="flex items-center gap-1.5">
-                        <UserAvatar name={ticket.assignee} className="h-5 w-5" fallbackClassName="text-[9px]" />
+                        <UserAvatar name={ticket.assignee} avatarUrl={technicians.find(t => t.name === ticket.assignee)?.avatar_url || undefined} className="h-5 w-5" fallbackClassName="text-[9px]" />
                         {ticket.assignee}
                       </span>
                     ) : (
@@ -533,7 +533,14 @@ export function TicketDetailSheet({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="unassigned">Sem responsável</SelectItem>
-                    {technicians.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+                    {technicians.map((t) => (
+                      <SelectItem key={t.name} value={t.name}>
+                        <span className="flex items-center gap-1.5">
+                          <UserAvatar name={t.name} avatarUrl={t.avatar_url || undefined} className="h-5 w-5" fallbackClassName="text-[9px]" />
+                          {t.name}
+                        </span>
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </PropRow>

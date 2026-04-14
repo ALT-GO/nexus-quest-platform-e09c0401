@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { UserAvatar } from "@/components/ui/user-avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -23,7 +24,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   stages: MarketingStage[];
-  teamMembers: { id: string; name: string }[];
+  teamMembers: { id: string; name: string; avatar_url?: string | null }[];
   sprints?: MarketingSprint[];
   eventId?: string;
 }
@@ -163,7 +164,12 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
                   {teamMembers.map(m => (
-                    <SelectItem key={m.id} value={m.id}>{m.name}</SelectItem>
+                    <SelectItem key={m.id} value={m.id}>
+                      <span className="flex items-center gap-1.5">
+                        <UserAvatar name={m.name} avatarUrl={m.avatar_url || undefined} className="h-5 w-5" fallbackClassName="text-[9px]" />
+                        {m.name}
+                      </span>
+                    </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
