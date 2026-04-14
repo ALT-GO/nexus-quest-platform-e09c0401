@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { ActiveTimersCard } from "@/components/dashboard/ActiveTimersCard";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchTimesheetByDateRange, formatDuration } from "@/hooks/use-timesheet";
@@ -25,6 +25,7 @@ import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
+import { TicketDrilldownDialog } from "./TicketDrilldownDialog";
 
 import type { CostCenterFilter } from "@/pages/CentralInteligencia";
 
