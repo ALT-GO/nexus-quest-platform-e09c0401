@@ -159,6 +159,7 @@ function AssetSection({
 }) {
   const [singleTermAsset, setSingleTermAsset] = useState<CollaboratorAsset | null>(null);
   const [singleTermType, setSingleTermType] = useState<"responsabilidade" | "devolucao">("responsabilidade");
+  const { getStatusesForCategory: getStatuses } = useInventoryStatuses();
 
   const config = categoryConfig[category];
   if (!config) return null;
@@ -235,7 +236,7 @@ function AssetSection({
                             value={(item as any)[col.key] || ""}
                             onSave={(v) => onUpdate(item.id, { [col.key]: v } as any)}
                             type="select"
-                            options={statusOptionsDefault}
+                            options={getStatuses(category)}
                             displayRender={(v) => <StatusBadge status={v} />}
                           />
                         </TableCell>
