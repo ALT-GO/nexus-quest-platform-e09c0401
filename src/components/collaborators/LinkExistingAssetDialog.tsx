@@ -161,6 +161,12 @@ export function LinkExistingAssetDialog({ collaboratorName, category, onLinked }
                           <span className="font-medium">{item.service_tag}</span>
                         </div>
                       )}
+                      {item.service_tag_2 && (
+                        <div>
+                          <span className="text-muted-foreground">ST 2: </span>
+                          <span className="font-medium">{item.service_tag_2}</span>
+                        </div>
+                      )}
                       {item.numero && (
                         <div>
                           <span className="text-muted-foreground">Número: </span>
