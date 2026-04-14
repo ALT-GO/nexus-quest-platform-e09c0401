@@ -25,6 +25,7 @@ import { EditCollaboratorDialog } from "@/components/collaborators/EditCollabora
 interface Props {
   name: string;
   onBack: () => void;
+  onNameChange?: (newName: string) => void;
 }
 
 const statusColors: Record<string, string> = {
