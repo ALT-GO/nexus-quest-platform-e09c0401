@@ -203,7 +203,7 @@ export function TicketDetailSheet({
       ]);
       const all = [...(ti || []), ...(adm || [])];
       const unique = Array.from(new Map(all.map(p => [p.id, p])).values());
-      setTechnicians(unique.map(p => p.full_name).filter(Boolean).sort());
+      setTechnicians(unique.filter(p => p.full_name).map(p => ({ name: p.full_name, avatar_url: p.avatar_url })).sort((a, b) => a.name.localeCompare(b.name)));
     };
     fetchTechnicians();
     // Fetch current user profile
