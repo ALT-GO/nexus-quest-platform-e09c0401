@@ -4,6 +4,7 @@ import {
 } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { useInventory } from "@/hooks/use-inventory";
+import { useInventoryStatuses } from "@/hooks/use-inventory-statuses";
 import { InlineCellEditor } from "@/components/assets/InlineCellEditor";
 import { NewAssetDialog } from "@/components/assets/NewAssetDialog";
 import { FieldManagerDialog } from "@/components/assets/FieldManagerDialog";
@@ -18,7 +19,7 @@ import {
   AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 
-const statusColors: Record<string, string> = {
+const defaultStatusColors: Record<string, string> = {
   "Disponível": "bg-emerald-500/15 text-emerald-600",
   "Em uso": "bg-blue-500/15 text-blue-600",
   "Manutenção": "bg-amber-500/15 text-amber-600",
@@ -28,9 +29,21 @@ const statusColors: Record<string, string> = {
   "Desligado": "bg-red-500/15 text-red-600",
 };
 
-function StatusBadge({ status }: { status: string }) {
+function StatusBadge({ status, colorMap }: { status: string; colorMap?: Record<string, string> }) {
+  // Try dynamic color from config, fall back to hardcoded
+  const hslColor = colorMap?.[status];
+  if (hslColor) {
+    return (
+      <span
+        className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium"
+        style={{ backgroundColor: `hsl(${hslColor} / 0.15)`, color: `hsl(${hslColor})` }}
+      >
+        {status}
+      </span>
+    );
+  }
   return (
-    <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", statusColors[status] || "bg-secondary text-secondary-foreground")}>
+    <span className={cn("inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium", defaultStatusColors[status] || "bg-secondary text-secondary-foreground")}>
       {status}
     </span>
   );
@@ -45,8 +58,6 @@ interface ColDef {
   mono?: boolean;
 }
 
-const statusOptionsDefault = ["Disponível", "Em uso", "Manutenção", "Reservado", "Baixado"];
-const statusOptionsLicenca = ["Ativo", "Desligado"];
 const tipoNotebook = ["Administrativo", "Campo"];
 
 const columnsByCategory: Record<string, ColDef[]> = {
