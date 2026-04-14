@@ -485,7 +485,7 @@ function CategoryStockTable({
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filtered.map((item) => (
+              {sorted.map((item) => (
                 <TableRow key={item.id}>
                   {columns.map((col) => (
                     <TableCell key={col.id} className="whitespace-nowrap p-1.5">
