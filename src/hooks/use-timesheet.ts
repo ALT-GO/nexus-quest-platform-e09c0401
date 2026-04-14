@@ -458,14 +458,14 @@ export async function fetchMarketingTimesheetTotals(
 // Fetch timesheet logs filtered by date range (for dashboard charts)
 export async function fetchTimesheetByDateRange(
   dateRange: { start: Date; end: Date }
-): Promise<{ ticket_id: string; start_time: string; end_time: string | null; duration_seconds: number }[]> {
+): Promise<{ ticket_id: string | null; start_time: string; end_time: string | null; duration_seconds: number }[]> {
   const { data } = await supabase
     .from("timesheet_logs")
     .select("ticket_id, start_time, end_time, duration_seconds")
     .gte("start_time", dateRange.start.toISOString())
     .lte("start_time", dateRange.end.toISOString());
 
-  return (data as unknown as { ticket_id: string; start_time: string; end_time: string | null; duration_seconds: number }[]) || [];
+  return (data as unknown as { ticket_id: string | null; start_time: string; end_time: string | null; duration_seconds: number }[]) || [];
 }
 
 /**
