@@ -524,7 +524,7 @@ export function TicketDetailSheet({
                   <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
                     {ticket.assignee ? (
                       <span className="flex items-center gap-1.5">
-                        <UserAvatar name={ticket.assignee} className="h-5 w-5" fallbackClassName="text-[9px]" />
+                        <UserAvatar name={ticket.assignee} avatarUrl={technicians.find(t => t.name === ticket.assignee)?.avatar_url || undefined} className="h-5 w-5" fallbackClassName="text-[9px]" />
                         {ticket.assignee}
                       </span>
                     ) : (
