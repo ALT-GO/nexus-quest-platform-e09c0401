@@ -225,7 +225,7 @@ export function MarketingTaskDetailSheet({
   const [titleValue, setTitleValue] = useState("");
   const [editingDesc, setEditingDesc] = useState(false);
   const [descValue, setDescValue] = useState("");
-  const [activityTab, setActivityTab] = useState<"activity" | "comments">("activity");
+  const [activityTab, setActivityTab] = useState<"activity" | "comments">("comments");
 
   useEffect(() => {
     if (task) {
