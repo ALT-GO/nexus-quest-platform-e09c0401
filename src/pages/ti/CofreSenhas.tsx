@@ -123,7 +123,13 @@ export default function CofreSenhas() {
     if (!file) return;
     setImporting(true);
     try {
-      const text = await file.text();
+      // Try UTF-8 first, fallback to Latin-1 for Windows CSVs with accents
+      let text = await file.text();
+      if (text.includes("�") || text.includes("\ufffd")) {
+        const buffer = await file.arrayBuffer();
+        const decoder = new TextDecoder("windows-1252");
+        text = decoder.decode(buffer);
+      }
       const lines = text.split(/\r?\n/).filter((l) => l.trim());
       if (lines.length < 2) { toast.error("Arquivo vazio ou sem dados"); return; }
 
