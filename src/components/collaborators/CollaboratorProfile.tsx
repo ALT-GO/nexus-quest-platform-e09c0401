@@ -18,6 +18,7 @@ import { LinkExistingAssetDialog } from "@/components/collaborators/LinkExisting
 import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useInventoryStatuses } from "@/hooks/use-inventory-statuses";
 import { useState } from "react";
 import { StockDetailDialog } from "@/components/collaborators/StockDetailDialog";
 import { EditCollaboratorDialog } from "@/components/collaborators/EditCollaboratorDialog";
@@ -56,8 +57,6 @@ interface ColDef {
   readOnly?: boolean;
 }
 
-const statusOptionsDefault = ["Disponível", "Em uso", "Manutenção", "Reservado", "Baixado"];
-const statusOptionsLicenca = ["Ativo", "Inativo", "Desligado"];
 const tipoNotebook = ["Administrativo", "Campo"];
 
 const columnsByCategory: Record<string, ColDef[]> = {
@@ -320,6 +319,7 @@ function AssetSection({
 
 export function CollaboratorProfile({ name, onBack, onNameChange }: Props) {
   const { assets, loading, refetch, updateAsset, deleteAsset } = useCollaboratorDetail(name);
+  const { getStatusesForCategory } = useInventoryStatuses();
   const [termDialogOpen, setTermDialogOpen] = useState(false);
   const [selectionDialogOpen, setSelectionDialogOpen] = useState(false);
   const [editDialogOpen, setEditDialogOpen] = useState(false);
