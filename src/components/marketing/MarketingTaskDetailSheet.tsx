@@ -358,6 +358,16 @@ export function MarketingTaskDetailSheet({
       .update({ stage_id: previousStage.id, progress: "Em andamento", updated_at: new Date().toISOString() } as any)
       .eq("id", task.id);
     logHistory("Reprovação", `Tarefa reprovada por ${authorName}. Motivo: ${rejectReason}`);
+    // Add rejection reason as a comment
+    if (user) {
+      await addComment.mutateAsync({
+        task_id: task.id,
+        author_id: user.id,
+        author_name: authorName,
+        avatar_url: profile?.avatar_url || null,
+        content: `❌ **Reprovação:** ${rejectReason.trim()}`,
+      });
+    }
     if (task.requester_id) notifyTaskCreator({ creatorId: task.requester_id, taskTitle: task.title, taskId: task.id, approved: false, reason: rejectReason });
     qc.invalidateQueries({ queryKey: ["marketing_tasks"] });
     toast.success("Tarefa reprovada e devolvida para ajustes");
