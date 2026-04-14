@@ -51,7 +51,6 @@ const tipoNotebook = ["Administrativo", "Campo"];
 
 const columnsByCategory: Record<string, ColDef[]> = {
   notebooks: [
-    { key: "asset_code", label: "Id", mono: true },
     { key: "service_tag", label: "Service tag" },
     { key: "collaborator", label: "Colaborador" },
     { key: "cargo", label: "Cargo" },
@@ -68,7 +67,6 @@ const columnsByCategory: Record<string, ColDef[]> = {
     { key: "service_tag_2", label: "Service tag 2" },
   ],
   celulares: [
-    { key: "asset_code", label: "Id", mono: true },
     { key: "service_tag", label: "Service tag" },
     { key: "collaborator", label: "Colaborador" },
     { key: "cargo", label: "Cargo" },
@@ -86,7 +84,6 @@ const columnsByCategory: Record<string, ColDef[]> = {
     { key: "imei2", label: "Imei 2" },
   ],
   linhas: [
-    { key: "asset_code", label: "Id", mono: true },
     { key: "numero", label: "Número" },
     { key: "collaborator", label: "Colaborador" },
     { key: "cargo", label: "Cargo" },
@@ -100,7 +97,6 @@ const columnsByCategory: Record<string, ColDef[]> = {
     { key: "notes", label: "Notas" },
   ],
   tablets: [
-    { key: "asset_code", label: "Id", mono: true },
     { key: "service_tag", label: "Service tag" },
     { key: "collaborator", label: "Colaborador" },
     { key: "cargo", label: "Cargo" },
@@ -116,7 +112,6 @@ const columnsByCategory: Record<string, ColDef[]> = {
     { key: "notes", label: "Notas" },
   ],
   perifericos: [
-    { key: "asset_code", label: "Id", mono: true },
     { key: "service_tag", label: "Service tag / P/N" },
     { key: "collaborator", label: "Colaborador" },
     { key: "cargo", label: "Cargo" },
@@ -130,7 +125,7 @@ const columnsByCategory: Record<string, ColDef[]> = {
     { key: "notes", label: "Notas" },
   ],
   licencas: [
-    { key: "asset_code", label: "Id", mono: true },
+    
     { key: "status", label: "Status", type: "status" },
     { key: "collaborator", label: "Colaborador" },
     { key: "cargo", label: "Cargo" },
@@ -327,13 +322,6 @@ export function CategoryTable({ category, label }: Props) {
               {items.map((item) => (
                 <TableRow key={item.id}>
                   {columns.map((col) => {
-                    if (col.key === "asset_code") {
-                      return (
-                        <TableCell key={col.key} className="font-mono text-xs">
-                          {item.asset_code}
-                        </TableCell>
-                      );
-                    }
                     // Editable date columns (delivered_at, data_aquisicao, created_at readonly)
                     if (col.type === "date" && (col.key === "delivered_at" || col.key === "data_aquisicao" || col.key === "created_at")) {
                       if (col.key === "created_at") {

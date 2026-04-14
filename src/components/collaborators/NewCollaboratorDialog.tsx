@@ -84,7 +84,7 @@ export function NewCollaboratorDialog({ onCreated }: Props) {
   }, [open, fetchAvailable]);
 
   const getAssetLabel = (asset: AvailableAsset, category: string) => {
-    const parts = [asset.asset_code];
+    const parts: string[] = [];
     if (category === "linhas" && asset.numero) parts.push(asset.numero);
     else if (category === "licencas" && asset.licenca) parts.push(asset.licenca);
     else {
@@ -92,7 +92,7 @@ export function NewCollaboratorDialog({ onCreated }: Props) {
       if (asset.model) parts.push(asset.model);
       if (asset.service_tag) parts.push(`ST: ${asset.service_tag}`);
     }
-    return parts.join(" — ");
+    return parts.length > 0 ? parts.join(" — ") : asset.id.slice(0, 8);
   };
 
   const handleSave = async () => {
