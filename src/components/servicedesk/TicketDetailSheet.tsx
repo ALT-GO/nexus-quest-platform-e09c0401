@@ -186,7 +186,7 @@ export function TicketDetailSheet({
   const [hideEmpty, setHideEmpty] = useState(false);
   const [activityTab, setActivityTab] = useState<"activity" | "comments">("activity");
   const commentsEndRef = useRef<HTMLDivElement>(null);
-  const [technicians, setTechnicians] = useState<string[]>([]);
+  const [technicians, setTechnicians] = useState<{ name: string; avatar_url: string | null }[]>([]);
   const [currentUserName, setCurrentUserName] = useState("Admin");
   const [currentUserAvatar, setCurrentUserAvatar] = useState<string | null>(null);
 
