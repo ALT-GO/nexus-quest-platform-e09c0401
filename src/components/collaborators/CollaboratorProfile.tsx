@@ -319,10 +319,11 @@ function AssetSection({
   );
 }
 
-export function CollaboratorProfile({ name, onBack }: Props) {
+export function CollaboratorProfile({ name, onBack, onNameChange }: Props) {
   const { assets, loading, refetch, updateAsset, deleteAsset } = useCollaboratorDetail(name);
   const [termDialogOpen, setTermDialogOpen] = useState(false);
   const [selectionDialogOpen, setSelectionDialogOpen] = useState(false);
+  const [editDialogOpen, setEditDialogOpen] = useState(false);
   const [termType, setTermType] = useState<"responsabilidade" | "devolucao">("responsabilidade");
   const [termAssets, setTermAssets] = useState<CollaboratorAsset[]>([]);
 
