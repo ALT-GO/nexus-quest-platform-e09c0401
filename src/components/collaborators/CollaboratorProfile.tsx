@@ -456,6 +456,23 @@ export function CollaboratorProfile({ name, onBack, onNameChange }: Props) {
         assets={termAssets}
         type={termType}
       />
+
+      <EditCollaboratorDialog
+        open={editDialogOpen}
+        onOpenChange={setEditDialogOpen}
+        currentName={name}
+        currentCargo={currentCargo}
+        currentDepartamento={currentDepartamento}
+        currentGestor={currentGestor}
+        onSaved={(newName) => {
+          refetch();
+          if (onNameChange && newName !== name) {
+            onNameChange(newName);
+          } else {
+            refetch();
+          }
+        }}
+      />
     </div>
   );
 }
