@@ -306,20 +306,26 @@ export default function ServiceDesk() {
     [tickets]
   );
 
-  // Build unique assignee list for filter
-  const assigneeOptions = useMemo(() => {
-    const set = new Set<string>();
+  // Build unique assignee list for filter (dynamic based on visible tickets)
+  const { assigneeNames, hasUnassigned } = useMemo(() => {
+    const names = new Set<string>();
+    let unassigned = false;
     tickets.forEach((t) => {
-      if (!t.parent_ticket_id) {
-        set.add(t.assignee || "");
+      if (t.parent_ticket_id) return;
+      if (hideCompleted && !!t.completed_at) return;
+      if (filterCategory !== "all" && t.category !== filterCategory) return;
+      if (filterStatus !== "all" && t.status_id !== filterStatus) return;
+      if (!t.assignee) {
+        unassigned = true;
+      } else {
+        names.add(t.assignee);
       }
     });
-    return Array.from(set).sort((a, b) => {
-      if (!a) return 1;
-      if (!b) return -1;
-      return a.localeCompare(b);
-    });
-  }, [tickets]);
+    return {
+      assigneeNames: Array.from(names).sort((a, b) => a.localeCompare(b)),
+      hasUnassigned: unassigned,
+    };
+  }, [tickets, hideCompleted, filterCategory, filterStatus]);
 
   // Filters - exclude subtasks from main list
   const filteredTickets = tickets
@@ -401,8 +407,8 @@ export default function ServiceDesk() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="all">Todos os Responsáveis</SelectItem>
-            <SelectItem value="__none__">Sem atribuição</SelectItem>
-            {assigneeOptions.filter(Boolean).map((name) => (
+            {hasUnassigned && <SelectItem value="__none__">Sem atribuição</SelectItem>}
+            {assigneeNames.map((name) => (
               <SelectItem key={name} value={name}>{name}</SelectItem>
             ))}
           </SelectContent>
