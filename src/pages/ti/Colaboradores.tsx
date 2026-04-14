@@ -16,9 +16,11 @@ import {
   Loader2, Search, Users, Laptop, Smartphone, Phone, FileText, Package,
   LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown,
 } from "lucide-react";
-import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { DeleteCollaboratorDialog } from "@/components/collaborators/DeleteCollaboratorDialog";
 import { NewCollaboratorDialog } from "@/components/collaborators/NewCollaboratorDialog";
+import {
+  CollaboratorAdvancedFilters, CollaboratorFilters, emptyFilters,
+} from "@/components/collaborators/CollaboratorAdvancedFilters";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
