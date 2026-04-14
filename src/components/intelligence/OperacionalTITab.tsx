@@ -510,7 +510,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
                     <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))" }} unit="h" />
                     <YAxis dataKey="name" type="category" width={120} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
                     <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => `${value}h`} />
-                    <Bar dataKey="hours" name="Horas" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} />
+                    <Bar dataKey="hours" name="Horas" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} className="cursor-pointer" onClick={(_: any, idx: number) => handleHoursBarClick(hoursByAssignee[idx])} />
                   </BarChart>
                 </ResponsiveContainer>
               </div>
