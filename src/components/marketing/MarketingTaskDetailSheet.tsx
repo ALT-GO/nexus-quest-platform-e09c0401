@@ -89,7 +89,7 @@ import { CalendarIcon as CalendarEventIcon } from "lucide-react";
 interface Props {
   task: MarketingTask | null;
   stages: MarketingStage[];
-  teamMembers: { id: string; name: string }[];
+  teamMembers: { id: string; name: string; avatar_url?: string | null }[];
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
