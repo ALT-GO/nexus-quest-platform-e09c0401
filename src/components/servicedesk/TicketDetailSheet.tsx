@@ -187,6 +187,8 @@ export function TicketDetailSheet({
   const [activityTab, setActivityTab] = useState<"activity" | "comments">("activity");
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const [technicians, setTechnicians] = useState<string[]>([]);
+  const [currentUserName, setCurrentUserName] = useState("Admin");
+  const [currentUserAvatar, setCurrentUserAvatar] = useState<string | null>(null);
 
   const { comments, loading: commentsLoading, addComment } = useTicketComments(ticket?.id ?? null);
   const { history, loading: historyLoading, logHistory } = useTicketHistory(ticket?.id ?? null);
@@ -195,6 +197,17 @@ export function TicketDetailSheet({
   useEffect(() => {
     supabase.from("profiles").select("full_name").then(({ data }) => {
       if (data) setTechnicians(data.map((p) => p.full_name).filter(Boolean).sort());
+    });
+    // Fetch current user profile
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).single().then(({ data }) => {
+          if (data) {
+            setCurrentUserName(data.full_name || "Admin");
+            setCurrentUserAvatar(data.avatar_url);
+          }
+        });
+      }
     });
   }, []);
 
@@ -336,16 +349,16 @@ export function TicketDetailSheet({
   const handleStatusChange = async (newStatusId: string) => {
     const newStatus = statuses.find((s) => s.id === newStatusId);
     onStatusChange(ticket.ticket_number, newStatusId);
-    await logHistory("status_change", `Status alterado para ${newStatus?.nome ?? newStatusId}`, "Admin");
+    await logHistory("status_change", `Status alterado para ${newStatus?.nome ?? newStatusId}`, currentUserName);
   };
 
   const handleSendComment = async () => {
     if (!newComment.trim()) return;
     setSubmitting(true);
-    const success = await addComment("Admin", newComment.trim());
+    const success = await addComment(currentUserName, newComment.trim(), currentUserAvatar);
     if (success) {
       setNewComment("");
-      await logHistory("comment", "Comentário adicionado", "Admin");
+      await logHistory("comment", "Comentário adicionado", currentUserName);
     }
     setSubmitting(false);
   };

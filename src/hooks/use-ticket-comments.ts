@@ -60,12 +60,13 @@ export function useTicketComments(ticketId: string | null) {
   }, [ticketId]);
 
   const addComment = useCallback(
-    async (author: string, content: string) => {
+    async (author: string, content: string, avatar_url?: string | null) => {
       if (!ticketId) return false;
       const { error } = await supabase.from("ticket_comments").insert({
         ticket_id: ticketId,
         author,
         content,
+        avatar_url: avatar_url || null,
       } as any);
 
       if (error) {
