@@ -414,26 +414,43 @@ function CategoryStockTable({
   const [columns, reorderColumns] = useColumnOrder(category, defaultColsByCat[category]);
   const dragIdx = useRef<number | null>(null);
 
-  const filtered = applySorting(
-    items.filter((i) => {
-      if (search) {
-        const q = search.toLowerCase();
-        if (!columns.some((col) => col.accessor(i).toLowerCase().includes(q))) return false;
-      }
-      for (const [field, val] of Object.entries(advancedFilters)) {
-        if (!val) continue;
-        const itemVal = ((i as any)[field] ?? "").toString().toLowerCase();
-        if (!itemVal.includes(val.toLowerCase())) return false;
-      }
-      return true;
-    }),
-    stockSortKey,
-    stockSortDir,
-  );
+  const [colSortKey, setColSortKey] = useState<string | null>(null);
+  const [colSortDir, setColSortDir] = useState<"asc" | "desc">("asc");
 
-  const handleDragStart = (idx: number) => { dragIdx.current = idx; };
-  const handleDragOver = (e: React.DragEvent, _idx: number) => { e.preventDefault(); };
-  const handleDrop = (toIdx: number) => {
+  const handleColSort = (colId: string) => {
+    if (colSortKey === colId) {
+      setColSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setColSortKey(colId);
+      setColSortDir("asc");
+    }
+  };
+
+  // Find accessor for the column being sorted
+  const sortedCol = colSortKey ? columns.find((c) => c.id === colSortKey) : null;
+
+  const filtered = items.filter((i) => {
+    if (search) {
+      const q = search.toLowerCase();
+      if (!columns.some((col) => col.accessor(i).toLowerCase().includes(q))) return false;
+    }
+    for (const [field, val] of Object.entries(advancedFilters)) {
+      if (!val) continue;
+      const itemVal = ((i as any)[field] ?? "").toString().toLowerCase();
+      if (!itemVal.includes(val.toLowerCase())) return false;
+    }
+    return true;
+  });
+
+  // Apply column header sort first, then fall back to dropdown sort
+  const sorted = sortedCol
+    ? [...filtered].sort((a, b) => {
+        const aVal = sortedCol.accessor(a).toLowerCase();
+        const bVal = sortedCol.accessor(b).toLowerCase();
+        const cmp = aVal.localeCompare(bVal, "pt-BR");
+        return colSortDir === "asc" ? cmp : -cmp;
+      })
+    : applySorting(filtered, stockSortKey, stockSortDir);
     if (dragIdx.current !== null && dragIdx.current !== toIdx) {
       reorderColumns(dragIdx.current, toIdx);
     }
