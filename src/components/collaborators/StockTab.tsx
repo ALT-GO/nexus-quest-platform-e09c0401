@@ -522,7 +522,7 @@ function CategoryStockTable({
                   </TableCell>
                 </TableRow>
               ))}
-              {filtered.length === 0 && (
+              {sorted.length === 0 && (
                 <TableRow>
                   <TableCell colSpan={columns.length + 1} className="text-center py-8 text-muted-foreground">
                     <Package className="mx-auto mb-2 h-8 w-8" />
