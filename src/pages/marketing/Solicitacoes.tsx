@@ -41,7 +41,7 @@ export default function Solicitacoes() {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<MarketingTask | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
-  const [teamMembers, setTeamMembers] = useState<{ id: string; name: string }[]>([]);
+  const [teamMembers, setTeamMembers] = useState<{ id: string; name: string; avatar_url?: string | null }[]>([]);
   const [filterTagIds, setFilterTagIds] = useState<string[]>([]);
   const [selectedSprintId, setSelectedSprintId] = useState("all");
   const [viewMode, setViewMode] = useState<"kanban" | "list" | "gantt">(() => {
@@ -67,7 +67,7 @@ export default function Solicitacoes() {
       const all = [...(mkt || []), ...(adm || [])];
       // Deduplicate by id
       const unique = Array.from(new Map(all.map(p => [p.id, p])).values());
-      setTeamMembers(unique.map(p => ({ id: p.id, name: p.full_name })));
+      setTeamMembers(unique.map(p => ({ id: p.id, name: p.full_name, avatar_url: p.avatar_url })));
     };
     fetchMembers();
   }, []);
