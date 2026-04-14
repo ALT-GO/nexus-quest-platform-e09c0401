@@ -23,7 +23,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   stages: MarketingStage[];
-  teamMembers: { id: string; name: string }[];
+  teamMembers: { id: string; name: string; avatar_url?: string | null }[];
   sprints?: MarketingSprint[];
   eventId?: string;
 }
