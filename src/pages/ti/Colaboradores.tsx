@@ -16,9 +16,11 @@ import {
   Loader2, Search, Users, Laptop, Smartphone, Phone, FileText, Package,
   LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown,
 } from "lucide-react";
-import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { DeleteCollaboratorDialog } from "@/components/collaborators/DeleteCollaboratorDialog";
 import { NewCollaboratorDialog } from "@/components/collaborators/NewCollaboratorDialog";
+import {
+  CollaboratorAdvancedFilters, CollaboratorFilters, emptyFilters,
+} from "@/components/collaborators/CollaboratorAdvancedFilters";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -134,6 +136,44 @@ export default function Colaboradores() {
   const { sortKey, sortDir, setSort } = usePersistentSort("collab-sort", "name");
   const [inventoryMatchNames, setInventoryMatchNames] = useState<Set<string>>(new Set());
   const [inventorySearching, setInventorySearching] = useState(false);
+  const [advFilters, setAdvFilters] = useState<CollaboratorFilters>({ ...emptyFilters });
+  const [advFilteredNames, setAdvFilteredNames] = useState<Set<string> | null>(null);
+
+  // Apply advanced asset-level filters via inventory query
+  useEffect(() => {
+    const hasAssetFilter = advFilters.hasCategory || advFilters.asset_marca || advFilters.asset_model ||
+      advFilters.asset_contrato || advFilters.asset_type || advFilters.asset_operadora ||
+      advFilters.asset_gestor || advFilters.asset_status;
+
+    if (!hasAssetFilter) {
+      setAdvFilteredNames(null);
+      return;
+    }
+
+    const timer = setTimeout(async () => {
+      let query = supabase
+        .from("inventory")
+        .select("collaborator")
+        .not("collaborator", "is", null)
+        .neq("collaborator", "");
+
+      if (advFilters.hasCategory) query = query.eq("category", advFilters.hasCategory);
+      if (advFilters.asset_marca) query = query.ilike("marca", `%${advFilters.asset_marca}%`);
+      if (advFilters.asset_model) query = query.ilike("model", `%${advFilters.asset_model}%`);
+      if (advFilters.asset_contrato) query = query.ilike("contrato", `%${advFilters.asset_contrato}%`);
+      if (advFilters.asset_type) query = query.eq("asset_type", advFilters.asset_type);
+      if (advFilters.asset_operadora) query = query.eq("operadora", advFilters.asset_operadora);
+      if (advFilters.asset_gestor) query = query.ilike("gestor", `%${advFilters.asset_gestor}%`);
+      if (advFilters.asset_status) query = query.eq("status", advFilters.asset_status);
+
+      const { data } = await query;
+      if (data) {
+        setAdvFilteredNames(new Set(data.map((r: any) => (r.collaborator as string).trim()).filter(Boolean)));
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [advFilters]);
 
   // Search inventory items when query changes
   useEffect(() => {
@@ -183,14 +223,28 @@ export default function Colaboradores() {
 
   const filtered = applySorting(
     collaborators.filter((c) => {
+      // Text search
       const q = search.toLowerCase();
-      if (!q) return true;
-      return (
-        c.name.toLowerCase().includes(q) ||
-        c.cargo?.toLowerCase().includes(q) ||
-        c.sector?.toLowerCase().includes(q) ||
-        inventoryMatchNames.has(c.name)
-      );
+      if (q) {
+        const textMatch = c.name.toLowerCase().includes(q) ||
+          c.cargo?.toLowerCase().includes(q) ||
+          c.sector?.toLowerCase().includes(q) ||
+          inventoryMatchNames.has(c.name);
+        if (!textMatch) return false;
+      }
+
+      // Collaborator-level filters
+      if (advFilters.cargo && c.cargo !== advFilters.cargo) return false;
+      if (advFilters.sector && c.sector !== advFilters.sector) return false;
+      if (advFilters.cost_center && c.cost_center !== advFilters.cost_center) return false;
+
+      // Category filter
+      if (advFilters.hasCategory && !c.categories.includes(advFilters.hasCategory)) return false;
+
+      // Asset-level filter results
+      if (advFilteredNames !== null && !advFilteredNames.has(c.name)) return false;
+
+      return true;
     }),
     sortKey,
     sortDir as "asc" | "desc",
@@ -272,6 +326,9 @@ export default function Colaboradores() {
                 </ToggleGroup>
               </div>
             </div>
+
+            {/* Advanced Filters */}
+            <CollaboratorAdvancedFilters filters={advFilters} onChange={setAdvFilters} />
 
             {loading ? (
               <div className="flex items-center justify-center py-20">
