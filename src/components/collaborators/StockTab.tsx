@@ -476,6 +476,9 @@ function CategoryStockTable({
                     onDragStart={handleDragStart}
                     onDragOver={handleDragOver}
                     onDrop={handleDrop}
+                    sortKey={colSortKey}
+                    sortDir={colSortDir}
+                    onSort={handleColSort}
                   />
                 ))}
                 <TableHead className="w-[100px]">Ações</TableHead>
