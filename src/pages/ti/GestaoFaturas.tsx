@@ -57,6 +57,8 @@ const formatBRL = (v: number) =>
 function MensalidadeTab({ category }: { category: "linhas" | "licencas" }) {
   const queryClient = useQueryClient();
   const isLinhas = category === "linhas";
+  const { getStatusesForCategory } = useInventoryStatuses();
+  const statusList = getStatusesForCategory(category);
 
   // Filters
   const [filterStatus, setFilterStatus] = useState("todas");
