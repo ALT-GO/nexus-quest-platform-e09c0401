@@ -17,6 +17,7 @@ interface AvailableAsset {
   asset_code: string;
   model: string | null;
   service_tag: string | null;
+  service_tag_2: string | null;
   numero: string | null;
   licenca: string | null;
   marca: string | null;
@@ -58,7 +59,7 @@ export function NewCollaboratorDialog({ onCreated }: Props) {
       const statusFilter = cat.key === "licencas" ? "Ativo" : "Disponível";
       const { data } = await supabase
         .from("inventory")
-        .select("id, asset_code, model, service_tag, numero, licenca, marca")
+        .select("id, asset_code, model, service_tag, service_tag_2, numero, licenca, marca")
         .eq("category", cat.key)
         .eq("status", statusFilter)
         .or("collaborator.eq.,collaborator.is.null")
@@ -91,6 +92,7 @@ export function NewCollaboratorDialog({ onCreated }: Props) {
       if (asset.marca) parts.push(asset.marca);
       if (asset.model) parts.push(asset.model);
       if (asset.service_tag) parts.push(`ST: ${asset.service_tag}`);
+      if (asset.service_tag_2) parts.push(`ST2: ${asset.service_tag_2}`);
     }
     return parts.length > 0 ? parts.join(" — ") : asset.id.slice(0, 8);
   };
