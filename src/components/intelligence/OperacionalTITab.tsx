@@ -452,7 +452,11 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
               </div>
               <div className="max-h-[300px] space-y-2 overflow-y-auto pr-2">
                 {ticketsByCategory.map((item) => (
-                  <div key={item.fullName} className="flex items-center gap-2 text-sm">
+                  <div
+                    key={item.fullName}
+                    className="flex items-center gap-2 text-sm cursor-pointer hover:bg-accent rounded px-1.5 py-1 transition-colors"
+                    onClick={() => handleCategoryClick(item)}
+                  >
                     <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
                     <span className="text-muted-foreground truncate max-w-[140px]" title={item.fullName}>{item.name}</span>
                     <span className="ml-auto font-medium">{item.value}</span>
