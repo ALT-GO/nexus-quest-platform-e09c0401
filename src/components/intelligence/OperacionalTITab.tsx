@@ -273,18 +273,26 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     return items;
   }, [inventoryItems, costCenter]);
 
-  const assetsEmUso = filteredInv.filter((a) => a.status === "Em uso").length;
-  const assetsAtivo = filteredInv.filter((a) => a.status === "Ativo").length;
-  const assetsInativo = filteredInv.filter((a) => a.status === "Inativo").length;
+  // Collect all unique statuses from inventory
+  const allStatuses = useMemo(() => {
+    const set = new Set<string>();
+    filteredInv.forEach((i) => set.add(i.status));
+    // Fixed order: Em uso first, then alphabetical for the rest
+    const ordered = ["Em uso"];
+    const rest = [...set].filter((s) => s !== "Em uso").sort();
+    return [...ordered.filter((s) => set.has(s)), ...rest];
+  }, [filteredInv]);
+
   const inventoryByCategory = useMemo(() => {
     const cats = ["notebooks", "celulares", "tablets", "perifericos", "linhas", "licencas"];
-    return cats.map((cat) => ({
-      category: cat,
-      emUso: filteredInv.filter((i) => i.category === cat && i.status === "Em uso").length,
-      ativo: filteredInv.filter((i) => i.category === cat && i.status === "Ativo").length,
-      total: filteredInv.filter((i) => i.category === cat).length,
-    }));
-  }, [filteredInv]);
+    return cats.map((cat) => {
+      const catItems = filteredInv.filter((i) => i.category === cat);
+      const byStatus: Record<string, number> = {};
+      allStatuses.forEach((s) => { byStatus[s] = 0; });
+      catItems.forEach((i) => { byStatus[i.status] = (byStatus[i.status] || 0) + 1; });
+      return { category: cat, total: catItems.length, byStatus };
+    });
+  }, [filteredInv, allStatuses]);
 
   // ---- Financial: Custo por Operadora ----
   const costByOperadora = useMemo(() => {
@@ -656,39 +664,55 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Monitor className="h-4 w-4 text-muted-foreground" />Resumo de Ativos
+              <Monitor className="h-4 w-4 text-muted-foreground" />Resumo de Ativos por Status
             </CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-3 gap-4 py-4 mb-4">
-              <div className="flex flex-col items-center gap-2 rounded-lg border p-4 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all active:scale-[0.98]" onClick={() => navigate("/ti/gestao-ativos")}>
-                <Monitor className="h-8 w-8 text-primary" />
-                <span className="text-2xl font-bold">{assetsEmUso}</span>
-                <span className="text-sm text-muted-foreground">Em uso</span>
-              </div>
-              <div className="flex flex-col items-center gap-2 rounded-lg border p-4 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all active:scale-[0.98]" onClick={() => navigate("/ti/gestao-ativos")}>
-                <CheckCircle2 className="h-8 w-8 text-success" />
-                <span className="text-2xl font-bold">{assetsAtivo}</span>
-                <span className="text-sm text-muted-foreground">Ativos</span>
-              </div>
-              <div className="flex flex-col items-center gap-2 rounded-lg border p-4 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all active:scale-[0.98]" onClick={() => navigate("/ti/gestao-ativos")}>
-                <AlertTriangle className="h-8 w-8 text-warning" />
-                <span className="text-2xl font-bold">{assetsInativo}</span>
-                <span className="text-sm text-muted-foreground">Inativos</span>
-              </div>
-            </div>
-            <div className="grid grid-cols-2 lg:grid-cols-3 gap-3">
-              {inventoryByCategory.map((item) => {
-                const Icon = categoryIcons[item.category] || Monitor;
-                return (
-                  <div key={item.category} className="flex flex-col items-center gap-1 rounded-lg border p-3 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all active:scale-[0.98]" onClick={() => navigate("/ti/gestao-ativos")}>
-                    <Icon className={`h-6 w-6 ${categoryColorClasses[item.category] || "text-muted-foreground"}`} />
-                    <span className="text-lg font-bold">{item.emUso + item.ativo}</span>
-                    <span className="text-xs text-muted-foreground">{categoryLabels[item.category]} ativos</span>
-                    <span className="text-[10px] text-muted-foreground/60">{item.total} total</span>
-                  </div>
-                );
-              })}
+          <CardContent className="p-0">
+            <div className="overflow-x-auto">
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead className="sticky left-0 bg-card z-10">Categoria</TableHead>
+                    {allStatuses.map((s) => (
+                      <TableHead key={s} className="text-center text-xs whitespace-nowrap">{s}</TableHead>
+                    ))}
+                    <TableHead className="text-center text-xs font-bold">Total</TableHead>
+                  </TableRow>
+                </TableHeader>
+                <TableBody>
+                  {inventoryByCategory.map((item) => {
+                    const Icon = categoryIcons[item.category] || Monitor;
+                    return (
+                      <TableRow key={item.category} className="cursor-pointer hover:bg-accent/50" onClick={() => navigate("/ti/gestao-ativos")}>
+                        <TableCell className="sticky left-0 bg-card z-10 font-medium">
+                          <div className="flex items-center gap-2">
+                            <Icon className={`h-4 w-4 ${categoryColorClasses[item.category] || "text-muted-foreground"}`} />
+                            {categoryLabels[item.category] || item.category}
+                          </div>
+                        </TableCell>
+                        {allStatuses.map((s) => (
+                          <TableCell key={s} className="text-center tabular-nums">
+                            {item.byStatus[s] || 0}
+                          </TableCell>
+                        ))}
+                        <TableCell className="text-center font-bold tabular-nums">{item.total}</TableCell>
+                      </TableRow>
+                    );
+                  })}
+                  {/* Totals row */}
+                  <TableRow className="bg-muted/30 font-semibold">
+                    <TableCell className="sticky left-0 bg-muted/30 z-10">Total</TableCell>
+                    {allStatuses.map((s) => (
+                      <TableCell key={s} className="text-center tabular-nums">
+                        {inventoryByCategory.reduce((sum, item) => sum + (item.byStatus[s] || 0), 0)}
+                      </TableCell>
+                    ))}
+                    <TableCell className="text-center font-bold tabular-nums">
+                      {inventoryByCategory.reduce((sum, item) => sum + item.total, 0)}
+                    </TableCell>
+                  </TableRow>
+                </TableBody>
+              </Table>
             </div>
           </CardContent>
         </Card>
@@ -723,7 +747,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           title="Total de Ativos"
           value={filteredInv.length}
           icon={Monitor}
-          description={`${assetsEmUso + assetsAtivo} ativos · ${assetsInativo} inativos`}
+          description={`${filteredInv.filter((a) => a.status === "Em uso" || a.status === "Ativo").length} ativos · ${filteredInv.filter((a) => a.status === "Inativo").length} inativos`}
           className="border-l-4 border-l-success"
           onClick={() => navigate("/ti/gestao-ativos")}
         />
