@@ -187,6 +187,8 @@ export function TicketDetailSheet({
   const [activityTab, setActivityTab] = useState<"activity" | "comments">("activity");
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const [technicians, setTechnicians] = useState<string[]>([]);
+  const [currentUserName, setCurrentUserName] = useState("Admin");
+  const [currentUserAvatar, setCurrentUserAvatar] = useState<string | null>(null);
 
   const { comments, loading: commentsLoading, addComment } = useTicketComments(ticket?.id ?? null);
   const { history, loading: historyLoading, logHistory } = useTicketHistory(ticket?.id ?? null);
@@ -195,6 +197,17 @@ export function TicketDetailSheet({
   useEffect(() => {
     supabase.from("profiles").select("full_name").then(({ data }) => {
       if (data) setTechnicians(data.map((p) => p.full_name).filter(Boolean).sort());
+    });
+    // Fetch current user profile
+    supabase.auth.getUser().then(({ data: { user } }) => {
+      if (user) {
+        supabase.from("profiles").select("full_name, avatar_url").eq("id", user.id).single().then(({ data }) => {
+          if (data) {
+            setCurrentUserName(data.full_name || "Admin");
+            setCurrentUserAvatar(data.avatar_url);
+          }
+        });
+      }
     });
   }, []);
 
