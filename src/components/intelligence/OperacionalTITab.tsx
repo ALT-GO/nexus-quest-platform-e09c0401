@@ -587,10 +587,69 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
                 <span className="absolute text-3xl font-bold">{slaCumprido}%</span>
               </div>
               <div className="flex gap-6 text-sm text-muted-foreground">
-                <span>Dentro do SLA: <strong className="text-foreground">{completedTickets.filter((t) => new Date(t.completed_at!).getTime() <= new Date(t.sla_deadline).getTime()).length}</strong></span>
-                <span>Fora do SLA: <strong className="text-foreground">{completedTickets.filter((t) => new Date(t.completed_at!).getTime() > new Date(t.sla_deadline).getTime()).length}</strong></span>
+                <span
+                  className="cursor-pointer hover:text-success transition-colors"
+                  onClick={() => openDrilldown("Dentro do SLA", completedTickets.filter((t) => new Date(t.completed_at!).getTime() <= new Date(t.sla_deadline).getTime()))}
+                >
+                  Dentro do SLA: <strong className="text-foreground">{completedTickets.filter((t) => new Date(t.completed_at!).getTime() <= new Date(t.sla_deadline).getTime()).length}</strong>
+                </span>
+                <span
+                  className="cursor-pointer hover:text-destructive transition-colors"
+                  onClick={() => openDrilldown("Fora do SLA", completedTickets.filter((t) => new Date(t.completed_at!).getTime() > new Date(t.sla_deadline).getTime()))}
+                >
+                  Fora do SLA: <strong className="text-foreground">{completedTickets.filter((t) => new Date(t.completed_at!).getTime() > new Date(t.sla_deadline).getTime()).length}</strong>
+                </span>
               </div>
             </div>
+            {/* Lista resumida dos chamados por SLA */}
+            {completedTickets.length > 0 && (
+              <div className="grid grid-cols-2 gap-4 border-t pt-4">
+                {/* Dentro do SLA */}
+                <div>
+                  <h4 className="text-xs font-semibold text-success mb-2 flex items-center gap-1">
+                    <CheckCircle2 className="h-3.5 w-3.5" /> Dentro do SLA
+                  </h4>
+                  <div className="space-y-1 max-h-[180px] overflow-y-auto pr-1">
+                    {completedTickets.filter((t) => new Date(t.completed_at!).getTime() <= new Date(t.sla_deadline).getTime()).length === 0 ? (
+                      <p className="text-xs text-muted-foreground">Nenhum</p>
+                    ) : (
+                      completedTickets.filter((t) => new Date(t.completed_at!).getTime() <= new Date(t.sla_deadline).getTime()).map((t) => (
+                        <div
+                          key={t.id}
+                          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-accent/50 cursor-pointer transition-colors"
+                          onClick={() => { navigate(`/ti/service-desk?ticket=${t.id}`); }}
+                        >
+                          <span className="font-mono text-muted-foreground shrink-0">{t.ticket_number}</span>
+                          <span className="truncate font-medium">{t.title}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+                {/* Fora do SLA */}
+                <div>
+                  <h4 className="text-xs font-semibold text-destructive mb-2 flex items-center gap-1">
+                    <AlertTriangle className="h-3.5 w-3.5" /> Fora do SLA
+                  </h4>
+                  <div className="space-y-1 max-h-[180px] overflow-y-auto pr-1">
+                    {completedTickets.filter((t) => new Date(t.completed_at!).getTime() > new Date(t.sla_deadline).getTime()).length === 0 ? (
+                      <p className="text-xs text-muted-foreground">Nenhum</p>
+                    ) : (
+                      completedTickets.filter((t) => new Date(t.completed_at!).getTime() > new Date(t.sla_deadline).getTime()).map((t) => (
+                        <div
+                          key={t.id}
+                          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-accent/50 cursor-pointer transition-colors"
+                          onClick={() => { navigate(`/ti/service-desk?ticket=${t.id}`); }}
+                        >
+                          <span className="font-mono text-muted-foreground shrink-0">{t.ticket_number}</span>
+                          <span className="truncate font-medium">{t.title}</span>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                </div>
+              </div>
+            )}
           </CardContent>
         </Card>
 
