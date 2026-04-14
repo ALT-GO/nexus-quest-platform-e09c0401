@@ -443,7 +443,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
               <div className="h-[220px] w-[220px]">
                 <ResponsiveContainer width="100%" height="100%">
                   <PieChart>
-                    <Pie data={ticketsByCategory} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value">
+                    <Pie data={ticketsByCategory} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value" className="cursor-pointer" onClick={(_: any, idx: number) => handleCategoryClick(ticketsByCategory[idx])}>
                       {ticketsByCategory.map((entry, i) => <Cell key={i} fill={entry.color} />)}
                     </Pie>
                     <Tooltip contentStyle={tooltipStyle} formatter={(value: number, _: string, props: any) => [value, props.payload.fullName]} />
