@@ -451,6 +451,10 @@ function CategoryStockTable({
         return colSortDir === "asc" ? cmp : -cmp;
       })
     : applySorting(filtered, stockSortKey, stockSortDir);
+
+  const handleDragStart = (idx: number) => { dragIdx.current = idx; };
+  const handleDragOver = (e: React.DragEvent, _idx: number) => { e.preventDefault(); };
+  const handleDrop = (toIdx: number) => {
     if (dragIdx.current !== null && dragIdx.current !== toIdx) {
       reorderColumns(dragIdx.current, toIdx);
     }
