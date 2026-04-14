@@ -163,7 +163,7 @@ interface TicketDetailSheetProps {
   getAsset: (id: string) => HardwareAsset | undefined;
   onLinkAsset: (ticketId: string, assetId: string) => void;
   onStatusChange: (ticketId: string, newStatusId: string) => void;
-  onUpdateTicket: (id: string, updates: Partial<Pick<Ticket, "title" | "description" | "assignee" | "priority" | "category">>) => Promise<boolean>;
+  onUpdateTicket: (id: string, updates: Partial<Pick<Ticket, "title" | "description" | "assignee" | "priority" | "category" | "sla_deadline">>) => Promise<boolean>;
 }
 
 const progressConfig = [
@@ -567,7 +567,18 @@ export function TicketDetailSheet({
               </PropRow>
 
               <PropRow icon={Clock} label="Vencimento SLA">
-                <span className="text-sm">{format(new Date(ticket.sla_deadline), "dd/MM/yyyy HH:mm", { locale: ptBR })}</span>
+                <input
+                  type="datetime-local"
+                  className="text-sm bg-transparent border-none outline-none cursor-pointer hover:bg-muted rounded px-1 py-0.5 transition-colors w-auto"
+                  value={format(new Date(ticket.sla_deadline), "yyyy-MM-dd'T'HH:mm")}
+                  onChange={async (e) => {
+                    if (!e.target.value) return;
+                    const newDeadline = new Date(e.target.value).toISOString();
+                    await onUpdateTicket(ticket.id, { sla_deadline: newDeadline } as any);
+                    await logHistory("field_change", `Vencimento SLA alterado para ${format(new Date(e.target.value), "dd/MM/yyyy HH:mm", { locale: ptBR })}`, "Sistema");
+                    toast.success("Vencimento SLA atualizado");
+                  }}
+                />
               </PropRow>
 
               {/* Requester */}
