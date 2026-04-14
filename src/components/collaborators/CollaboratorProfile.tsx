@@ -7,7 +7,7 @@ import {
 } from "@/components/ui/table";
 import { InlineCellEditor } from "@/components/assets/InlineCellEditor";
 import { StatusSelectCell } from "@/components/collaborators/StatusSelectCell";
-import { ArrowLeft, FileDown, Laptop, Smartphone, Phone, FileText, Loader2, FileUp, Eye, Tablet, Mouse, MoreHorizontal, Unlink } from "lucide-react";
+import { ArrowLeft, FileDown, Laptop, Smartphone, Phone, FileText, Loader2, FileUp, Eye, Tablet, Mouse, MoreHorizontal, Unlink, Pencil } from "lucide-react";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
@@ -20,6 +20,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useState } from "react";
 import { StockDetailDialog } from "@/components/collaborators/StockDetailDialog";
+import { EditCollaboratorDialog } from "@/components/collaborators/EditCollaboratorDialog";
 
 interface Props {
   name: string;
