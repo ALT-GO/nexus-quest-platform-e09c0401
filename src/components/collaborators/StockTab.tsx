@@ -129,7 +129,7 @@ function AssignDialog({ asset, onAssigned }: { asset: CollaboratorAsset; onAssig
       status: asset.category === "licencas" ? "Ativo" : "Em uso",
       updated_at: new Date().toISOString(),
     }).eq("id", asset.id);
-    toast.success(`Ativo ${asset.asset_code} vinculado a ${name.trim()}`);
+    toast.success(`Ativo vinculado a ${name.trim()}`);
     setSaving(false);
     setName("");
     setOpen(false);
@@ -145,7 +145,7 @@ function AssignDialog({ asset, onAssigned }: { asset: CollaboratorAsset; onAssig
       </DialogTrigger>
       <DialogContent className="sm:max-w-sm">
         <DialogHeader><DialogTitle>Vincular ativo a colaborador</DialogTitle></DialogHeader>
-        <p className="text-sm text-muted-foreground">{asset.asset_code} — {asset.model || asset.licenca || asset.numero || "Sem nome"}</p>
+        <p className="text-sm text-muted-foreground">{asset.model || asset.licenca || asset.numero || "Sem nome"}</p>
         <div className="space-y-3 pt-2">
           <div className="relative" ref={dropdownRef}>
             <Input
