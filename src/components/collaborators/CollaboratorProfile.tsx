@@ -389,6 +389,12 @@ export function CollaboratorProfile({ name, onBack, onNameChange }: Props) {
     );
   }
 
+  // Extract current collaborator info from first asset
+  const firstAsset = assets[0];
+  const currentCargo = (firstAsset as any)?.cargo || "";
+  const currentDepartamento = (firstAsset as any)?.sector || "";
+  const currentGestor = (firstAsset as any)?.gestor || "";
+
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between flex-wrap gap-3">
@@ -400,6 +406,10 @@ export function CollaboratorProfile({ name, onBack, onNameChange }: Props) {
             <h2 className="text-xl font-bold">{name}</h2>
             <p className="text-sm text-muted-foreground">{assets.length} ativo(s) vinculado(s)</p>
           </div>
+          <Button variant="outline" size="sm" className="gap-1.5" onClick={() => setEditDialogOpen(true)}>
+            <Pencil className="h-3.5 w-3.5" />
+            Editar dados
+          </Button>
         </div>
         <div className="flex items-center gap-2">
           <Button variant="outline" onClick={() => openTermDialog("devolucao")} className="gap-2">
