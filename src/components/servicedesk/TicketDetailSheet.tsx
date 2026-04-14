@@ -349,7 +349,7 @@ export function TicketDetailSheet({
   const handleStatusChange = async (newStatusId: string) => {
     const newStatus = statuses.find((s) => s.id === newStatusId);
     onStatusChange(ticket.ticket_number, newStatusId);
-    await logHistory("status_change", `Status alterado para ${newStatus?.nome ?? newStatusId}`, "Admin");
+    await logHistory("status_change", `Status alterado para ${newStatus?.nome ?? newStatusId}`, currentUserName);
   };
 
   const handleSendComment = async () => {
