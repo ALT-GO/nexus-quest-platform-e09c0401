@@ -1,4 +1,5 @@
 import { useState, useMemo, useRef } from "react";
+import { useInventoryStatuses } from "@/hooks/use-inventory-statuses";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { PageHeader } from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -159,8 +160,8 @@ function MensalidadeTab({ category }: { category: "linhas" | "licencas" }) {
     );
   }
 
-  const statusLinhas = ["Em uso", "Disponível"];
-  const statusLicencas = ["Ativo", "Desligado"];
+  const { getStatusesForCategory } = useInventoryStatuses();
+  const statusList = getStatusesForCategory(category);
 
   return (
     <Card>
@@ -198,7 +199,7 @@ function MensalidadeTab({ category }: { category: "linhas" | "licencas" }) {
                   <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="todas">Todos</SelectItem>
-                    {(isLinhas ? statusLinhas : statusLicencas).map((s) => (
+                    {statusList.map((s) => (
                       <SelectItem key={s} value={s}>{s}</SelectItem>
                     ))}
                   </SelectContent>
