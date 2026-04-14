@@ -249,7 +249,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     return Object.entries(map)
       .map(([name, seconds]) => ({ name, hours: Math.round((seconds / 3600) * 10) / 10 }))
       .sort((a, b) => b.hours - a.hours);
-  }, [allTimesheetData, allTickets]);
+  }, [allTimesheetData, mainTickets]);
 
   // ---- NEW: Volume de Chamados por Dia da Semana ----
   const ticketsByDayOfWeek = useMemo(() => {
