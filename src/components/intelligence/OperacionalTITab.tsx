@@ -747,7 +747,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           title="Total de Ativos"
           value={filteredInv.length}
           icon={Monitor}
-          description={`${assetsEmUso + assetsAtivo} ativos · ${assetsInativo} inativos`}
+          description={`${filteredInv.filter((a) => a.status === "Em uso" || a.status === "Ativo").length} ativos · ${filteredInv.filter((a) => a.status === "Inativo").length} inativos`}
           className="border-l-4 border-l-success"
           onClick={() => navigate("/ti/gestao-ativos")}
         />
