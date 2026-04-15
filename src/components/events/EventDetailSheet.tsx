@@ -342,6 +342,37 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
 
             <Separator />
 
+            {/* ===== MATERIAIS VINCULADOS ===== */}
+            {(() => {
+              const linkedMats = (materials ?? []).filter(m => m.linked_event_id === event.id);
+              if (linkedMats.length === 0) return null;
+              return (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <Package className="h-4 w-4 text-primary" />
+                    Materiais Vinculados ({linkedMats.length})
+                  </h4>
+                  <div className="space-y-1.5">
+                    {linkedMats.map((m) => (
+                      <div key={m.id} className="flex items-center gap-3 p-2 rounded-lg border text-sm">
+                        <Package className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="flex-1 truncate font-medium">{m.name}</span>
+                        {m.budget > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {m.budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          </span>
+                        )}
+                        <Badge variant="outline" className="text-[9px]">
+                          {m.status === "planning" ? "Planejamento" : m.status === "purchasing" ? "Compra" : m.status === "delivered" ? "Entregue" : "Distribuído"}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                  <Separator />
+                </div>
+              );
+            })()}
+
             {/* ===== SUBTASKS / ETAPAS DO EVENTO ===== */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
