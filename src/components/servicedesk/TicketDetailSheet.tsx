@@ -185,6 +185,7 @@ export function TicketDetailSheet({
   const [showDevolutionChecklist, setShowDevolutionChecklist] = useState(false);
   const [hideEmpty, setHideEmpty] = useState(false);
   const [activityTab, setActivityTab] = useState<"activity" | "comments">("comments");
+  const [mobileView, setMobileView] = useState<"details" | "activity">("details");
   const commentsEndRef = useRef<HTMLDivElement>(null);
   const [technicians, setTechnicians] = useState<{ name: string; avatar_url: string | null }[]>([]);
   const [currentUserName, setCurrentUserName] = useState("Admin");
@@ -385,10 +386,27 @@ export function TicketDetailSheet({
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
-      <SheetContent side="right" className="w-full sm:max-w-[900px] p-0 flex flex-row gap-0 overflow-hidden">
+      <SheetContent side="right" className="w-full sm:max-w-[900px] p-0 flex flex-col sm:flex-row gap-0 overflow-hidden">
+        {/* ─── Mobile Tab Bar ─── */}
+        <div className="flex sm:hidden border-b bg-muted/30 shrink-0">
+          <button
+            className={cn("flex-1 py-2.5 text-sm font-medium transition-colors", mobileView === "details" ? "text-primary border-b-2 border-primary" : "text-muted-foreground")}
+            onClick={() => setMobileView("details")}
+          >
+            Detalhes
+          </button>
+          <button
+            className={cn("flex-1 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-1.5", mobileView === "activity" ? "text-primary border-b-2 border-primary" : "text-muted-foreground")}
+            onClick={() => setMobileView("activity")}
+          >
+            <MessageSquare className="h-3.5 w-3.5" />
+            Atividade
+          </button>
+        </div>
+
         {/* ─── LEFT: Main Content ─── */}
-        <ScrollArea className="flex-1 min-w-0">
-          <div className="p-6 space-y-1">
+        <ScrollArea className={cn("flex-1 min-w-0", mobileView !== "details" && "hidden sm:block")}>
+          <div className="p-4 sm:p-6 space-y-1">
             {/* Timer reminder banner */}
             <TimerReminderBanner
               entityId={ticket.id}
@@ -717,7 +735,7 @@ export function TicketDetailSheet({
         </ScrollArea>
 
         {/* ─── RIGHT: Activity Sidebar ─── */}
-        <div className="w-[320px] shrink-0 border-l flex flex-col bg-muted/20">
+        <div className={cn("w-full sm:w-[320px] shrink-0 sm:border-l flex flex-col bg-muted/20 overflow-hidden", mobileView !== "activity" && "hidden sm:flex")}>
           <div className="flex items-center justify-between px-4 py-3 border-b">
             <h3 className="text-sm font-semibold">Atividade</h3>
             <div className="flex items-center gap-1">
