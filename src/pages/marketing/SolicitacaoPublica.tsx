@@ -41,6 +41,7 @@ export default function SolicitacaoPublica() {
     nome_cliente: "",
     endereco: "",
   });
+  const [attachmentLinks, setAttachmentLinks] = useState<string[]>([]);
 
   const update = (field: string, value: string) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -87,6 +88,7 @@ export default function SolicitacaoPublica() {
           request_type: formData.request_type,
           description: formData.description,
           extra_fields,
+          attachment_links: attachmentLinks,
         },
       });
 
