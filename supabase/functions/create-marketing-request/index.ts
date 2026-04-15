@@ -27,7 +27,7 @@ Deno.serve(async (req) => {
     );
 
     const body = await req.json();
-    const { requester_name, request_type, description, extra_fields } = body;
+    const { requester_name, request_type, description, extra_fields, attachment_links } = body;
 
     if (!requester_name || !request_type || !description) {
       return new Response(JSON.stringify({ error: "Campos obrigatórios faltando" }), {
@@ -137,6 +137,18 @@ Deno.serve(async (req) => {
 
     if (notifications.length > 0) {
       await supabase.from("notifications").insert(notifications);
+    }
+
+    // Save attachment links
+    if (attachment_links && Array.isArray(attachment_links) && attachment_links.length > 0) {
+      const attachments = attachment_links.map((link: string) => ({
+        entity_type: "marketing_task",
+        entity_id: task!.id,
+        file_name: link.split("/").pop() || "Arquivo",
+        file_url: link,
+        added_by: requester_name,
+      }));
+      await supabase.from("attachments").insert(attachments);
     }
 
     return new Response(
