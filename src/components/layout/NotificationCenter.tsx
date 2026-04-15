@@ -50,13 +50,13 @@ export function NotificationCenter() {
   const fetchNotifications = useCallback(async () => {
     if (!user) return;
     const { data } = await supabase
-      .from("notifications" as any)
+      .from("notifications")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(50);
-    setNotifications(((data as unknown) as Notification[]) || []);
-  }, [user]);
+    setNotifications((data as Notification[]) || []);
+  }, [user?.id]);
 
   useEffect(() => {
     fetchNotifications();
@@ -84,7 +84,7 @@ export function NotificationCenter() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user?.id]);
 
   // Filter notifications by team scope
   const filteredNotifications = notifications.filter((n) => {
@@ -101,37 +101,36 @@ export function NotificationCenter() {
   const unreadCount = filteredNotifications.filter((n) => !n.read).length;
 
   const markAsRead = async (id: string) => {
-    await supabase
-      .from("notifications" as any)
-      .update({ read: true })
-      .eq("id", id as any);
     setNotifications((prev) =>
       prev.map((n) => (n.id === id ? { ...n, read: true } : n))
     );
+    await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("id", id);
   };
 
   const markAllAsRead = async () => {
     if (!user) return;
-    const ids = filteredNotifications.filter((n) => !n.read).map((n) => n.id);
-    if (ids.length === 0) return;
-    await supabase
-      .from("notifications" as any)
-      .update({ read: true })
-      .eq("user_id", user.id as any)
-      .eq("read", false as any);
+    const hasUnread = filteredNotifications.some((n) => !n.read);
+    if (!hasUnread) return;
     setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
+    await supabase
+      .from("notifications")
+      .update({ read: true })
+      .eq("user_id", user.id)
+      .eq("read", false);
   };
 
   const clearAllNotifications = async () => {
     if (!user) return;
-    const ids = filteredNotifications.map((n) => n.id);
-    if (ids.length === 0) return;
-    await supabase
-      .from("notifications" as any)
-      .delete()
-      .eq("user_id", user.id as any);
+    if (notifications.length === 0) return;
     setNotifications([]);
     toast.success("Todas as notificações foram removidas");
+    await supabase
+      .from("notifications")
+      .delete()
+      .eq("user_id", user.id);
   };
 
   const handleClick = async (notif: Notification) => {
