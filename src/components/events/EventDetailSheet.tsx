@@ -11,7 +11,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   CalendarIcon, MapPin, DollarSign, Users, Plus, Flag,
   CheckCircle2, Clock, AlertTriangle, Trash2, ListTodo,
-  Circle, ArrowUpRight, Share2, Copy,
+  Circle, ArrowUpRight, Share2, Package,
 } from "lucide-react";
 import { format, isPast, isToday } from "date-fns";
 import { ptBR } from "date-fns/locale";
@@ -21,6 +21,7 @@ import { useMarketingTasks, useCreateMarketingTask, MarketingTask, useMarketingS
 import { MarketingTaskDetailSheet } from "@/components/marketing/MarketingTaskDetailSheet";
 import { NewMarketingTaskDialog } from "@/components/marketing/NewMarketingTaskDialog";
 import { useMarketingSprints } from "@/hooks/use-sprints";
+import { useMarketingMaterials, MarketingMaterial } from "@/hooks/use-materials";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfileAvatars } from "@/hooks/use-profile-avatars";
 import { toast } from "sonner";
@@ -49,6 +50,7 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
   const { data: allTasks } = useMarketingTasks();
   const { data: stages } = useMarketingStages();
   const { data: sprints } = useMarketingSprints();
+  const { data: materials } = useMarketingMaterials();
   const { data: avatars } = useProfileAvatars();
   const [teamMembers, setTeamMembers] = useState<{ id: string; name: string }[]>([]);
   const [newTaskDialogOpen, setNewTaskDialogOpen] = useState(false);
@@ -339,6 +341,37 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
             </div>
 
             <Separator />
+
+            {/* ===== MATERIAIS VINCULADOS ===== */}
+            {(() => {
+              const linkedMats = (materials ?? []).filter(m => m.linked_event_id === event.id);
+              if (linkedMats.length === 0) return null;
+              return (
+                <div className="space-y-3">
+                  <h4 className="text-sm font-medium flex items-center gap-2">
+                    <Package className="h-4 w-4 text-primary" />
+                    Materiais Vinculados ({linkedMats.length})
+                  </h4>
+                  <div className="space-y-1.5">
+                    {linkedMats.map((m) => (
+                      <div key={m.id} className="flex items-center gap-3 p-2 rounded-lg border text-sm">
+                        <Package className="h-4 w-4 text-muted-foreground shrink-0" />
+                        <span className="flex-1 truncate font-medium">{m.name}</span>
+                        {m.budget > 0 && (
+                          <span className="text-xs text-muted-foreground">
+                            {m.budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                          </span>
+                        )}
+                        <Badge variant="outline" className="text-[9px]">
+                          {m.status === "planning" ? "Planejamento" : m.status === "purchasing" ? "Compra" : m.status === "delivered" ? "Entregue" : "Distribuído"}
+                        </Badge>
+                      </div>
+                    ))}
+                  </div>
+                  <Separator />
+                </div>
+              );
+            })()}
 
             {/* ===== SUBTASKS / ETAPAS DO EVENTO ===== */}
             <div className="space-y-4">

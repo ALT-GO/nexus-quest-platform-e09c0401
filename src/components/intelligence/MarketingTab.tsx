@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchMarketingTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
 import { useMarketingTasks, MarketingTask, useMarketingStages } from "@/hooks/use-marketing";
 import { useMarketingEvents } from "@/hooks/use-events";
+import { useMarketingMaterials } from "@/hooks/use-materials";
 import { useMarketingSprints } from "@/hooks/use-sprints";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -14,7 +15,7 @@ import { UserAvatar } from "@/components/ui/user-avatar";
 import { useProfileAvatars } from "@/hooks/use-profile-avatars";
 import {
   CheckCircle2, Clock, ListTodo, AlertTriangle, Target, TrendingUp,
-  Timer, Users, CalendarIcon, DollarSign, Flag, Zap, BarChart3, Milestone,
+  Timer, Users, CalendarIcon, DollarSign, Flag, Zap, BarChart3, Milestone, Package,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
@@ -52,6 +53,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   const { data: allTasks } = useMarketingTasks();
   const { data: stages } = useMarketingStages();
   const { data: events } = useMarketingEvents();
+  const { data: materials } = useMarketingMaterials();
   const { data: sprints } = useMarketingSprints();
   const { data: avatars } = useProfileAvatars();
   const [mktTimesheetTotals, setMktTimesheetTotals] = useState<Record<string, number>>({});
@@ -283,6 +285,11 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
     return new Date(t.due_date) < new Date();
   }).length;
 
+  // ── Materials Stats ──
+  const totalMatBudget = materials?.reduce((sum, m) => sum + (m.budget || 0), 0) ?? 0;
+  const totalMatActualCost = materials?.reduce((sum, m) => sum + (m.actual_cost || 0), 0) ?? 0;
+  const matBudgetDiff = totalMatBudget - totalMatActualCost;
+  const matWithCost = materials?.filter((m) => m.actual_cost != null).length ?? 0;
   return (
     <div className="space-y-8">
       <ActiveTimersCard />
@@ -531,6 +538,94 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
           </div>
         )}
       </div>
+
+      {/* ═══════════ SEÇÃO: BRINDES & MATERIAIS ═══════════ */}
+      {(materials?.length ?? 0) > 0 && (
+        <div className="space-y-4">
+          <div className="flex items-center gap-2">
+            <Package className="h-5 w-5 text-primary" />
+            <h2 className="text-lg font-semibold">Brindes & Materiais</h2>
+          </div>
+          <Separator />
+
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              title="Total de Materiais"
+              value={materials?.length ?? 0}
+              icon={Package}
+              description={`${materials?.filter(m => m.status === "delivered" || m.status === "distributed").length ?? 0} entregue(s)`}
+              onClick={() => navigate("/marketing/eventos")}
+            />
+            <StatCard
+              title="Orçamento Total"
+              value={totalMatBudget > 0 ? totalMatBudget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+              icon={DollarSign}
+              description="planejado para materiais"
+              onClick={() => navigate("/marketing/eventos")}
+            />
+            <StatCard
+              title="Valor Real Gasto"
+              value={totalMatActualCost > 0 ? totalMatActualCost.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+              icon={DollarSign}
+              description={`${matWithCost} material(is) com valor real`}
+              onClick={() => navigate("/marketing/eventos")}
+            />
+            <StatCard
+              title={matBudgetDiff >= 0 ? "Economia" : "Excedente"}
+              value={matWithCost > 0 ? Math.abs(matBudgetDiff).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+              icon={TrendingUp}
+              description={matWithCost > 0 ? (matBudgetDiff >= 0 ? "abaixo do orçamento ✓" : "acima do orçamento ⚠") : "sem dados de custo real"}
+              onClick={() => navigate("/marketing/eventos")}
+            />
+          </div>
+
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                <Package className="h-4 w-4 text-muted-foreground" />
+                Materiais ({materials?.length ?? 0})
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {materials?.slice(0, 6).map((m) => {
+                  const linkedEvent = events?.find(e => e.id === m.linked_event_id);
+                  return (
+                    <div key={m.id} className="p-3 rounded-lg border space-y-1 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all" onClick={() => navigate("/marketing/eventos")}>
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="font-medium truncate">{m.name}</span>
+                        <Badge variant="outline" className="text-[10px]">
+                          {m.status === "planning" ? "Planejamento" : m.status === "purchasing" ? "Compra" : m.status === "delivered" ? "Entregue" : "Distribuído"}
+                        </Badge>
+                      </div>
+                      <div className="flex items-center gap-4 text-xs">
+                        {m.budget > 0 && (
+                          <div className="flex items-center gap-1 text-muted-foreground">
+                            <DollarSign className="h-3 w-3" />
+                            <span>Orç: {m.budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                          </div>
+                        )}
+                        {m.actual_cost != null && (
+                          <div className={cn("flex items-center gap-1", m.actual_cost > m.budget ? "text-destructive" : "text-success")}>
+                            <DollarSign className="h-3 w-3" />
+                            <span>Real: {m.actual_cost.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                          </div>
+                        )}
+                        {linkedEvent && (
+                          <div className="flex items-center gap-1 text-primary">
+                            <CalendarIcon className="h-3 w-3" />
+                            <span className="truncate">{linkedEvent.name}</span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* ═══════════ SEÇÃO: TAREFAS ═══════════ */}
       <div className="space-y-4">
