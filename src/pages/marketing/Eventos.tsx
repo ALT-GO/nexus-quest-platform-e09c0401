@@ -206,6 +206,25 @@ export default function Eventos() {
             className="pl-8 h-9 text-sm"
           />
         </div>
+        <SortDropdown options={eventSortOptions} sortKey={sortKey} sortDir={sortDir} onSort={setSort} />
+        <div className="flex items-center border rounded-md">
+          <Button
+            variant={viewMode === "cards" ? "default" : "ghost"}
+            size="sm"
+            className="h-9 rounded-r-none"
+            onClick={() => setViewMode("cards")}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === "calendar" ? "default" : "ghost"}
+            size="sm"
+            className="h-9 rounded-l-none"
+            onClick={() => setViewMode("calendar")}
+          >
+            <CalendarDays className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
