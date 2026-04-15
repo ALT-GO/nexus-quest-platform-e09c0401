@@ -22,6 +22,7 @@ import { useInventoryStatuses } from "@/hooks/use-inventory-statuses";
 import { useState } from "react";
 import { StockDetailDialog } from "@/components/collaborators/StockDetailDialog";
 import { EditCollaboratorDialog } from "@/components/collaborators/EditCollaboratorDialog";
+import { CollaboratorDocuments } from "@/components/collaborators/CollaboratorDocuments";
 
 interface Props {
   name: string;
@@ -439,6 +440,8 @@ export function CollaboratorProfile({ name, onBack, onNameChange }: Props) {
         <AssetSection category="perifericos" assets={perifericos} collaboratorName={name} onUpdate={updateAsset} onDelete={handleDelete} onUnlink={handleUnlink} onRefetch={refetch} />
         <AssetSection category="linhas" assets={linhas} collaboratorName={name} onUpdate={updateAsset} onDelete={handleDelete} onUnlink={handleUnlink} onRefetch={refetch} />
         <AssetSection category="licencas" assets={licencas} collaboratorName={name} onUpdate={updateAsset} onDelete={handleDelete} onUnlink={handleUnlink} onRefetch={refetch} />
+
+        <CollaboratorDocuments collaboratorName={name} />
       </div>
 
       <AssetSelectionDialog

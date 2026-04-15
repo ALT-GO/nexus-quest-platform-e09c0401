@@ -122,6 +122,42 @@ export type Database = {
         }
         Relationships: []
       }
+      collaborator_documents: {
+        Row: {
+          collaborator_name: string
+          created_at: string
+          document_name: string
+          document_type: string
+          document_url: string
+          id: string
+          notes: string | null
+          signed_at: string | null
+          updated_at: string
+        }
+        Insert: {
+          collaborator_name: string
+          created_at?: string
+          document_name?: string
+          document_type?: string
+          document_url: string
+          id?: string
+          notes?: string | null
+          signed_at?: string | null
+          updated_at?: string
+        }
+        Update: {
+          collaborator_name?: string
+          created_at?: string
+          document_name?: string
+          document_type?: string
+          document_url?: string
+          id?: string
+          notes?: string | null
+          signed_at?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       custom_field_values: {
         Row: {
           asset_id: string
