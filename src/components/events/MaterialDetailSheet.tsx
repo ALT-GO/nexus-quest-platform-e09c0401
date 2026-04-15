@@ -182,8 +182,17 @@ export function MaterialDetailSheet({ material, open, onOpenChange, events }: Pr
                   type="number" min={0} step="0.01" placeholder="0,00"
                   value={localActualCost}
                   onChange={(e) => {
-                    setLocalActualCost(e.target.value);
-                    debouncedUpdate("actual_cost", e.target.value ? parseFloat(e.target.value) : null);
+                    const val = e.target.value;
+                    setLocalActualCost(val);
+                    debouncedUpdate("actual_cost", val ? parseFloat(val) : null);
+                    // Auto-calc unit_cost = actual_cost / total_quantity
+                    const qty = parseFloat(localTotalQty);
+                    if (val && qty > 0) {
+                      const computed = parseFloat(val) / qty;
+                      const rounded = Math.round(computed * 100) / 100;
+                      setLocalUnitCost(String(rounded));
+                      debouncedUpdate("unit_cost", rounded);
+                    }
                   }}
                   className="h-7 w-full text-sm"
                 />
@@ -213,8 +222,17 @@ export function MaterialDetailSheet({ material, open, onOpenChange, events }: Pr
                   type="number" min={0} step="0.01" placeholder="0,00"
                   value={localUnitCost}
                   onChange={(e) => {
-                    setLocalUnitCost(e.target.value);
-                    debouncedUpdate("unit_cost", e.target.value ? parseFloat(e.target.value) : null);
+                    const val = e.target.value;
+                    setLocalUnitCost(val);
+                    debouncedUpdate("unit_cost", val ? parseFloat(val) : null);
+                    // Auto-calc actual_cost = unit_cost * total_quantity
+                    const qty = parseFloat(localTotalQty);
+                    if (val && qty > 0) {
+                      const computed = parseFloat(val) * qty;
+                      const rounded = Math.round(computed * 100) / 100;
+                      setLocalActualCost(String(rounded));
+                      debouncedUpdate("actual_cost", rounded);
+                    }
                   }}
                   className="h-7 text-sm"
                 />
@@ -225,8 +243,27 @@ export function MaterialDetailSheet({ material, open, onOpenChange, events }: Pr
                   type="number" min={0} step="1" placeholder="0"
                   value={localTotalQty}
                   onChange={(e) => {
-                    setLocalTotalQty(e.target.value);
-                    debouncedUpdate("total_quantity", e.target.value ? parseInt(e.target.value) : null);
+                    const val = e.target.value;
+                    setLocalTotalQty(val);
+                    debouncedUpdate("total_quantity", val ? parseInt(val) : null);
+                    const qty = parseFloat(val);
+                    if (qty > 0) {
+                      const uc = parseFloat(localUnitCost);
+                      const ac = parseFloat(localActualCost);
+                      if (uc > 0) {
+                        // unit_cost exists → calc actual_cost
+                        const computed = uc * qty;
+                        const rounded = Math.round(computed * 100) / 100;
+                        setLocalActualCost(String(rounded));
+                        debouncedUpdate("actual_cost", rounded);
+                      } else if (ac > 0) {
+                        // actual_cost exists → calc unit_cost
+                        const computed = ac / qty;
+                        const rounded = Math.round(computed * 100) / 100;
+                        setLocalUnitCost(String(rounded));
+                        debouncedUpdate("unit_cost", rounded);
+                      }
+                    }
                   }}
                   className="h-7 text-sm"
                 />
