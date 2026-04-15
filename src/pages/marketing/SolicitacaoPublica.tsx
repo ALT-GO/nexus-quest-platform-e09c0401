@@ -14,6 +14,7 @@ import {
 import { Palette, CheckCircle2, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { PublicAttachmentLinks } from "@/components/shared/PublicAttachmentLinks";
 
 const requestTypes = [
   "Assinatura de e-mail",
