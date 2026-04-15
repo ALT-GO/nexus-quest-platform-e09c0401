@@ -271,7 +271,7 @@ export default function Colaboradores() {
 
   return (
     <AppLayout>
-      <div className="flex items-center justify-between flex-wrap gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between flex-wrap">
         <PageHeader
           title="Colaboradores"
           description="Gestão de inventário e ativos por colaborador"
