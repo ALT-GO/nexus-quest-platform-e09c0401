@@ -231,6 +231,65 @@ export default function Eventos() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map(i => <Skeleton key={i} className="h-52" />)}
         </div>
+      ) : viewMode === "calendar" ? (
+        <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-6">
+          <Card className="w-fit h-fit">
+            <CardContent className="p-3">
+              <Calendar
+                mode="single"
+                month={calendarMonth}
+                onMonthChange={setCalendarMonth}
+                locale={ptBR}
+                className="pointer-events-auto"
+                modifiers={{ hasEvent: eventDates }}
+                modifiersClassNames={{ hasEvent: "bg-primary/20 text-primary font-bold" }}
+                onDayClick={(day) => {
+                  const eventsOnDay = (events ?? []).filter(e => {
+                    const start = parseISO(e.start_date);
+                    const end = parseISO(e.end_date);
+                    return day >= new Date(start.getFullYear(), start.getMonth(), start.getDate()) &&
+                           day <= new Date(end.getFullYear(), end.getMonth(), end.getDate());
+                  });
+                  if (eventsOnDay.length === 1) handleOpenDetail(eventsOnDay[0]);
+                }}
+              />
+            </CardContent>
+          </Card>
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">
+              Eventos em {format(calendarMonth, "MMMM yyyy", { locale: ptBR })}
+            </h3>
+            {(() => {
+              const monthEvents = filteredEvents.filter(e => {
+                const start = parseISO(e.start_date);
+                const end = parseISO(e.end_date);
+                return isSameMonth(start, calendarMonth) || isSameMonth(end, calendarMonth);
+              });
+              if (monthEvents.length === 0) return (
+                <p className="text-sm text-muted-foreground py-8 text-center">Nenhum evento neste mês</p>
+              );
+              return monthEvents.map(event => {
+                const st = statusLabels[event.status] || statusLabels.planning;
+                return (
+                  <Card key={event.id} className="cursor-pointer hover:shadow-md transition-all" onClick={() => handleOpenDetail(event)}>
+                    <CardContent className="p-3 flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <CalendarIcon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{event.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(parseISO(event.start_date), "dd MMM", { locale: ptBR })} — {format(parseISO(event.end_date), "dd MMM", { locale: ptBR })}
+                        </p>
+                      </div>
+                      <Badge variant="outline" className={cn("text-[10px] shrink-0", st.color)}>{st.label}</Badge>
+                    </CardContent>
+                  </Card>
+                );
+              });
+            })()}
+          </div>
+        </div>
       ) : filteredEvents.length === 0 ? (
         <div className="text-center py-20 text-muted-foreground">
           <CalendarIcon className="h-12 w-12 mx-auto mb-3 opacity-30" />
