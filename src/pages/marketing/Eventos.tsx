@@ -9,13 +9,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Plus, Search, CalendarIcon, MapPin, Users, DollarSign,
   MoreVertical, Trash2, Pencil, AlertTriangle, CheckCircle2, Clock,
-  Flag, Share2, Copy,
+  Flag, Share2, Copy, LayoutGrid, CalendarDays,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { format, isSameDay, isSameMonth, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -23,6 +24,15 @@ import { useMarketingEvents, MarketingEvent, useDeleteEvent } from "@/hooks/use-
 import { useMarketingTasks } from "@/hooks/use-marketing";
 import { EventDialog } from "@/components/events/EventDialog";
 import { EventDetailSheet } from "@/components/events/EventDetailSheet";
+import { SortDropdown, usePersistentSort, applySorting, type SortOption } from "@/components/ui/sort-dropdown";
+
+const eventSortOptions: SortOption[] = [
+  { value: "start_date", label: "Data de Início" },
+  { value: "name", label: "Nome" },
+  { value: "priority", label: "Prioridade" },
+  { value: "status", label: "Status" },
+  { value: "budget", label: "Budget" },
+];
 
 const statusLabels: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   planning: { label: "Planejamento", color: "bg-muted text-muted-foreground", icon: Clock },
@@ -47,6 +57,9 @@ export default function Eventos() {
   const [editingEvent, setEditingEvent] = useState<MarketingEvent | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<MarketingEvent | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"cards" | "calendar">("cards");
+  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
+  const { sortKey, sortDir, setSort } = usePersistentSort("eventos-sort", "start_date", "asc");
 
   // Open event from URL query param
   useEffect(() => {
@@ -68,12 +81,31 @@ export default function Eventos() {
     }
   }, [events]);
 
+  const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
+
   const filteredEvents = useMemo(() => {
+    let list = events ?? [];
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(e => e.name.toLowerCase().includes(q) || e.location.toLowerCase().includes(q));
+    }
+    return applySorting(list, sortKey, sortDir, (item, key) => {
+      if (key === "priority") return priorityOrder[item.priority] ?? 99;
+      if (key === "budget") return item.budget ?? 0;
+      return (item as any)[key] ?? "";
+    });
+  }, [events, searchQuery, sortKey, sortDir]);
+
+  // Calendar: dates that have events
+  const eventDates = useMemo(() => {
     if (!events) return [];
-    if (!searchQuery.trim()) return events;
-    const q = searchQuery.toLowerCase();
-    return events.filter(e => e.name.toLowerCase().includes(q) || e.location.toLowerCase().includes(q));
-  }, [events, searchQuery]);
+    return events.map(e => parseISO(e.start_date));
+  }, [events]);
+
+  const eventsForSelectedDate = useMemo(() => {
+    if (!events || !calendarMonth) return [];
+    return filteredEvents;
+  }, [filteredEvents]);
 
   const eventBudgetInfo = useMemo(() => {
     const map: Record<string, { taskCount: number; invested: number }> = {};
@@ -174,11 +206,89 @@ export default function Eventos() {
             className="pl-8 h-9 text-sm"
           />
         </div>
+        <SortDropdown options={eventSortOptions} sortKey={sortKey} sortDir={sortDir} onSort={setSort} />
+        <div className="flex items-center border rounded-md">
+          <Button
+            variant={viewMode === "cards" ? "default" : "ghost"}
+            size="sm"
+            className="h-9 rounded-r-none"
+            onClick={() => setViewMode("cards")}
+          >
+            <LayoutGrid className="h-4 w-4" />
+          </Button>
+          <Button
+            variant={viewMode === "calendar" ? "default" : "ghost"}
+            size="sm"
+            className="h-9 rounded-l-none"
+            onClick={() => setViewMode("calendar")}
+          >
+            <CalendarDays className="h-4 w-4" />
+          </Button>
+        </div>
       </div>
 
       {isLoading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {[1, 2, 3].map(i => <Skeleton key={i} className="h-52" />)}
+        </div>
+      ) : viewMode === "calendar" ? (
+        <div className="grid grid-cols-1 lg:grid-cols-[auto_1fr] gap-6">
+          <Card className="w-fit h-fit">
+            <CardContent className="p-3">
+              <Calendar
+                mode="single"
+                month={calendarMonth}
+                onMonthChange={setCalendarMonth}
+                locale={ptBR}
+                className="pointer-events-auto"
+                modifiers={{ hasEvent: eventDates }}
+                modifiersClassNames={{ hasEvent: "bg-primary/20 text-primary font-bold" }}
+                onDayClick={(day) => {
+                  const eventsOnDay = (events ?? []).filter(e => {
+                    const start = parseISO(e.start_date);
+                    const end = parseISO(e.end_date);
+                    return day >= new Date(start.getFullYear(), start.getMonth(), start.getDate()) &&
+                           day <= new Date(end.getFullYear(), end.getMonth(), end.getDate());
+                  });
+                  if (eventsOnDay.length === 1) handleOpenDetail(eventsOnDay[0]);
+                }}
+              />
+            </CardContent>
+          </Card>
+          <div className="space-y-2">
+            <h3 className="text-sm font-medium text-muted-foreground mb-2">
+              Eventos em {format(calendarMonth, "MMMM yyyy", { locale: ptBR })}
+            </h3>
+            {(() => {
+              const monthEvents = filteredEvents.filter(e => {
+                const start = parseISO(e.start_date);
+                const end = parseISO(e.end_date);
+                return isSameMonth(start, calendarMonth) || isSameMonth(end, calendarMonth);
+              });
+              if (monthEvents.length === 0) return (
+                <p className="text-sm text-muted-foreground py-8 text-center">Nenhum evento neste mês</p>
+              );
+              return monthEvents.map(event => {
+                const st = statusLabels[event.status] || statusLabels.planning;
+                return (
+                  <Card key={event.id} className="cursor-pointer hover:shadow-md transition-all" onClick={() => handleOpenDetail(event)}>
+                    <CardContent className="p-3 flex items-center gap-3">
+                      <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                        <CalendarIcon className="h-5 w-5 text-primary" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="font-medium text-sm truncate">{event.name}</p>
+                        <p className="text-xs text-muted-foreground">
+                          {format(parseISO(event.start_date), "dd MMM", { locale: ptBR })} — {format(parseISO(event.end_date), "dd MMM", { locale: ptBR })}
+                        </p>
+                      </div>
+                      <Badge variant="outline" className={cn("text-[10px] shrink-0", st.color)}>{st.label}</Badge>
+                    </CardContent>
+                  </Card>
+                );
+              });
+            })()}
+          </div>
         </div>
       ) : filteredEvents.length === 0 ? (
         <div className="text-center py-20 text-muted-foreground">
