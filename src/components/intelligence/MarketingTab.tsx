@@ -53,6 +53,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   const { data: allTasks } = useMarketingTasks();
   const { data: stages } = useMarketingStages();
   const { data: events } = useMarketingEvents();
+  const { data: materials } = useMarketingMaterials();
   const { data: sprints } = useMarketingSprints();
   const { data: avatars } = useProfileAvatars();
   const [mktTimesheetTotals, setMktTimesheetTotals] = useState<Record<string, number>>({});
