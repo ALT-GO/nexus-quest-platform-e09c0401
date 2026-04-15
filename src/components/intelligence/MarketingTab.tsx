@@ -209,11 +209,23 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   // ── 13. Eventos Ativos / Próximos ──
   const activeEvents = events?.filter((e) => e.status === "active" || e.status === "planning") ?? [];
 
+  // ── Helper: allocated material cost per event ──
+  const allocatedCostByEvent = useMemo(() => {
+    const map: Record<string, number> = {};
+    (allAllocations ?? []).forEach(a => {
+      map[a.event_id] = (map[a.event_id] || 0) + (a.allocated_value || 0);
+    });
+    return map;
+  }, [allAllocations]);
+
+  const getEventTotalCost = (e: { id: string; actual_cost: number | null; budget?: number }) =>
+    (e.actual_cost ?? 0) + (allocatedCostByEvent[e.id] || 0);
+
   // ── 14. Budget Total vs Real ──
   const totalBudget = events?.reduce((sum, e) => sum + (e.budget || 0), 0) ?? 0;
-  const totalActualCost = events?.reduce((sum, e) => sum + (e.actual_cost || 0), 0) ?? 0;
+  const totalActualCost = events?.reduce((sum, e) => sum + getEventTotalCost(e), 0) ?? 0;
   const budgetDifference = totalBudget - totalActualCost;
-  const eventsWithActualCost = events?.filter((e) => e.actual_cost != null).length ?? 0;
+  const eventsWithActualCost = events?.filter((e) => e.actual_cost != null || (allocatedCostByEvent[e.id] || 0) > 0).length ?? 0;
 
   // ── 15. Tarefas por Evento ──
   const tasksByEvent = useMemo(() => {
@@ -248,27 +260,27 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
         custoLead: e.leads_gerados! > 0 && e.budget > 0
           ? Math.round((e.budget / e.leads_gerados!) * 100) / 100
           : 0,
-        custoLeadReal: e.leads_gerados! > 0 && e.actual_cost
-          ? Math.round((e.actual_cost / e.leads_gerados!) * 100) / 100
+        custoLeadReal: e.leads_gerados! > 0
+          ? Math.round((getEventTotalCost(e) / e.leads_gerados!) * 100) / 100
           : 0,
         budget: e.budget || 0,
       }))
       .sort((a, b) => b.leads - a.leads);
-  }, [events]);
+  }, [events, allocatedCostByEvent]);
 
   // ── 19. Budget Planejado vs Real por Evento ──
   const budgetVsRealData = useMemo(() => {
     if (!events) return [];
     return events
-      .filter((e) => e.budget > 0 || (e.actual_cost != null && e.actual_cost > 0))
+      .filter((e) => e.budget > 0 || getEventTotalCost(e) > 0)
       .map((e) => ({
         name: e.name.length > 18 ? e.name.substring(0, 18) + "…" : e.name,
         planejado: e.budget || 0,
-        real: e.actual_cost ?? 0,
-        diff: (e.budget || 0) - (e.actual_cost ?? 0),
+        real: getEventTotalCost(e),
+        diff: (e.budget || 0) - getEventTotalCost(e),
       }))
       .sort((a, b) => b.planejado - a.planejado);
-  }, [events]);
+  }, [events, allocatedCostByEvent]);
 
   // ── Priority distribution ──
   const byPriority = useMemo(() => {
@@ -438,7 +450,8 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
                   {activeEvents.slice(0, 5).map((e) => {
                     const eventTasks = (allTasks ?? []).filter((t: any) => t.event_id === e.id);
                     const completedEvTasks = eventTasks.filter((t) => t.progress === "Concluído").length;
-                    const variance = e.actual_cost != null ? (e.budget || 0) - e.actual_cost : null;
+                    const evTotalCost = getEventTotalCost(e);
+                    const variance = evTotalCost > 0 ? (e.budget || 0) - evTotalCost : null;
                     return (
                       <div key={e.id} className="p-3 rounded-lg border space-y-2 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all" onClick={() => navigate("/marketing/eventos")}>
                         <div className="flex items-center justify-between text-sm">
@@ -460,10 +473,10 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
                               <span>Orç: {e.budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
                             </div>
                           )}
-                          {e.actual_cost != null && (
+                          {evTotalCost > 0 && (
                             <div className={cn("flex items-center gap-1", variance != null && variance < 0 ? "text-destructive" : "text-success")}>
                               <DollarSign className="h-3 w-3" />
-                              <span>Real: {e.actual_cost.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                              <span>Real: {evTotalCost.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
                             </div>
                           )}
                         </div>
