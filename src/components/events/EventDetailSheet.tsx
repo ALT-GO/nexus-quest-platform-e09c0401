@@ -56,6 +56,29 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
   const [taskDetailOpen, setTaskDetailOpen] = useState(false);
   const [newCheckItem, setNewCheckItem] = useState("");
 
+  // Local state for debounced fields
+  const [localActualCost, setLocalActualCost] = useState<string>("");
+  const [localLeads, setLocalLeads] = useState<string>("");
+  const [localParticipants, setLocalParticipants] = useState<string>("");
+  const debounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  // Sync local state when event changes
+  useEffect(() => {
+    if (event) {
+      setLocalActualCost(event.actual_cost != null ? String(event.actual_cost) : "");
+      setLocalLeads(event.leads_gerados != null ? String(event.leads_gerados) : "");
+      setLocalParticipants(event.notes_participants ?? "");
+    }
+  }, [event?.id, event?.actual_cost, event?.leads_gerados, event?.notes_participants]);
+
+  const debouncedUpdate = useCallback((field: string, value: any) => {
+    if (!event) return;
+    if (debounceRef.current[field]) clearTimeout(debounceRef.current[field]);
+    debounceRef.current[field] = setTimeout(() => {
+      updateEvent.mutate({ id: event.id, [field]: value } as any);
+    }, 600);
+  }, [event, updateEvent]);
+
   useEffect(() => {
     supabase.from("profiles").select("id, full_name").then(({ data }) => {
       if (data) setTeamMembers(data.map(p => ({ id: p.id, name: p.full_name })));
