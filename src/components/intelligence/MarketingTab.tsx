@@ -260,13 +260,13 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
         custoLead: e.leads_gerados! > 0 && e.budget > 0
           ? Math.round((e.budget / e.leads_gerados!) * 100) / 100
           : 0,
-        custoLeadReal: e.leads_gerados! > 0 && e.actual_cost
-          ? Math.round((e.actual_cost / e.leads_gerados!) * 100) / 100
+        custoLeadReal: e.leads_gerados! > 0
+          ? Math.round((getEventTotalCost(e) / e.leads_gerados!) * 100) / 100
           : 0,
         budget: e.budget || 0,
       }))
       .sort((a, b) => b.leads - a.leads);
-  }, [events]);
+  }, [events, allocatedCostByEvent]);
 
   // ── 19. Budget Planejado vs Real por Evento ──
   const budgetVsRealData = useMemo(() => {
