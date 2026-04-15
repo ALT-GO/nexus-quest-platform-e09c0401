@@ -22,6 +22,7 @@ import { useInventoryStatuses } from "@/hooks/use-inventory-statuses";
 import { useState } from "react";
 import { StockDetailDialog } from "@/components/collaborators/StockDetailDialog";
 import { EditCollaboratorDialog } from "@/components/collaborators/EditCollaboratorDialog";
+import { CollaboratorDocuments } from "@/components/collaborators/CollaboratorDocuments";
 
 interface Props {
   name: string;
