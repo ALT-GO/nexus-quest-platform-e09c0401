@@ -57,6 +57,9 @@ export default function Eventos() {
   const [editingEvent, setEditingEvent] = useState<MarketingEvent | null>(null);
   const [selectedEvent, setSelectedEvent] = useState<MarketingEvent | null>(null);
   const [detailOpen, setDetailOpen] = useState(false);
+  const [viewMode, setViewMode] = useState<"cards" | "calendar">("cards");
+  const [calendarMonth, setCalendarMonth] = useState<Date>(new Date());
+  const { sortKey, sortDir, setSort } = usePersistentSort("eventos-sort", "start_date", "asc");
 
   // Open event from URL query param
   useEffect(() => {
@@ -78,12 +81,31 @@ export default function Eventos() {
     }
   }, [events]);
 
+  const priorityOrder: Record<string, number> = { high: 0, medium: 1, low: 2 };
+
   const filteredEvents = useMemo(() => {
+    let list = events ?? [];
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(e => e.name.toLowerCase().includes(q) || e.location.toLowerCase().includes(q));
+    }
+    return applySorting(list, sortKey, sortDir, (item, key) => {
+      if (key === "priority") return priorityOrder[item.priority] ?? 99;
+      if (key === "budget") return item.budget ?? 0;
+      return (item as any)[key] ?? "";
+    });
+  }, [events, searchQuery, sortKey, sortDir]);
+
+  // Calendar: dates that have events
+  const eventDates = useMemo(() => {
     if (!events) return [];
-    if (!searchQuery.trim()) return events;
-    const q = searchQuery.toLowerCase();
-    return events.filter(e => e.name.toLowerCase().includes(q) || e.location.toLowerCase().includes(q));
-  }, [events, searchQuery]);
+    return events.map(e => parseISO(e.start_date));
+  }, [events]);
+
+  const eventsForSelectedDate = useMemo(() => {
+    if (!events || !calendarMonth) return [];
+    return filteredEvents;
+  }, [filteredEvents]);
 
   const eventBudgetInfo = useMemo(() => {
     const map: Record<string, { taskCount: number; invested: number }> = {};
