@@ -9,13 +9,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import {
   Plus, Search, CalendarIcon, MapPin, Users, DollarSign,
   MoreVertical, Trash2, Pencil, AlertTriangle, CheckCircle2, Clock,
-  Flag, Share2, Copy,
+  Flag, Share2, Copy, LayoutGrid, CalendarDays,
 } from "lucide-react";
 import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
+import { Calendar } from "@/components/ui/calendar";
+import { format, isSameDay, isSameMonth, parseISO } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
@@ -23,6 +24,15 @@ import { useMarketingEvents, MarketingEvent, useDeleteEvent } from "@/hooks/use-
 import { useMarketingTasks } from "@/hooks/use-marketing";
 import { EventDialog } from "@/components/events/EventDialog";
 import { EventDetailSheet } from "@/components/events/EventDetailSheet";
+import { SortDropdown, usePersistentSort, applySorting, type SortOption } from "@/components/ui/sort-dropdown";
+
+const eventSortOptions: SortOption[] = [
+  { value: "start_date", label: "Data de Início" },
+  { value: "name", label: "Nome" },
+  { value: "priority", label: "Prioridade" },
+  { value: "status", label: "Status" },
+  { value: "budget", label: "Budget" },
+];
 
 const statusLabels: Record<string, { label: string; color: string; icon: typeof Clock }> = {
   planning: { label: "Planejamento", color: "bg-muted text-muted-foreground", icon: Clock },
