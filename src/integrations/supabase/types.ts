@@ -487,6 +487,57 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_material_allocations: {
+        Row: {
+          allocated_value: number
+          allocation_type: string
+          created_at: string
+          event_id: string
+          id: string
+          material_id: string
+          notes: string | null
+          quantity_used: number | null
+          updated_at: string
+        }
+        Insert: {
+          allocated_value?: number
+          allocation_type?: string
+          created_at?: string
+          event_id: string
+          id?: string
+          material_id: string
+          notes?: string | null
+          quantity_used?: number | null
+          updated_at?: string
+        }
+        Update: {
+          allocated_value?: number
+          allocation_type?: string
+          created_at?: string
+          event_id?: string
+          id?: string
+          material_id?: string
+          notes?: string | null
+          quantity_used?: number | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_material_allocations_event_id_fkey"
+            columns: ["event_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_events"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "marketing_material_allocations_material_id_fkey"
+            columns: ["material_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_materials"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_materials: {
         Row: {
           actual_cost: number | null
@@ -501,6 +552,8 @@ export type Database = {
           priority: string
           purchase_date: string | null
           status: string
+          total_quantity: number | null
+          unit_cost: number | null
           updated_at: string
         }
         Insert: {
@@ -516,6 +569,8 @@ export type Database = {
           priority?: string
           purchase_date?: string | null
           status?: string
+          total_quantity?: number | null
+          unit_cost?: number | null
           updated_at?: string
         }
         Update: {
@@ -531,6 +586,8 @@ export type Database = {
           priority?: string
           purchase_date?: string | null
           status?: string
+          total_quantity?: number | null
+          unit_cost?: number | null
           updated_at?: string
         }
         Relationships: [

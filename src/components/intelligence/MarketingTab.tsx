@@ -5,7 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchMarketingTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
 import { useMarketingTasks, MarketingTask, useMarketingStages } from "@/hooks/use-marketing";
 import { useMarketingEvents } from "@/hooks/use-events";
-import { useMarketingMaterials } from "@/hooks/use-materials";
+import { useMarketingMaterials, useMaterialAllocations } from "@/hooks/use-materials";
 import { useMarketingSprints } from "@/hooks/use-sprints";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -54,6 +54,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   const { data: stages } = useMarketingStages();
   const { data: events } = useMarketingEvents();
   const { data: materials } = useMarketingMaterials();
+  const { data: allAllocations } = useMaterialAllocations();
   const { data: sprints } = useMarketingSprints();
   const { data: avatars } = useProfileAvatars();
   const [mktTimesheetTotals, setMktTimesheetTotals] = useState<Record<string, number>>({});
@@ -290,6 +291,24 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   const totalMatActualCost = materials?.reduce((sum, m) => sum + (m.actual_cost || 0), 0) ?? 0;
   const matBudgetDiff = totalMatBudget - totalMatActualCost;
   const matWithCost = materials?.filter((m) => m.actual_cost != null).length ?? 0;
+
+  // ── Allocation stats per event ──
+  const allocByEvent = useMemo(() => {
+    if (!allAllocations || !events) return [];
+    const map: Record<string, number> = {};
+    allAllocations.forEach(a => {
+      map[a.event_id] = (map[a.event_id] || 0) + (a.allocated_value || 0);
+    });
+    return events.map(e => ({
+      name: e.name.length > 18 ? e.name.substring(0, 18) + "…" : e.name,
+      eventCost: e.actual_cost ?? e.budget ?? 0,
+      materialCost: map[e.id] || 0,
+      total: (e.actual_cost ?? e.budget ?? 0) + (map[e.id] || 0),
+    })).filter(e => e.materialCost > 0).sort((a, b) => b.materialCost - a.materialCost);
+  }, [allAllocations, events]);
+
+  const totalAllocatedValue = allAllocations?.reduce((sum, a) => sum + (a.allocated_value || 0), 0) ?? 0;
+  const unallocatedValue = totalMatActualCost - totalAllocatedValue;
   return (
     <div className="space-y-8">
       <ActiveTimersCard />
@@ -557,73 +576,103 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
               onClick={() => navigate("/marketing/eventos")}
             />
             <StatCard
-              title="Orçamento Total"
-              value={totalMatBudget > 0 ? totalMatBudget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
-              icon={DollarSign}
-              description="planejado para materiais"
-              onClick={() => navigate("/marketing/eventos")}
-            />
-            <StatCard
-              title="Valor Real Gasto"
+              title="Valor Real Total"
               value={totalMatActualCost > 0 ? totalMatActualCost.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
               icon={DollarSign}
               description={`${matWithCost} material(is) com valor real`}
               onClick={() => navigate("/marketing/eventos")}
             />
             <StatCard
-              title={matBudgetDiff >= 0 ? "Economia" : "Excedente"}
-              value={matWithCost > 0 ? Math.abs(matBudgetDiff).toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+              title="Rateado em Eventos"
+              value={totalAllocatedValue > 0 ? totalAllocatedValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
+              icon={BarChart3}
+              description={`${allAllocations?.length ?? 0} alocação(ões)`}
+              onClick={() => navigate("/marketing/eventos")}
+            />
+            <StatCard
+              title="Saldo Não Alocado"
+              value={totalMatActualCost > 0 ? unallocatedValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }) : "—"}
               icon={TrendingUp}
-              description={matWithCost > 0 ? (matBudgetDiff >= 0 ? "abaixo do orçamento ✓" : "acima do orçamento ⚠") : "sem dados de custo real"}
+              description={unallocatedValue > 0 ? "a ratear entre eventos" : unallocatedValue === 0 ? "100% alocado ✓" : "sobre-alocado ⚠"}
               onClick={() => navigate("/marketing/eventos")}
             />
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                <Package className="h-4 w-4 text-muted-foreground" />
-                Materiais ({materials?.length ?? 0})
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-3">
-                {materials?.slice(0, 6).map((m) => {
-                  const linkedEvent = events?.find(e => e.id === m.linked_event_id);
-                  return (
-                    <div key={m.id} className="p-3 rounded-lg border space-y-1 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all" onClick={() => navigate("/marketing/eventos")}>
-                      <div className="flex items-center justify-between text-sm">
-                        <span className="font-medium truncate">{m.name}</span>
-                        <Badge variant="outline" className="text-[10px]">
-                          {m.status === "planning" ? "Planejamento" : m.status === "purchasing" ? "Compra" : m.status === "delivered" ? "Entregue" : "Distribuído"}
-                        </Badge>
+          <div className="grid gap-6 lg:grid-cols-2">
+            {/* Material allocation by event chart */}
+            {allocByEvent.length > 0 && (
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                    <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                    Custo de Materiais por Evento
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="h-[260px]">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <BarChart data={allocByEvent}>
+                        <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+                        <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }} />
+                        <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} tickFormatter={(v) => `R$ ${(v / 1000).toFixed(0)}k`} />
+                        <Tooltip
+                          contentStyle={tooltipStyle}
+                          formatter={(v: number) => [v.toLocaleString("pt-BR", { style: "currency", currency: "BRL" }), "Materiais"]}
+                        />
+                        <Bar dataKey="materialCost" name="Materiais" fill="hsl(var(--chart-5))" radius={[4, 4, 0, 0]} />
+                      </BarChart>
+                    </ResponsiveContainer>
+                  </div>
+                </CardContent>
+              </Card>
+            )}
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2 text-base font-semibold">
+                  <Package className="h-4 w-4 text-muted-foreground" />
+                  Materiais ({materials?.length ?? 0})
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-3">
+                  {materials?.slice(0, 6).map((m) => {
+                    const matAllocs = (allAllocations ?? []).filter(a => a.material_id === m.id);
+                    const allocated = matAllocs.reduce((sum, a) => sum + (a.allocated_value || 0), 0);
+                    const total = m.actual_cost ?? m.budget ?? 0;
+                    const allocPercent = total > 0 ? Math.round((allocated / total) * 100) : 0;
+                    return (
+                      <div key={m.id} className="p-3 rounded-lg border space-y-1.5 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all" onClick={() => navigate("/marketing/eventos")}>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="font-medium truncate">{m.name}</span>
+                          <Badge variant="outline" className="text-[10px]">
+                            {m.status === "planning" ? "Planejamento" : m.status === "purchasing" ? "Compra" : m.status === "delivered" ? "Entregue" : "Distribuído"}
+                          </Badge>
+                        </div>
+                        <div className="flex items-center gap-4 text-xs">
+                          {total > 0 && (
+                            <span className="text-muted-foreground">
+                              Custo: {total.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                            </span>
+                          )}
+                          {matAllocs.length > 0 && (
+                            <span className="text-primary">
+                              {allocPercent}% rateado ({matAllocs.length} evento{matAllocs.length > 1 ? "s" : ""})
+                            </span>
+                          )}
+                        </div>
+                        {total > 0 && (
+                          <div className="h-1 rounded-full bg-muted overflow-hidden">
+                            <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${Math.min(allocPercent, 100)}%` }} />
+                          </div>
+                        )}
                       </div>
-                      <div className="flex items-center gap-4 text-xs">
-                        {m.budget > 0 && (
-                          <div className="flex items-center gap-1 text-muted-foreground">
-                            <DollarSign className="h-3 w-3" />
-                            <span>Orç: {m.budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
-                          </div>
-                        )}
-                        {m.actual_cost != null && (
-                          <div className={cn("flex items-center gap-1", m.actual_cost > m.budget ? "text-destructive" : "text-success")}>
-                            <DollarSign className="h-3 w-3" />
-                            <span>Real: {m.actual_cost.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
-                          </div>
-                        )}
-                        {linkedEvent && (
-                          <div className="flex items-center gap-1 text-primary">
-                            <CalendarIcon className="h-3 w-3" />
-                            <span className="truncate">{linkedEvent.name}</span>
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
-            </CardContent>
-          </Card>
+                    );
+                  })}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </div>
       )}
 
