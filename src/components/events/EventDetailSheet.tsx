@@ -281,9 +281,10 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
               </h4>
               <Textarea
                 placeholder="Digite os nomes dos participantes (ex: João Silva, Maria Souza, Carlos Lima)"
-                value={event.notes_participants ?? ""}
+                value={localParticipants}
                 onChange={(e) => {
-                  updateEvent.mutate({ id: event.id, notes_participants: e.target.value } as any);
+                  setLocalParticipants(e.target.value);
+                  debouncedUpdate("notes_participants", e.target.value);
                 }}
                 className="text-sm min-h-[60px]"
               />
