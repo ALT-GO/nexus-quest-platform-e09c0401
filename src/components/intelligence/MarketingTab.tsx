@@ -272,15 +272,15 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   const budgetVsRealData = useMemo(() => {
     if (!events) return [];
     return events
-      .filter((e) => e.budget > 0 || (e.actual_cost != null && e.actual_cost > 0))
+      .filter((e) => e.budget > 0 || getEventTotalCost(e) > 0)
       .map((e) => ({
         name: e.name.length > 18 ? e.name.substring(0, 18) + "…" : e.name,
         planejado: e.budget || 0,
-        real: e.actual_cost ?? 0,
-        diff: (e.budget || 0) - (e.actual_cost ?? 0),
+        real: getEventTotalCost(e),
+        diff: (e.budget || 0) - getEventTotalCost(e),
       }))
       .sort((a, b) => b.planejado - a.planejado);
-  }, [events]);
+  }, [events, allocatedCostByEvent]);
 
   // ── Priority distribution ──
   const byPriority = useMemo(() => {
