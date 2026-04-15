@@ -81,17 +81,17 @@ export default function CentralInteligencia() {
 
   return (
     <AppLayout>
-      <div className="flex flex-col gap-6 sm:flex-row sm:items-start sm:justify-between">
+      <div className="flex flex-col gap-4">
         <PageHeader
           title="Dashboard"
           description="Visão consolidada de métricas, KPIs e inteligência operacional"
         />
 
         {/* Global filters */}
-        <div className="flex flex-wrap items-end gap-2 shrink-0">
+        <div className="flex flex-wrap items-end gap-2">
           {/* Cost Center Filter */}
           <Select value={costCenter} onValueChange={(v) => setCostCenter(v as CostCenterFilter)}>
-            <SelectTrigger className="w-[200px]">
+            <SelectTrigger className="w-full sm:w-[200px]">
               <Building2 className="mr-2 h-4 w-4" />
               <SelectValue />
             </SelectTrigger>
@@ -103,7 +103,7 @@ export default function CentralInteligencia() {
           </Select>
 
           <Select value={period} onValueChange={(v) => setPeriod(v as PeriodFilter)}>
-            <SelectTrigger className="w-[170px]">
+            <SelectTrigger className="w-[calc(50%-4px)] sm:w-[170px]">
               <CalendarIcon className="mr-2 h-4 w-4" />
               <SelectValue />
             </SelectTrigger>
@@ -118,7 +118,7 @@ export default function CentralInteligencia() {
             <>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-[130px] justify-start text-left font-normal", !customFrom && "text-muted-foreground")}>
+                  <Button variant="outline" className={cn("w-[calc(50%-4px)] sm:w-[130px] justify-start text-left font-normal", !customFrom && "text-muted-foreground")}>
                     {customFrom ? format(customFrom, "dd/MM/yyyy") : "Início"}
                   </Button>
                 </PopoverTrigger>
@@ -128,7 +128,7 @@ export default function CentralInteligencia() {
               </Popover>
               <Popover>
                 <PopoverTrigger asChild>
-                  <Button variant="outline" className={cn("w-[130px] justify-start text-left font-normal", !customTo && "text-muted-foreground")}>
+                  <Button variant="outline" className={cn("w-[calc(50%-4px)] sm:w-[130px] justify-start text-left font-normal", !customTo && "text-muted-foreground")}>
                     {customTo ? format(customTo, "dd/MM/yyyy") : "Fim"}
                   </Button>
                 </PopoverTrigger>

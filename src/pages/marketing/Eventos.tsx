@@ -206,7 +206,7 @@ export default function Eventos() {
 
   return (
     <AppLayout>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <PageHeader
           title="Eventos & Materiais"
           description="Gerencie eventos, brindes e materiais de marketing"

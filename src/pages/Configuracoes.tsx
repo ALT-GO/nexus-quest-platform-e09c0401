@@ -120,8 +120,8 @@ export default function Configuracoes() {
     <AppLayout>
       <PageHeader title="Configurações" description="Gerencie as configurações do sistema" />
 
-      <div className="flex gap-6 min-h-[600px]">
-        {/* Sidebar */}
+      <div className="flex flex-col gap-4 md:flex-row md:gap-6 min-h-[600px]">
+        {/* Sidebar - desktop */}
         <nav className="w-56 shrink-0 space-y-5 hidden md:block">
           {visibleGroups.map((group) => (
             <div key={group.title}>
@@ -155,7 +155,7 @@ export default function Configuracoes() {
         </nav>
 
         {/* Mobile select */}
-        <div className="md:hidden w-full mb-4">
+        <div className="md:hidden w-full">
           <select
             value={currentSection}
             onChange={(e) => setActiveSection(e.target.value as Section)}
