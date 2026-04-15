@@ -242,9 +242,14 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
                     />
                   </div>
                   <div className="flex items-center justify-between text-xs text-muted-foreground">
-                    <span>Investido: {(event.actual_cost ?? 0).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
-                    <span>Restante: {((event.budget ?? 0) - (event.actual_cost ?? 0)).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                    <span>Investido: {invested.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                    <span>Restante: {((event.budget ?? 0) - invested).toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
                   </div>
+                  {allocatedMaterialsValue > 0 && (
+                    <div className="text-[10px] text-muted-foreground mt-0.5">
+                      Evento: {eventOwnCost.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })} + Materiais: {allocatedMaterialsValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
+                    </div>
+                  )}
                 </>
               )}
             </div>
