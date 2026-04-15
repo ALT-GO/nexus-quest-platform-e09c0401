@@ -291,6 +291,24 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   const totalMatActualCost = materials?.reduce((sum, m) => sum + (m.actual_cost || 0), 0) ?? 0;
   const matBudgetDiff = totalMatBudget - totalMatActualCost;
   const matWithCost = materials?.filter((m) => m.actual_cost != null).length ?? 0;
+
+  // ── Allocation stats per event ──
+  const allocByEvent = useMemo(() => {
+    if (!allAllocations || !events) return [];
+    const map: Record<string, number> = {};
+    allAllocations.forEach(a => {
+      map[a.event_id] = (map[a.event_id] || 0) + (a.allocated_value || 0);
+    });
+    return events.map(e => ({
+      name: e.name.length > 18 ? e.name.substring(0, 18) + "…" : e.name,
+      eventCost: e.actual_cost ?? e.budget ?? 0,
+      materialCost: map[e.id] || 0,
+      total: (e.actual_cost ?? e.budget ?? 0) + (map[e.id] || 0),
+    })).filter(e => e.materialCost > 0).sort((a, b) => b.materialCost - a.materialCost);
+  }, [allAllocations, events]);
+
+  const totalAllocatedValue = allAllocations?.reduce((sum, a) => sum + (a.allocated_value || 0), 0) ?? 0;
+  const unallocatedValue = totalMatActualCost - totalAllocatedValue;
   return (
     <div className="space-y-8">
       <ActiveTimersCard />
