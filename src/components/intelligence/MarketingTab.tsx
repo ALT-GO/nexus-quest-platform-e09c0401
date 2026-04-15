@@ -285,6 +285,11 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
     return new Date(t.due_date) < new Date();
   }).length;
 
+  // ── Materials Stats ──
+  const totalMatBudget = materials?.reduce((sum, m) => sum + (m.budget || 0), 0) ?? 0;
+  const totalMatActualCost = materials?.reduce((sum, m) => sum + (m.actual_cost || 0), 0) ?? 0;
+  const matBudgetDiff = totalMatBudget - totalMatActualCost;
+  const matWithCost = materials?.filter((m) => m.actual_cost != null).length ?? 0;
   return (
     <div className="space-y-8">
       <ActiveTimersCard />
