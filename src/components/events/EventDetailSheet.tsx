@@ -108,8 +108,16 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
     return { total, completed, inProgress, overdue, percent };
   }, [eventTasks]);
 
-  // Budget tracking
-  const invested = event?.actual_cost ?? 0;
+  // Budget tracking — event actual_cost + allocated materials
+  const allocatedMaterialsValue = useMemo(() => {
+    if (!event || !allAllocations) return 0;
+    return allAllocations
+      .filter(a => a.event_id === event.id)
+      .reduce((sum, a) => sum + (a.allocated_value || 0), 0);
+  }, [event?.id, allAllocations]);
+
+  const eventOwnCost = event?.actual_cost ?? 0;
+  const invested = eventOwnCost + allocatedMaterialsValue;
   const budgetPercent = event && event.budget > 0 ? Math.min((invested / event.budget) * 100, 100) : 0;
 
   // Checklist
