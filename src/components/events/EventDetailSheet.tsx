@@ -209,10 +209,11 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
                     min={0}
                     step="0.01"
                     placeholder="0,00"
-                    value={event.actual_cost ?? ""}
+                    value={localActualCost}
                     onChange={(e) => {
+                      setLocalActualCost(e.target.value);
                       const val = e.target.value ? parseFloat(e.target.value) : null;
-                      updateEvent.mutate({ id: event.id, actual_cost: val } as any);
+                      debouncedUpdate("actual_cost", val);
                     }}
                     className="h-7 w-full text-sm"
                   />
