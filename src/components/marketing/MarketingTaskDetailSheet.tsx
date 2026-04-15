@@ -226,6 +226,7 @@ export function MarketingTaskDetailSheet({
   const [editingDesc, setEditingDesc] = useState(false);
   const [descValue, setDescValue] = useState("");
   const [activityTab, setActivityTab] = useState<"activity" | "comments">("comments");
+  const [mobileView, setMobileView] = useState<"details" | "activity">("details");
 
   useEffect(() => {
     if (task) {
@@ -433,11 +434,28 @@ export function MarketingTaskDetailSheet({
   return (
     <>
       <Sheet open={open} onOpenChange={onOpenChange}>
-        <SheetContent className="w-full sm:max-w-[1100px] p-0 flex flex-row gap-0 overflow-hidden" side="right">
+        <SheetContent className="w-full sm:max-w-[1100px] p-0 flex flex-col sm:flex-row gap-0 overflow-hidden" side="right">
          <TooltipProvider delayDuration={300}>
+          {/* ─── Mobile Tab Bar ─── */}
+          <div className="flex sm:hidden border-b bg-muted/30 shrink-0">
+            <button
+              className={cn("flex-1 py-2.5 text-sm font-medium transition-colors", mobileView === "details" ? "text-primary border-b-2 border-primary" : "text-muted-foreground")}
+              onClick={() => setMobileView("details")}
+            >
+              Detalhes
+            </button>
+            <button
+              className={cn("flex-1 py-2.5 text-sm font-medium transition-colors flex items-center justify-center gap-1.5", mobileView === "activity" ? "text-primary border-b-2 border-primary" : "text-muted-foreground")}
+              onClick={() => setMobileView("activity")}
+            >
+              <MessageSquare className="h-3.5 w-3.5" />
+              Atividade
+            </button>
+          </div>
+
           {/* ─── LEFT: Main Content ─── */}
-          <ScrollArea className="flex-1 min-w-0">
-            <div className="p-6 space-y-1">
+          <ScrollArea className={cn("flex-1 min-w-0", mobileView !== "details" && "hidden sm:block")}>
+            <div className="p-4 sm:p-6 space-y-1">
               {/* Timer reminder banner */}
               <TimerReminderBanner
                 entityId={task.id}
@@ -906,7 +924,7 @@ export function MarketingTaskDetailSheet({
           </ScrollArea>
 
           {/* ─── RIGHT: Activity Sidebar ─── */}
-          <div className="w-[360px] shrink-0 border-l flex flex-col bg-muted/20 overflow-hidden">
+          <div className={cn("w-full sm:w-[360px] shrink-0 sm:border-l flex flex-col bg-muted/20 overflow-hidden", mobileView !== "activity" && "hidden sm:flex")}>
             {/* Sidebar header */}
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <h3 className="text-sm font-semibold">Atividade</h3>
