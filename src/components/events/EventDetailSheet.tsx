@@ -343,31 +343,43 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
 
             <Separator />
 
-            {/* ===== MATERIAIS VINCULADOS ===== */}
+            {/* ===== MATERIAIS ALOCADOS (via rateio) ===== */}
             {(() => {
-              const linkedMats = (materials ?? []).filter(m => m.linked_event_id === event.id);
-              if (linkedMats.length === 0) return null;
+              const eventAllocations = (allAllocations ?? []).filter(a => a.event_id === event.id);
+              if (eventAllocations.length === 0) return null;
+              const totalAllocValue = eventAllocations.reduce((sum, a) => sum + (a.allocated_value || 0), 0);
               return (
                 <div className="space-y-3">
                   <h4 className="text-sm font-medium flex items-center gap-2">
                     <Package className="h-4 w-4 text-primary" />
-                    Materiais Vinculados ({linkedMats.length})
+                    Materiais Alocados ({eventAllocations.length})
                   </h4>
                   <div className="space-y-1.5">
-                    {linkedMats.map((m) => (
-                      <div key={m.id} className="flex items-center gap-3 p-2 rounded-lg border text-sm">
-                        <Package className="h-4 w-4 text-muted-foreground shrink-0" />
-                        <span className="flex-1 truncate font-medium">{m.name}</span>
-                        {m.budget > 0 && (
-                          <span className="text-xs text-muted-foreground">
-                            {m.budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}
-                          </span>
-                        )}
-                        <Badge variant="outline" className="text-[9px]">
-                          {m.status === "planning" ? "Planejamento" : m.status === "purchasing" ? "Compra" : m.status === "delivered" ? "Entregue" : "Distribuído"}
-                        </Badge>
-                      </div>
-                    ))}
+                    {eventAllocations.map((alloc) => {
+                      const mat = (materials ?? []).find(m => m.id === alloc.material_id);
+                      if (!mat) return null;
+                      return (
+                        <div key={alloc.id} className="flex items-center gap-3 p-2 rounded-lg border text-sm">
+                          <Package className="h-4 w-4 text-muted-foreground shrink-0" />
+                          <div className="flex-1 min-w-0">
+                            <span className="font-medium truncate block">{mat.name}</span>
+                            <div className="flex items-center gap-3 text-xs text-muted-foreground mt-0.5">
+                              <span>{alloc.allocated_value.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                              {alloc.allocation_type === "quantity" && alloc.quantity_used > 0 && (
+                                <span>{alloc.quantity_used} un</span>
+                              )}
+                            </div>
+                          </div>
+                          <Badge variant="outline" className="text-[9px]">
+                            {alloc.allocation_type === "quantity" ? "Qtd" : "Valor"}
+                          </Badge>
+                        </div>
+                      );
+                    })}
+                  </div>
+                  <div className="flex items-center justify-between text-xs text-muted-foreground p-2 rounded bg-muted/30">
+                    <span>Total alocado neste evento</span>
+                    <span className="font-semibold text-foreground">{totalAllocValue.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
                   </div>
                   <Separator />
                 </div>
