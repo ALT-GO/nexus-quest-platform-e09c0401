@@ -5,6 +5,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchMarketingTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
 import { useMarketingTasks, MarketingTask, useMarketingStages } from "@/hooks/use-marketing";
 import { useMarketingEvents } from "@/hooks/use-events";
+import { useMarketingMaterials } from "@/hooks/use-materials";
 import { useMarketingSprints } from "@/hooks/use-sprints";
 import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
