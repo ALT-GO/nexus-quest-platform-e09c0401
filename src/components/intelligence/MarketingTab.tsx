@@ -450,7 +450,8 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
                   {activeEvents.slice(0, 5).map((e) => {
                     const eventTasks = (allTasks ?? []).filter((t: any) => t.event_id === e.id);
                     const completedEvTasks = eventTasks.filter((t) => t.progress === "Concluído").length;
-                    const variance = e.actual_cost != null ? (e.budget || 0) - e.actual_cost : null;
+                    const evTotalCost = getEventTotalCost(e);
+                    const variance = evTotalCost > 0 ? (e.budget || 0) - evTotalCost : null;
                     return (
                       <div key={e.id} className="p-3 rounded-lg border space-y-2 cursor-pointer hover:ring-2 hover:ring-primary/30 transition-all" onClick={() => navigate("/marketing/eventos")}>
                         <div className="flex items-center justify-between text-sm">
@@ -472,10 +473,10 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
                               <span>Orç: {e.budget.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
                             </div>
                           )}
-                          {e.actual_cost != null && (
+                          {evTotalCost > 0 && (
                             <div className={cn("flex items-center gap-1", variance != null && variance < 0 ? "text-destructive" : "text-success")}>
                               <DollarSign className="h-3 w-3" />
-                              <span>Real: {e.actual_cost.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
+                              <span>Real: {evTotalCost.toLocaleString("pt-BR", { style: "currency", currency: "BRL" })}</span>
                             </div>
                           )}
                         </div>
