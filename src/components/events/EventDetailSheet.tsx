@@ -21,7 +21,7 @@ import { useMarketingTasks, useCreateMarketingTask, MarketingTask, useMarketingS
 import { MarketingTaskDetailSheet } from "@/components/marketing/MarketingTaskDetailSheet";
 import { NewMarketingTaskDialog } from "@/components/marketing/NewMarketingTaskDialog";
 import { useMarketingSprints } from "@/hooks/use-sprints";
-import { useMarketingMaterials, MarketingMaterial } from "@/hooks/use-materials";
+import { useMarketingMaterials, MarketingMaterial, useMaterialAllocations } from "@/hooks/use-materials";
 import { supabase } from "@/integrations/supabase/client";
 import { useProfileAvatars } from "@/hooks/use-profile-avatars";
 import { toast } from "sonner";
