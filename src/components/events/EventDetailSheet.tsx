@@ -248,10 +248,11 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
                 type="number"
                 min={0}
                 placeholder="Quantidade de leads"
-                value={event.leads_gerados ?? ""}
+                value={localLeads}
                 onChange={(e) => {
+                  setLocalLeads(e.target.value);
                   const val = e.target.value ? parseInt(e.target.value) : null;
-                  updateEvent.mutate({ id: event.id, leads_gerados: val } as any);
+                  debouncedUpdate("leads_gerados", val);
                 }}
                 className="h-8 w-full text-sm"
               />
