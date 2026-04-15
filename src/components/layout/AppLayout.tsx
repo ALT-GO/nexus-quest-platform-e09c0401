@@ -9,7 +9,7 @@ export function AppLayout({ children }: AppLayoutProps) {
     <div className="min-h-screen bg-background">
       <AppSidebar />
       <main className="lg:pl-60">
-        <div className="min-h-screen p-5 lg:p-7">{children}</div>
+        <div className="min-h-screen pt-14 px-3 pb-4 sm:px-5 sm:pb-5 lg:pt-5 lg:px-7 lg:pb-7">{children}</div>
       </main>
     </div>
   );

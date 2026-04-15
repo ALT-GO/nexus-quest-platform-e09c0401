@@ -359,7 +359,7 @@ export default function ServiceDesk() {
       >
         <NewTicketDialog />
         
-        <Button variant="outline" asChild>
+        <Button variant="outline" size="sm" asChild className="hidden sm:inline-flex">
           <a href="/chamado-publico" target="_blank">
             Ver Formulário Público
           </a>
@@ -367,94 +367,94 @@ export default function ServiceDesk() {
       </PageHeader>
 
       {/* Filters + View Toggle */}
-      <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center">
-        <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-          <Input
-            placeholder="Buscar por ID ou título..."
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            className="pl-10"
-          />
+      <div className="mb-4 sm:mb-6 flex flex-col gap-3">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="Buscar por ID ou título..."
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+          <div className="flex rounded-lg border bg-muted p-1 shrink-0 self-start sm:self-auto">
+            <Button
+              variant={viewMode === "kanban" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("kanban")}
+              className="gap-1.5"
+            >
+              <Kanban className="h-4 w-4" />
+              <span className="hidden sm:inline">Kanban</span>
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("list")}
+              className="gap-1.5"
+            >
+              <LayoutList className="h-4 w-4" />
+              <span className="hidden sm:inline">Lista</span>
+            </Button>
+            <Button
+              variant={viewMode === "gantt" ? "default" : "ghost"}
+              size="sm"
+              onClick={() => setViewMode("gantt")}
+              className="gap-1.5"
+            >
+              <GanttChartIcon className="h-4 w-4" />
+              <span className="hidden sm:inline">Gantt</span>
+            </Button>
+          </div>
         </div>
-        <Select value={filterCategory} onValueChange={setFilterCategory}>
-          <SelectTrigger className="w-full sm:w-[250px]">
-            <Filter className="mr-2 h-4 w-4" />
-            <SelectValue placeholder="Categoria" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todas as Categorias</SelectItem>
-            {categories.map((cat) => (
-              <SelectItem key={cat} value={cat}>{cat}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={filterStatus} onValueChange={setFilterStatus}>
-          <SelectTrigger className="w-full sm:w-[180px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Status</SelectItem>
-            {activeStatuses.map((s) => (
-              <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-        <Select value={filterAssignee} onValueChange={setFilterAssignee}>
-          <SelectTrigger className="w-full sm:w-[200px]">
-            <User className="mr-2 h-4 w-4" />
-            <SelectValue placeholder="Responsável" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Todos os Responsáveis</SelectItem>
-            {hasUnassigned && <SelectItem value="__none__">Sem atribuição</SelectItem>}
-            {assigneeNames.map((name) => (
-              <SelectItem key={name} value={name}>{name}</SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
-
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap gap-2 items-center">
+          <Select value={filterCategory} onValueChange={setFilterCategory}>
+            <SelectTrigger className="w-full sm:w-[200px]">
+              <Filter className="mr-2 h-4 w-4" />
+              <SelectValue placeholder="Categoria" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todas as Categorias</SelectItem>
+              {categories.map((cat) => (
+                <SelectItem key={cat} value={cat}>{cat}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterStatus} onValueChange={setFilterStatus}>
+            <SelectTrigger className="w-[calc(50%-4px)] sm:w-[160px]">
+              <SelectValue placeholder="Status" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos os Status</SelectItem>
+              {activeStatuses.map((s) => (
+                <SelectItem key={s.id} value={s.id}>{s.nome}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+          <Select value={filterAssignee} onValueChange={setFilterAssignee}>
+            <SelectTrigger className="w-[calc(50%-4px)] sm:w-[170px]">
+              <User className="mr-2 h-4 w-4" />
+              <SelectValue placeholder="Responsável" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              {hasUnassigned && <SelectItem value="__none__">Sem atribuição</SelectItem>}
+              {assigneeNames.map((name) => (
+                <SelectItem key={name} value={name}>{name}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
           <div className="flex items-center gap-2">
             <Switch
               id="hide-completed"
               checked={hideCompleted}
               onCheckedChange={setHideCompleted}
             />
-            <Label htmlFor="hide-completed" className="text-sm text-muted-foreground whitespace-nowrap cursor-pointer">
+            <Label htmlFor="hide-completed" className="text-xs sm:text-sm text-muted-foreground whitespace-nowrap cursor-pointer">
               Ocultar concluídos
             </Label>
           </div>
-        </div>
-
-        <div className="flex rounded-lg border bg-muted p-1">
-          <Button
-            variant={viewMode === "kanban" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setViewMode("kanban")}
-            className="gap-1.5"
-          >
-            <Kanban className="h-4 w-4" />
-            <span className="hidden sm:inline">Kanban</span>
-          </Button>
-          <Button
-            variant={viewMode === "list" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setViewMode("list")}
-            className="gap-1.5"
-          >
-            <LayoutList className="h-4 w-4" />
-            <span className="hidden sm:inline">Lista</span>
-          </Button>
-          <Button
-            variant={viewMode === "gantt" ? "default" : "ghost"}
-            size="sm"
-            onClick={() => setViewMode("gantt")}
-            className="gap-1.5"
-          >
-            <GanttChartIcon className="h-4 w-4" />
-            <span className="hidden sm:inline">Gantt</span>
-          </Button>
         </div>
       </div>
 

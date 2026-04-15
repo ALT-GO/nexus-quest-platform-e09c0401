@@ -172,39 +172,39 @@ export default function Solicitacoes() {
 
   return (
     <AppLayout>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex flex-col gap-3 mb-4 sm:flex-row sm:items-center sm:justify-between">
         <PageHeader
           title="Solicitações de Marketing"
           description="Kanban de tarefas e solicitações"
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <div className="flex items-center rounded-md border bg-muted p-0.5">
             <Button
               variant={viewMode === "kanban" ? "default" : "ghost"}
               size="sm"
-              className="h-7 px-2.5 gap-1.5 text-xs"
+              className="h-7 px-2 gap-1 text-xs"
               onClick={() => handleViewChange("kanban")}
             >
               <LayoutGrid className="h-3.5 w-3.5" />
-              Kanban
+              <span className="hidden sm:inline">Kanban</span>
             </Button>
             <Button
               variant={viewMode === "list" ? "default" : "ghost"}
               size="sm"
-              className="h-7 px-2.5 gap-1.5 text-xs"
+              className="h-7 px-2 gap-1 text-xs"
               onClick={() => handleViewChange("list")}
             >
               <List className="h-3.5 w-3.5" />
-              Lista
+              <span className="hidden sm:inline">Lista</span>
             </Button>
             <Button
               variant={viewMode === "gantt" ? "default" : "ghost"}
               size="sm"
-              className="h-7 px-2.5 gap-1.5 text-xs"
+              className="h-7 px-2 gap-1 text-xs"
               onClick={() => handleViewChange("gantt")}
             >
               <GanttChartIcon className="h-3.5 w-3.5" />
-              Gantt
+              <span className="hidden sm:inline">Gantt</span>
             </Button>
           </div>
           <Button
@@ -215,10 +215,10 @@ export default function Solicitacoes() {
             title={hideCompleted ? "Mostrar tarefas concluídas" : "Ocultar tarefas concluídas"}
           >
             {hideCompleted ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
-            {hideCompleted ? "Concluídas ocultas" : "Concluídas visíveis"}
+            <span className="hidden sm:inline">{hideCompleted ? "Concluídas ocultas" : "Concluídas visíveis"}</span>
           </Button>
-          <Button onClick={() => setDialogOpen(true)}>
-            <Plus className="h-4 w-4 mr-2" /> Nova Tarefa
+          <Button size="sm" onClick={() => setDialogOpen(true)}>
+            <Plus className="h-4 w-4 mr-1" /> <span className="hidden sm:inline">Nova Tarefa</span>
           </Button>
         </div>
       </div>
@@ -237,14 +237,14 @@ export default function Solicitacoes() {
       )}
 
       {/* Filter Bar */}
-      <div className="flex items-center gap-3 mb-4 flex-wrap">
-        <div className="relative">
+      <div className="flex items-center gap-2 sm:gap-3 mb-4 flex-wrap">
+        <div className="relative flex-1 min-w-[180px]">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             placeholder="Buscar por título..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-8 w-52 pl-8 text-xs"
+            className="h-8 pl-8 text-xs"
           />
         </div>
         <Select value={filterPriority} onValueChange={setFilterPriority}>

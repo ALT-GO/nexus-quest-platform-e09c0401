@@ -138,10 +138,10 @@ export function KanbanBoard({
   return (
     <DragDropContext onDragEnd={handleDragEnd}>
       <div
-        className="overflow-x-auto pb-4 -mx-2 px-2 h-[calc(100vh-220px)]"
+        className="overflow-x-auto pb-4 -mx-2 px-2 h-[calc(100vh-260px)] sm:h-[calc(100vh-220px)]"
         style={{ scrollbarGutter: "stable" }}
       >
-        <div className="flex gap-4 min-w-max h-full">
+        <div className="flex gap-3 sm:gap-4 min-w-max h-full">
           {statuses.map((status) => {
             const columnTickets = getColumnTickets(status.id);
             const StatusIcon = statusTypeIcons[status.statusType] || Circle;
@@ -149,7 +149,7 @@ export function KanbanBoard({
             return (
               <div
                 key={status.id}
-                className="w-[300px] shrink-0 flex flex-col h-full rounded-xl border bg-muted/30"
+                className="w-[260px] sm:w-[300px] shrink-0 flex flex-col h-full rounded-xl border bg-muted/30"
               >
                 {/* Column Header — minimal pill badge */}
                 <div className="flex items-center gap-2.5 px-3 py-3">
