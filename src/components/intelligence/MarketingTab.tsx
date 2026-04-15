@@ -209,11 +209,23 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   // ── 13. Eventos Ativos / Próximos ──
   const activeEvents = events?.filter((e) => e.status === "active" || e.status === "planning") ?? [];
 
+  // ── Helper: allocated material cost per event ──
+  const allocatedCostByEvent = useMemo(() => {
+    const map: Record<string, number> = {};
+    (allAllocations ?? []).forEach(a => {
+      map[a.event_id] = (map[a.event_id] || 0) + (a.allocated_value || 0);
+    });
+    return map;
+  }, [allAllocations]);
+
+  const getEventTotalCost = (e: { id: string; actual_cost: number | null; budget?: number }) =>
+    (e.actual_cost ?? 0) + (allocatedCostByEvent[e.id] || 0);
+
   // ── 14. Budget Total vs Real ──
   const totalBudget = events?.reduce((sum, e) => sum + (e.budget || 0), 0) ?? 0;
-  const totalActualCost = events?.reduce((sum, e) => sum + (e.actual_cost || 0), 0) ?? 0;
+  const totalActualCost = events?.reduce((sum, e) => sum + getEventTotalCost(e), 0) ?? 0;
   const budgetDifference = totalBudget - totalActualCost;
-  const eventsWithActualCost = events?.filter((e) => e.actual_cost != null).length ?? 0;
+  const eventsWithActualCost = events?.filter((e) => e.actual_cost != null || (allocatedCostByEvent[e.id] || 0) > 0).length ?? 0;
 
   // ── 15. Tarefas por Evento ──
   const tasksByEvent = useMemo(() => {
