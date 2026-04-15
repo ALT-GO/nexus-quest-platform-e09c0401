@@ -487,6 +487,62 @@ export type Database = {
         }
         Relationships: []
       }
+      marketing_materials: {
+        Row: {
+          actual_cost: number | null
+          budget: number | null
+          checklist: Json | null
+          created_at: string
+          description: string | null
+          id: string
+          linked_event_id: string | null
+          name: string
+          notes: string | null
+          priority: string
+          purchase_date: string | null
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          actual_cost?: number | null
+          budget?: number | null
+          checklist?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          linked_event_id?: string | null
+          name: string
+          notes?: string | null
+          priority?: string
+          purchase_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          actual_cost?: number | null
+          budget?: number | null
+          checklist?: Json | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          linked_event_id?: string | null
+          name?: string
+          notes?: string | null
+          priority?: string
+          purchase_date?: string | null
+          status?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "marketing_materials_linked_event_id_fkey"
+            columns: ["linked_event_id"]
+            isOneToOne: false
+            referencedRelation: "marketing_events"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       marketing_sprints: {
         Row: {
           created_at: string
