@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef, useCallback } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,6 +55,29 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
   const [selectedTask, setSelectedTask] = useState<MarketingTask | null>(null);
   const [taskDetailOpen, setTaskDetailOpen] = useState(false);
   const [newCheckItem, setNewCheckItem] = useState("");
+
+  // Local state for debounced fields
+  const [localActualCost, setLocalActualCost] = useState<string>("");
+  const [localLeads, setLocalLeads] = useState<string>("");
+  const [localParticipants, setLocalParticipants] = useState<string>("");
+  const debounceRef = useRef<Record<string, ReturnType<typeof setTimeout>>>({});
+
+  // Sync local state when event changes
+  useEffect(() => {
+    if (event) {
+      setLocalActualCost(event.actual_cost != null ? String(event.actual_cost) : "");
+      setLocalLeads(event.leads_gerados != null ? String(event.leads_gerados) : "");
+      setLocalParticipants(event.notes_participants ?? "");
+    }
+  }, [event?.id, event?.actual_cost, event?.leads_gerados, event?.notes_participants]);
+
+  const debouncedUpdate = useCallback((field: string, value: any) => {
+    if (!event) return;
+    if (debounceRef.current[field]) clearTimeout(debounceRef.current[field]);
+    debounceRef.current[field] = setTimeout(() => {
+      updateEvent.mutate({ id: event.id, [field]: value } as any);
+    }, 600);
+  }, [event, updateEvent]);
 
   useEffect(() => {
     supabase.from("profiles").select("id, full_name").then(({ data }) => {
@@ -186,10 +209,11 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
                     min={0}
                     step="0.01"
                     placeholder="0,00"
-                    value={event.actual_cost ?? ""}
+                    value={localActualCost}
                     onChange={(e) => {
+                      setLocalActualCost(e.target.value);
                       const val = e.target.value ? parseFloat(e.target.value) : null;
-                      updateEvent.mutate({ id: event.id, actual_cost: val } as any);
+                      debouncedUpdate("actual_cost", val);
                     }}
                     className="h-7 w-full text-sm"
                   />
@@ -224,10 +248,11 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
                 type="number"
                 min={0}
                 placeholder="Quantidade de leads"
-                value={event.leads_gerados ?? ""}
+                value={localLeads}
                 onChange={(e) => {
+                  setLocalLeads(e.target.value);
                   const val = e.target.value ? parseInt(e.target.value) : null;
-                  updateEvent.mutate({ id: event.id, leads_gerados: val } as any);
+                  debouncedUpdate("leads_gerados", val);
                 }}
                 className="h-8 w-full text-sm"
               />
@@ -256,9 +281,10 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
               </h4>
               <Textarea
                 placeholder="Digite os nomes dos participantes (ex: João Silva, Maria Souza, Carlos Lima)"
-                value={event.notes_participants ?? ""}
+                value={localParticipants}
                 onChange={(e) => {
-                  updateEvent.mutate({ id: event.id, notes_participants: e.target.value } as any);
+                  setLocalParticipants(e.target.value);
+                  debouncedUpdate("notes_participants", e.target.value);
                 }}
                 className="text-sm min-h-[60px]"
               />
