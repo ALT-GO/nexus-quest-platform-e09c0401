@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      attachments: {
+        Row: {
+          added_by: string
+          created_at: string
+          entity_id: string
+          entity_type: string
+          file_name: string
+          file_size: number | null
+          file_url: string
+          id: string
+          mime_type: string | null
+        }
+        Insert: {
+          added_by?: string
+          created_at?: string
+          entity_id: string
+          entity_type: string
+          file_name: string
+          file_size?: number | null
+          file_url: string
+          id?: string
+          mime_type?: string | null
+        }
+        Update: {
+          added_by?: string
+          created_at?: string
+          entity_id?: string
+          entity_type?: string
+          file_name?: string
+          file_size?: number | null
+          file_url?: string
+          id?: string
+          mime_type?: string | null
+        }
+        Relationships: []
+      }
       audit_logs: {
         Row: {
           action: string
