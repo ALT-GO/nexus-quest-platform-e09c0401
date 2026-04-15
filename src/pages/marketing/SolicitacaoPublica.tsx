@@ -118,6 +118,7 @@ export default function SolicitacaoPublica() {
       nome_cliente: "",
       endereco: "",
     });
+    setAttachmentLinks([]);
   };
 
   if (isSubmitted) {
