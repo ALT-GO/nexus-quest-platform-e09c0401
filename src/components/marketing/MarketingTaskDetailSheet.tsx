@@ -50,6 +50,7 @@ import {
 } from "lucide-react";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { ChecklistEditor } from "./ChecklistEditor";
+import { AttachmentManager } from "@/components/shared/AttachmentManager";
 import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import { ptBR } from "date-fns/locale";
@@ -914,6 +915,11 @@ export function MarketingTaskDetailSheet({
                   onChange={(groups) => updateTask.mutate({ id: task.id, checklist: groups } as any)}
                   teamMembers={teamMembers}
                 />
+              </div>
+
+              {/* Attachments */}
+              <div className="mt-6">
+                <AttachmentManager entityType="marketing_task" entityId={task.id} addedBy={profile?.full_name || "Usuário"} />
               </div>
 
               {/* Requester */}

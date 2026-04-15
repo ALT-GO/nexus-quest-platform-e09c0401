@@ -11,9 +11,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Monitor, Upload, CheckCircle2, Send, Loader2 } from "lucide-react";
+import { Monitor, CheckCircle2, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { createTicket, runTicketCreatedAutomations } from "@/hooks/use-tickets";
+import { PublicAttachmentLinks } from "@/components/shared/PublicAttachmentLinks";
+import { supabase } from "@/integrations/supabase/client";
 
 const categories = [
   "Acesso e permissões",
@@ -39,8 +41,8 @@ export default function ChamadoPublico() {
     department: "",
     category: "",
     description: "",
-    file: null as File | null,
   });
+  const [attachmentLinks, setAttachmentLinks] = useState<string[]>([]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,11 +66,23 @@ export default function ChamadoPublico() {
     setIsSubmitting(false);
 
     if (result.success && result.ticketNumber) {
-      // Run automations (ignore errors for anonymous users)
+      // Run automations
       if (result.ticketId) {
         try {
           await runTicketCreatedAutomations(result.ticketId, formData.category);
         } catch {}
+        // Save attachment links
+        if (attachmentLinks.length > 0) {
+          for (const link of attachmentLinks) {
+            await supabase.from("attachments").insert({
+              entity_type: "ticket",
+              entity_id: result.ticketId,
+              file_name: link.split("/").pop() || "Arquivo",
+              file_url: link,
+              added_by: formData.name,
+            } as any);
+          }
+        }
       }
       setTicketId(result.ticketNumber);
       setIsSubmitted(true);
@@ -80,7 +94,8 @@ export default function ChamadoPublico() {
 
   const handleNewTicket = () => {
     setIsSubmitted(false);
-    setFormData({ name: "", email: "", department: "", category: "", description: "", file: null });
+    setFormData({ name: "", email: "", department: "", category: "", description: "" });
+    setAttachmentLinks([]);
   };
 
   if (isSubmitted) {
@@ -200,30 +215,7 @@ export default function ChamadoPublico() {
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="file">Anexar Arquivo (opcional)</Label>
-                <div className="flex items-center gap-4">
-                  <Input
-                    id="file"
-                    type="file"
-                    className="hidden"
-                    onChange={(e) =>
-                      setFormData({ ...formData, file: e.target.files?.[0] || null })
-                    }
-                  />
-                  <Button
-                    type="button"
-                    variant="outline"
-                    onClick={() => document.getElementById("file")?.click()}
-                  >
-                    <Upload className="mr-2 h-4 w-4" />
-                    Escolher Arquivo
-                  </Button>
-                  {formData.file && (
-                    <span className="text-sm text-muted-foreground">{formData.file.name}</span>
-                  )}
-                </div>
-              </div>
+              <PublicAttachmentLinks links={attachmentLinks} onChange={setAttachmentLinks} />
 
               <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                 {isSubmitting ? (

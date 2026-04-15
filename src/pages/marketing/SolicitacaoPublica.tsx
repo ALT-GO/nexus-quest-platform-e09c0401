@@ -14,6 +14,7 @@ import {
 import { Palette, CheckCircle2, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { PublicAttachmentLinks } from "@/components/shared/PublicAttachmentLinks";
 
 const requestTypes = [
   "Assinatura de e-mail",
@@ -40,6 +41,7 @@ export default function SolicitacaoPublica() {
     nome_cliente: "",
     endereco: "",
   });
+  const [attachmentLinks, setAttachmentLinks] = useState<string[]>([]);
 
   const update = (field: string, value: string) =>
     setFormData((prev) => ({ ...prev, [field]: value }));
@@ -86,6 +88,7 @@ export default function SolicitacaoPublica() {
           request_type: formData.request_type,
           description: formData.description,
           extra_fields,
+          attachment_links: attachmentLinks,
         },
       });
 
@@ -115,6 +118,7 @@ export default function SolicitacaoPublica() {
       nome_cliente: "",
       endereco: "",
     });
+    setAttachmentLinks([]);
   };
 
   if (isSubmitted) {
@@ -270,6 +274,8 @@ export default function SolicitacaoPublica() {
                   placeholder="Descreva detalhadamente o que você precisa..."
                 />
               </div>
+
+              <PublicAttachmentLinks links={attachmentLinks} onChange={setAttachmentLinks} />
 
               <Button type="submit" className="w-full" size="lg" disabled={isSubmitting}>
                 {isSubmitting ? (

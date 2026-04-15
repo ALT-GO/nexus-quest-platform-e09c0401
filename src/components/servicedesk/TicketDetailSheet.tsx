@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
 import { DevolutionChecklistDialog } from "@/components/servicedesk/DevolutionChecklistDialog";
+import { AttachmentManager } from "@/components/shared/AttachmentManager";
 import {
   Sheet,
   SheetContent,
@@ -698,6 +699,11 @@ export function TicketDetailSheet({
                 linkedAssetId={ticket.asset_id ?? undefined} linkedAsset={linkedAsset}
                 availableAssets={availableAssets} onLink={(assetId) => onLinkAsset(ticket.ticket_number, assetId)}
                 requesterName={ticket.requester} />
+            </div>
+
+            {/* Attachments */}
+            <div className="mt-6">
+              <AttachmentManager entityType="ticket" entityId={ticket.id} addedBy={currentUserName} />
             </div>
 
             {/* Devolution Term */}
