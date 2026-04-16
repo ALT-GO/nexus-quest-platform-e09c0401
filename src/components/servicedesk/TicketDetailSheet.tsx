@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTimesheet, formatDuration } from "@/hooks/use-timesheet";
 import { TimerReminderBanner } from "@/components/shared/TimerReminderBanner";
 import { useTicketComments } from "@/hooks/use-ticket-comments";
+import { CommentInput } from "@/components/shared/CommentInput";
 import { useTicketHistory } from "@/hooks/use-ticket-history";
 import { StatusCustom } from "@/hooks/use-custom-status";
 import { HardwareAsset } from "@/hooks/use-assets";
@@ -188,7 +189,7 @@ export function TicketDetailSheet({
   const [activityTab, setActivityTab] = useState<"activity" | "comments">("comments");
   const [mobileView, setMobileView] = useState<"details" | "activity">("details");
   const commentsEndRef = useRef<HTMLDivElement>(null);
-  const [technicians, setTechnicians] = useState<{ name: string; avatar_url: string | null }[]>([]);
+  const [technicians, setTechnicians] = useState<{ id: string; name: string; avatar_url: string | null }[]>([]);
   const [currentUserName, setCurrentUserName] = useState("Admin");
   const [currentUserAvatar, setCurrentUserAvatar] = useState<string | null>(null);
 
@@ -205,7 +206,7 @@ export function TicketDetailSheet({
       ]);
       const all = [...(ti || []), ...(adm || [])];
       const unique = Array.from(new Map(all.map(p => [p.id, p])).values());
-      setTechnicians(unique.filter(p => p.full_name).map(p => ({ name: p.full_name, avatar_url: p.avatar_url })).sort((a, b) => a.name.localeCompare(b.name)));
+      setTechnicians(unique.filter(p => p.full_name).map(p => ({ id: p.id, name: p.full_name, avatar_url: p.avatar_url })).sort((a, b) => a.name.localeCompare(b.name)));
     };
     fetchTechnicians();
     // Fetch current user profile
@@ -365,10 +366,23 @@ export function TicketDetailSheet({
   const handleSendComment = async () => {
     if (!newComment.trim()) return;
     setSubmitting(true);
-    const success = await addComment(currentUserName, newComment.trim(), currentUserAvatar);
+    const content = newComment.trim();
+    const success = await addComment(currentUserName, content, currentUserAvatar);
     if (success) {
       setNewComment("");
       await logHistory("comment", "Comentário adicionado", currentUserName);
+      // Notify mentioned users
+      const { extractMentionedIds, notifyMentions } = await import("@/lib/mentions");
+      const mentionedIds = extractMentionedIds(content, technicians);
+      if (mentionedIds.length > 0 && ticket) {
+        await notifyMentions({
+          userIds: mentionedIds,
+          authorName: currentUserName,
+          contextTitle: ticket.title,
+          contextType: "ticket",
+          link: "/ti/service-desk",
+        });
+      }
     }
     setSubmitting(false);
   };
@@ -553,7 +567,7 @@ export function TicketDetailSheet({
                   <SelectContent>
                     <SelectItem value="unassigned">Sem responsável</SelectItem>
                     {technicians.map((t) => (
-                      <SelectItem key={t.name} value={t.name}>
+                      <SelectItem key={t.id} value={t.name}>
                         <span className="flex items-center gap-1.5">
                           <UserAvatar name={t.name} avatarUrl={t.avatar_url || undefined} className="h-5 w-5" fallbackClassName="text-[9px]" />
                           {t.name}
@@ -779,15 +793,13 @@ export function TicketDetailSheet({
 
           {/* Comment input */}
           <div className="border-t p-3">
-            <div className="flex gap-2">
-              <Textarea placeholder="Escreva um comentário..." value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendComment(); } }}
-                className="min-h-[50px] text-sm resize-none flex-1" rows={2} />
-              <Button size="icon" onClick={handleSendComment} disabled={!newComment.trim() || submitting} className="shrink-0 self-end h-8 w-8">
-                {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-              </Button>
-            </div>
+            <CommentInput
+              value={newComment}
+              onChange={setNewComment}
+              onSend={handleSendComment}
+              disabled={!newComment.trim() || submitting}
+              teamMembers={technicians.map(t => ({ id: t.id, name: t.name, avatar_url: t.avatar_url }))}
+            />
           </div>
         </div>
       </SheetContent>

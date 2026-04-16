@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
-import { Send, Smile } from "lucide-react";
+import { AtSign, Send, Smile } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { cn } from "@/lib/utils";
@@ -124,6 +124,26 @@ export function CommentInput({
     }
   };
 
+  const triggerMention = () => {
+    const ta = textareaRef.current;
+    if (!ta) return;
+    const pos = ta.selectionStart ?? value.length;
+    const charBefore = pos > 0 ? value[pos - 1] : " ";
+    const needsSpace = charBefore && charBefore !== " " && charBefore !== "\n";
+    const insertion = needsSpace ? " @" : "@";
+    const newVal = value.slice(0, pos) + insertion + value.slice(pos);
+    onChange(newVal);
+    const newPos = pos + insertion.length;
+    setShowMentions(true);
+    setMentionFilter("");
+    setMentionStartPos(newPos - 1);
+    setMentionIndex(0);
+    setTimeout(() => {
+      ta.focus();
+      ta.setSelectionRange(newPos, newPos);
+    }, 0);
+  };
+
   const handleEmojiSelect = (emoji: any) => {
     const ta = textareaRef.current;
     const pos = ta?.selectionStart ?? value.length;
@@ -217,6 +237,16 @@ export function CommentInput({
             </PopoverContent>
           </Popover>
         </div>
+        <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          onClick={triggerMention}
+          className="shrink-0 h-8 w-8"
+          title="Mencionar usuário (@)"
+        >
+          <AtSign className="h-3.5 w-3.5" />
+        </Button>
         <Button
           size="icon"
           onClick={onSend}
