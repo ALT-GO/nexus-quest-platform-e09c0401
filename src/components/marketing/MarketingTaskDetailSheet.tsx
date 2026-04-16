@@ -309,12 +309,13 @@ export function MarketingTaskDetailSheet({
 
   const handleSendComment = async () => {
     if (!commentText.trim() || !user) return;
+    const content = commentText.trim();
     await addComment.mutateAsync({
       task_id: task.id,
       author_id: user.id,
       author_name: authorName,
       avatar_url: profile?.avatar_url || null,
-      content: commentText.trim(),
+      content,
     });
     if (task.assignee_id && task.assignee_id !== user.id) {
       await supabase.from("notifications").insert({
@@ -325,6 +326,22 @@ export function MarketingTaskDetailSheet({
         link: "/marketing/solicitacoes",
         scope: "marketing",
       } as any);
+    }
+    // Notify mentioned users
+    const { extractMentionedIds, notifyMentions } = await import("@/lib/mentions");
+    const mentionedIds = extractMentionedIds(
+      content,
+      teamMembers.map((m) => ({ id: m.id, name: m.name }))
+    );
+    if (mentionedIds.length > 0) {
+      await notifyMentions({
+        userIds: mentionedIds,
+        authorName,
+        contextTitle: task.title,
+        contextType: "marketing",
+        link: "/marketing/solicitacoes",
+        excludeUserId: user.id,
+      });
     }
     setCommentText("");
     toast.success("Comentário adicionado");
