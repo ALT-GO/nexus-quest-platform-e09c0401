@@ -413,15 +413,6 @@ export function MarketingTaskDetailSheet({
   };
 
   // Mentions are rendered by <MentionText /> using the team member names
-    const parts = text.split(/(@\S+)/g);
-    return parts.map((part, i) =>
-      part.startsWith("@") ? (
-        <span key={i} className="text-primary font-medium">{part}</span>
-      ) : (
-        <span key={i}>{part}</span>
-      )
-    );
-  };
 
   // Merged activity feed (comments + history)
   const activityFeed = [
