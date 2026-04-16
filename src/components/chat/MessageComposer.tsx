@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Send, AtSign, Smile } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { useSendMessage } from "@/hooks/use-chat";
-import { notifyMentions } from "@/lib/mentions";
+import { extractMentionedIds, notifyMentions } from "@/lib/mentions";
 import { useAuth } from "@/hooks/use-auth";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -51,14 +51,17 @@ export function MessageComposer({ channelId, channelName, members }: Props) {
       .select("full_name")
       .eq("id", user.id)
       .single();
-    await notifyMentions({
+    const mentionedIds = extractMentionedIds(
       content,
-      members: members.map((m) => ({ id: m.id, full_name: m.full_name })),
-      authorId: user.id,
+      members.map((m) => ({ id: m.id, name: m.full_name }))
+    );
+    await notifyMentions({
+      userIds: mentionedIds,
       authorName: profile?.full_name || "Alguém",
       contextTitle: `#${channelName}`,
-      contextType: "ticket", // mapped to ti scope
+      contextType: "ticket",
       link: `/chat?canal=${channelId}`,
+      excludeUserId: user.id,
     }).catch(() => {});
   };
 

@@ -22,8 +22,11 @@ import {
   KeyRound,
   Headphones,
   CalendarDays,
+  MessageCircle,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { useTotalUnread } from "@/hooks/use-chat";
 
 interface NavItem {
   title: string;
@@ -65,12 +68,19 @@ export function AppSidebar() {
     marketingChildren.push({ title: "Metas", href: "/marketing/metas", icon: Target });
   }
 
+  const totalUnreadChat = useTotalUnread();
+
   const navigation: NavItem[] = [
     ...(hasPermission("ver_dashboard") ? [{
       title: "Dashboard",
       href: hasPermission("ver_central_inteligencia") ? "/central-inteligencia" : "/",
       icon: hasPermission("ver_central_inteligencia") ? Brain : LayoutDashboard,
     } as NavItem] : []),
+    {
+      title: "Chat",
+      href: "/chat",
+      icon: MessageCircle,
+    } as NavItem,
     ...(marketingChildren.length > 0 ? [{
       title: "Marketing",
       icon: Megaphone,
@@ -146,6 +156,11 @@ export function AppSidebar() {
               >
                 <item.icon className="h-4 w-4" />
                 {item.title}
+                {item.title === "Chat" && totalUnreadChat > 0 && (
+                  <Badge variant="destructive" className="ml-auto h-5 px-1.5 text-[10px]">
+                    {totalUnreadChat > 99 ? "99+" : totalUnreadChat}
+                  </Badge>
+                )}
               </Link>
             ) : (
               <>
