@@ -238,6 +238,16 @@ export function CommentInput({
           </Popover>
         </div>
         <Button
+          type="button"
+          size="icon"
+          variant="outline"
+          onClick={triggerMention}
+          className="shrink-0 h-8 w-8"
+          title="Mencionar usuário (@)"
+        >
+          <AtSign className="h-3.5 w-3.5" />
+        </Button>
+        <Button
           size="icon"
           onClick={onSend}
           disabled={disabled}
