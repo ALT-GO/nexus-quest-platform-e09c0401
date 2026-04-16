@@ -78,6 +78,7 @@ import {
 } from "@/hooks/use-marketing-comments";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { CommentInput } from "@/components/shared/CommentInput";
+import { MentionText } from "@/components/shared/MentionText";
 import { useTaskDependencies, isTaskBlocked } from "@/hooks/use-dependencies";
 import { useMarketingTasks } from "@/hooks/use-marketing";
 import { DependencySection } from "./DependencySection";
@@ -411,17 +412,7 @@ export function MarketingTaskDetailSheet({
     setEditingDesc(false);
   };
 
-  // Render @mentions with highlight
-  const renderMentionText = (text: string) => {
-    const parts = text.split(/(@\S+)/g);
-    return parts.map((part, i) =>
-      part.startsWith("@") ? (
-        <span key={i} className="text-primary font-medium">{part}</span>
-      ) : (
-        <span key={i}>{part}</span>
-      )
-    );
-  };
+  // Mentions are rendered by <MentionText /> using the team member names
 
   // Merged activity feed (comments + history)
   const activityFeed = [
@@ -1000,9 +991,11 @@ export function MarketingTaskDetailSheet({
                           "text-xs mt-0.5 whitespace-pre-wrap break-all overflow-hidden [overflow-wrap:anywhere]",
                           item.type === "comment" ? "text-foreground" : "text-muted-foreground"
                         )}>
-                          {item.type === "comment"
-                            ? renderMentionText(item.content)
-                            : item.content}
+                          {item.type === "comment" ? (
+                            <MentionText text={item.content} memberNames={teamMembers.map((m) => m.name)} />
+                          ) : (
+                            item.content
+                          )}
                         </p>
                       </div>
                     </div>
