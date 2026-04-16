@@ -24,6 +24,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useTimesheet, formatDuration } from "@/hooks/use-timesheet";
 import { TimerReminderBanner } from "@/components/shared/TimerReminderBanner";
 import { useTicketComments } from "@/hooks/use-ticket-comments";
+import { CommentInput } from "@/components/shared/CommentInput";
 import { useTicketHistory } from "@/hooks/use-ticket-history";
 import { StatusCustom } from "@/hooks/use-custom-status";
 import { HardwareAsset } from "@/hooks/use-assets";
