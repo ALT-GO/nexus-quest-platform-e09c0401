@@ -25,6 +25,7 @@ import { useTimesheet, formatDuration } from "@/hooks/use-timesheet";
 import { TimerReminderBanner } from "@/components/shared/TimerReminderBanner";
 import { useTicketComments } from "@/hooks/use-ticket-comments";
 import { CommentInput } from "@/components/shared/CommentInput";
+import { MentionText } from "@/components/shared/MentionText";
 import { useTicketHistory } from "@/hooks/use-ticket-history";
 import { StatusCustom } from "@/hooks/use-custom-status";
 import { HardwareAsset } from "@/hooks/use-assets";
@@ -782,7 +783,11 @@ export function TicketDetailSheet({
                         </span>
                       </div>
                       <p className={cn("text-xs mt-0.5 whitespace-pre-wrap", item.type === "comment" ? "text-foreground" : "text-muted-foreground")}>
-                        {item.content}
+                        {item.type === "comment" ? (
+                          <MentionText text={item.content} memberNames={technicians.map((t) => t.name)} />
+                        ) : (
+                          item.content
+                        )}
                       </p>
                     </div>
                   </div>
