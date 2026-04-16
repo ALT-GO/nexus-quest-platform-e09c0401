@@ -188,7 +188,7 @@ export function TicketDetailSheet({
   const [activityTab, setActivityTab] = useState<"activity" | "comments">("comments");
   const [mobileView, setMobileView] = useState<"details" | "activity">("details");
   const commentsEndRef = useRef<HTMLDivElement>(null);
-  const [technicians, setTechnicians] = useState<{ name: string; avatar_url: string | null }[]>([]);
+  const [technicians, setTechnicians] = useState<{ id: string; name: string; avatar_url: string | null }[]>([]);
   const [currentUserName, setCurrentUserName] = useState("Admin");
   const [currentUserAvatar, setCurrentUserAvatar] = useState<string | null>(null);
 
@@ -205,7 +205,7 @@ export function TicketDetailSheet({
       ]);
       const all = [...(ti || []), ...(adm || [])];
       const unique = Array.from(new Map(all.map(p => [p.id, p])).values());
-      setTechnicians(unique.filter(p => p.full_name).map(p => ({ name: p.full_name, avatar_url: p.avatar_url })).sort((a, b) => a.name.localeCompare(b.name)));
+      setTechnicians(unique.filter(p => p.full_name).map(p => ({ id: p.id, name: p.full_name, avatar_url: p.avatar_url })).sort((a, b) => a.name.localeCompare(b.name)));
     };
     fetchTechnicians();
     // Fetch current user profile
@@ -365,10 +365,23 @@ export function TicketDetailSheet({
   const handleSendComment = async () => {
     if (!newComment.trim()) return;
     setSubmitting(true);
-    const success = await addComment(currentUserName, newComment.trim(), currentUserAvatar);
+    const content = newComment.trim();
+    const success = await addComment(currentUserName, content, currentUserAvatar);
     if (success) {
       setNewComment("");
       await logHistory("comment", "Comentário adicionado", currentUserName);
+      // Notify mentioned users
+      const { extractMentionedIds, notifyMentions } = await import("@/lib/mentions");
+      const mentionedIds = extractMentionedIds(content, technicians);
+      if (mentionedIds.length > 0 && ticket) {
+        await notifyMentions({
+          userIds: mentionedIds,
+          authorName: currentUserName,
+          contextTitle: ticket.title,
+          contextType: "ticket",
+          link: "/ti/service-desk",
+        });
+      }
     }
     setSubmitting(false);
   };
@@ -553,7 +566,7 @@ export function TicketDetailSheet({
                   <SelectContent>
                     <SelectItem value="unassigned">Sem responsável</SelectItem>
                     {technicians.map((t) => (
-                      <SelectItem key={t.name} value={t.name}>
+                      <SelectItem key={t.id} value={t.name}>
                         <span className="flex items-center gap-1.5">
                           <UserAvatar name={t.name} avatarUrl={t.avatar_url || undefined} className="h-5 w-5" fallbackClassName="text-[9px]" />
                           {t.name}
