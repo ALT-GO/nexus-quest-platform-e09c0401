@@ -792,15 +792,13 @@ export function TicketDetailSheet({
 
           {/* Comment input */}
           <div className="border-t p-3">
-            <div className="flex gap-2">
-              <Textarea placeholder="Escreva um comentário..." value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                onKeyDown={(e) => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); handleSendComment(); } }}
-                className="min-h-[50px] text-sm resize-none flex-1" rows={2} />
-              <Button size="icon" onClick={handleSendComment} disabled={!newComment.trim() || submitting} className="shrink-0 self-end h-8 w-8">
-                {submitting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Send className="h-3.5 w-3.5" />}
-              </Button>
-            </div>
+            <CommentInput
+              value={newComment}
+              onChange={setNewComment}
+              onSend={handleSendComment}
+              disabled={!newComment.trim() || submitting}
+              teamMembers={technicians.map(t => ({ id: t.id, name: t.name, avatar_url: t.avatar_url }))}
+            />
           </div>
         </div>
       </SheetContent>
