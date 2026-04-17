@@ -34,6 +34,16 @@ export function ChatPanel({ open, onOpenChange }: ChatPanelProps) {
     }
   }, [open, channels, activeId]);
 
+  // Listen to global event with optional channelId payload (e.g. from notifications)
+  useEffect(() => {
+    const handler = (e: Event) => {
+      const detail = (e as CustomEvent).detail as { channelId?: string } | undefined;
+      if (detail?.channelId) setActiveId(detail.channelId);
+    };
+    window.addEventListener("nexus:open-chat", handler);
+    return () => window.removeEventListener("nexus:open-chat", handler);
+  }, []);
+
   const active = channels.find((c) => c.id === activeId) || null;
   const { data: members = [] } = useChannelMembers(activeId);
 

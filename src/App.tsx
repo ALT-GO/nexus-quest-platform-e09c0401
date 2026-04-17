@@ -108,6 +108,7 @@ function AppRoutes() {
             <Route path="/ti/service-desk" element={
               <PermissionRoute permission="ver_service_desk"><ServiceDesk /></PermissionRoute>
             } />
+            <Route path="/ti/servicedesk" element={<Navigate to="/ti/service-desk" replace />} />
             <Route path="/ti/ativos" element={<Navigate to="/ti/colaboradores" replace />} />
             <Route path="/ti/colaboradores" element={
               <PermissionRoute permission="ver_colaboradores"><Colaboradores /></PermissionRoute>

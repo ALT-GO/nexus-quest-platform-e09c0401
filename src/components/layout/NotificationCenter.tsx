@@ -135,10 +135,26 @@ export function NotificationCenter() {
 
   const handleClick = async (notif: Notification) => {
     if (!notif.read) await markAsRead(notif.id);
-    if (notif.link) {
-      setOpen(false);
-      navigate(notif.link);
+    if (!notif.link) return;
+    setOpen(false);
+
+    // Special handling: chat links open the floating chat panel directly
+    // Supported formats: "/chat", "/chat?canal=<channelId>", "/chat?channel=<channelId>"
+    if (notif.link.startsWith("/chat")) {
+      let channelId: string | undefined;
+      try {
+        const url = new URL(notif.link, window.location.origin);
+        channelId = url.searchParams.get("canal") || url.searchParams.get("channel") || undefined;
+      } catch {
+        // ignore parse errors
+      }
+      window.dispatchEvent(
+        new CustomEvent("nexus:open-chat", { detail: channelId ? { channelId } : {} })
+      );
+      return;
     }
+
+    navigate(notif.link);
   };
 
   if (!user) return null;
