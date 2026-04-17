@@ -122,6 +122,38 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_settings: {
+        Row: {
+          channel_id: string | null
+          enabled: boolean
+          event_key: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          channel_id?: string | null
+          enabled?: boolean
+          event_key: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          channel_id?: string | null
+          enabled?: boolean
+          event_key?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "bot_settings_channel_id_fkey"
+            columns: ["channel_id"]
+            isOneToOne: false
+            referencedRelation: "chat_channels"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chat_channel_members: {
         Row: {
           channel_id: string
