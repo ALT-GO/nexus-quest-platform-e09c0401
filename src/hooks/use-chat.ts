@@ -319,7 +319,8 @@ export function useMarkChannelRead() {
 
 // ---------- Members ----------
 export function useChannelMembers(channelId: string | null) {
-  return useQuery({
+  const qc = useQueryClient();
+  const query = useQuery({
     queryKey: ["chat-members", channelId],
     enabled: !!channelId,
     queryFn: async () => {
@@ -330,6 +331,83 @@ export function useChannelMembers(channelId: string | null) {
       if (error) throw error;
       return data as ChannelMember[];
     },
+  });
+
+  // Realtime member changes
+  useEffect(() => {
+    if (!channelId) return;
+    const ch = supabase
+      .channel(`chat-members-${channelId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "chat_channel_members", filter: `channel_id=eq.${channelId}` },
+        () => qc.invalidateQueries({ queryKey: ["chat-members", channelId] })
+      )
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, [channelId, qc]);
+
+  return query;
+}
+
+export function useAddChannelMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ channelId, userId, role = "member" }: { channelId: string; userId: string; role?: "admin" | "member" }) => {
+      const { error } = await supabase
+        .from("chat_channel_members")
+        .insert({ channel_id: channelId, user_id: userId, role });
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => qc.invalidateQueries({ queryKey: ["chat-members", vars.channelId] }),
+  });
+}
+
+export function useRemoveChannelMember() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ channelId, userId }: { channelId: string; userId: string }) => {
+      const { error } = await supabase
+        .from("chat_channel_members")
+        .delete()
+        .eq("channel_id", channelId)
+        .eq("user_id", userId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => qc.invalidateQueries({ queryKey: ["chat-members", vars.channelId] }),
+  });
+}
+
+export function useUpdateMemberRole() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ channelId, userId, role }: { channelId: string; userId: string; role: "admin" | "member" }) => {
+      const { error } = await supabase
+        .from("chat_channel_members")
+        .update({ role })
+        .eq("channel_id", channelId)
+        .eq("user_id", userId);
+      if (error) throw error;
+    },
+    onSuccess: (_d, vars) => qc.invalidateQueries({ queryKey: ["chat-members", vars.channelId] }),
+  });
+}
+
+// All authenticated users (for picker)
+export function useAllUsers() {
+  return useQuery({
+    queryKey: ["chat-all-users"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("profiles")
+        .select("id, full_name, avatar_url")
+        .order("full_name");
+      if (error) throw error;
+      return (data || []) as { id: string; full_name: string; avatar_url: string | null }[];
+    },
+    staleTime: 60_000,
   });
 }
 
@@ -363,11 +441,39 @@ export function useCreateChannel() {
   });
 }
 
+export function useUpdateChannel() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      id,
+      updates,
+    }: {
+      id: string;
+      updates: Partial<Pick<ChatChannel, "name" | "description" | "icon" | "archived">>;
+    }) => {
+      const { error } = await supabase.from("chat_channels").update(updates).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["chat-channels"] }),
+  });
+}
+
 export function useArchiveChannel() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async (id: string) => {
       const { error } = await supabase.from("chat_channels").update({ archived: true }).eq("id", id);
+      if (error) throw error;
+    },
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["chat-channels"] }),
+  });
+}
+
+export function useDeleteChannel() {
+  const qc = useQueryClient();
+  return useMutation({
+    mutationFn: async (id: string) => {
+      const { error } = await supabase.from("chat_channels").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["chat-channels"] }),

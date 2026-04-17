@@ -37,6 +37,7 @@ import { TicketTable } from "@/components/servicedesk/TicketTable";
 import { TicketDetailSheet } from "@/components/servicedesk/TicketDetailSheet";
 import { toast } from "sonner";
 import { GanttChart, GanttItem } from "@/components/shared/GanttChart";
+import { ChatSuporteTI } from "@/lib/chat-suporte-ti";
 
 const categories = [
   "Acesso e permissões",
@@ -116,20 +117,44 @@ export default function ServiceDesk() {
   } = useAssets();
 
   const loggedExpired = useRef<Set<string>>(new Set());
+  const loggedSlaNear = useRef<Set<string>>(new Set());
 
   // SLA expiry check — update in DB when expired
   useEffect(() => {
     tickets.forEach((ticket) => {
       if (isFinalStatus(ticket.status_id)) return;
-      if (ticket.sla_expired) return;
 
       const sla = getSlaInfo(ticket.created_at, ticket.category, false);
+
+      // SLA near expiration (< 30 min remaining, not yet expired)
+      if (
+        !sla.slaVencido &&
+        sla.remainingMs > 0 &&
+        sla.remainingMs <= 30 * 60 * 1000 &&
+        !loggedSlaNear.current.has(ticket.id)
+      ) {
+        loggedSlaNear.current.add(ticket.id);
+        ChatSuporteTI.slaNear({
+          ticket_number: ticket.ticket_number,
+          title: ticket.title,
+          minutesLeft: Math.round(sla.remainingMs / 60000),
+        });
+      }
+
+      if (ticket.sla_expired) return;
+
       if (sla.slaVencido && !loggedExpired.current.has(ticket.id)) {
         loggedExpired.current.add(ticket.id);
         updateTicket(ticket.id, { sla_expired: true });
         toast.error(`SLA vencido: ${ticket.ticket_number} - ${ticket.title}`, {
           description: `O prazo de ${ticket.sla_hours}h foi ultrapassado.`,
           duration: 8000,
+        });
+        ChatSuporteTI.slaExpired({
+          ticket_number: ticket.ticket_number,
+          title: ticket.title,
+          sla_hours: ticket.sla_hours,
+          assignee: ticket.assignee,
         });
       }
     });
@@ -185,6 +210,15 @@ export default function ServiceDesk() {
         status_id: newStatusId,
         completed_at: completedAt,
       });
+
+      // Notify #suporte-ti when ticket is completed (final status reached)
+      if (isFinal && !ticket.completed_at) {
+        ChatSuporteTI.ticketCompleted({
+          ticket_number: ticket.ticket_number,
+          title: ticket.title,
+          assignee: ticket.assignee,
+        });
+      }
 
       if (isFinal && ticket.asset_id) {
         deliverAsset(ticket.asset_id, ticket.ticket_number, ticket.requester);
@@ -251,6 +285,11 @@ export default function ServiceDesk() {
         });
         if (success) {
           toast.success(`${ticket.ticket_number}: marcado como concluído`);
+          ChatSuporteTI.ticketCompleted({
+            ticket_number: ticket.ticket_number,
+            title: ticket.title,
+            assignee: ticket.assignee,
+          });
         }
       }
     },
