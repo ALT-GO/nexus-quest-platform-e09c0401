@@ -1,12 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bot } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Bot, Upload, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import srBotAvatar from "@/assets/sr-bot-avatar.png";
+import srBotAvatarFallback from "@/assets/sr-bot-avatar.png";
 
 interface BotSetting {
   id: string;
@@ -19,6 +20,11 @@ interface Channel {
   id: string;
   name: string;
   icon: string;
+}
+
+interface BotProfile {
+  avatar_url: string;
+  display_name: string;
 }
 
 const EVENT_LABELS: Record<string, { title: string; description: string; emoji: string }> = {
@@ -60,16 +66,21 @@ const EVENT_ORDER = [
 export function BotSettingsTab() {
   const [settings, setSettings] = useState<BotSetting[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
+  const [profile, setProfile] = useState<BotProfile | null>(null);
   const [loading, setLoading] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const load = async () => {
     setLoading(true);
-    const [{ data: s }, { data: c }] = await Promise.all([
+    const [{ data: s }, { data: c }, { data: p }] = await Promise.all([
       supabase.from("bot_settings").select("*"),
       supabase.from("chat_channels").select("id, name, icon").eq("archived", false).order("name"),
+      supabase.from("bot_profile").select("avatar_url, display_name").maybeSingle(),
     ]);
     setSettings(s || []);
     setChannels(c || []);
+    setProfile(p as BotProfile | null);
     setLoading(false);
   };
 
@@ -79,7 +90,6 @@ export function BotSettingsTab() {
 
   const upsertSetting = async (event_key: string, patch: Partial<BotSetting>) => {
     const existing = settings.find((s) => s.event_key === event_key);
-    // Optimistic update
     setSettings((prev) => {
       if (existing) return prev.map((s) => (s.event_key === event_key ? { ...s, ...patch } : s));
       return [
@@ -108,27 +118,98 @@ export function BotSettingsTab() {
     toast.success("Configuração salva");
   };
 
+  const handleAvatarUpload = async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("Selecione uma imagem (PNG, JPG, WebP)");
+      return;
+    }
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Imagem muito grande. Máximo 5MB.");
+      return;
+    }
+    setUploading(true);
+    try {
+      const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+      const path = `sr-bot-avatar-${Date.now()}.${ext}`;
+      const { error: upErr } = await supabase.storage
+        .from("chat-assets")
+        .upload(path, file, { cacheControl: "3600", upsert: false });
+      if (upErr) throw upErr;
+
+      const { data: urlData } = supabase.storage.from("chat-assets").getPublicUrl(path);
+      const publicUrl = urlData.publicUrl;
+
+      const { error: updErr } = await supabase
+        .from("bot_profile")
+        .update({ avatar_url: publicUrl, updated_at: new Date().toISOString() })
+        .eq("id", true);
+      if (updErr) throw updErr;
+
+      setProfile((prev) => ({
+        avatar_url: publicUrl,
+        display_name: prev?.display_name || "Sr. Bot",
+      }));
+      toast.success("Avatar do Sr. Bot atualizado");
+    } catch (e: any) {
+      toast.error("Erro no upload: " + (e.message || "tente novamente"));
+    } finally {
+      setUploading(false);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    }
+  };
+
   const getSetting = (event_key: string): BotSetting | undefined =>
     settings.find((s) => s.event_key === event_key);
+
+  const currentAvatar = profile?.avatar_url || srBotAvatarFallback;
 
   return (
     <div className="space-y-6">
       <Card>
         <CardHeader>
-          <div className="flex items-center gap-3">
-            <img
-              src={srBotAvatar}
-              alt="Sr. Bot"
-              className="h-12 w-12 rounded-full ring-2 ring-primary/20 object-cover"
-            />
-            <div>
+          <div className="flex items-start gap-4">
+            <div className="relative shrink-0">
+              <img
+                src={currentAvatar}
+                alt="Sr. Bot"
+                className="h-16 w-16 rounded-full ring-2 ring-primary/20 object-cover"
+              />
+              {uploading && (
+                <div className="absolute inset-0 flex items-center justify-center rounded-full bg-background/80">
+                  <Loader2 className="h-5 w-5 animate-spin text-primary" />
+                </div>
+              )}
+            </div>
+            <div className="flex-1 min-w-0">
               <CardTitle className="flex items-center gap-2">
                 <Bot className="h-5 w-5 text-primary" />
                 Sr. Bot — Service Desk
               </CardTitle>
               <p className="text-sm text-muted-foreground mt-1">
-                Configure quais eventos do Service Desk o Sr. Bot deve anunciar e em qual canal.
+                Configure o avatar, eventos e canais de notificação do Sr. Bot.
               </p>
+              <div className="mt-3 flex items-center gap-2">
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/png,image/jpeg,image/webp"
+                  className="hidden"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) handleAvatarUpload(file);
+                  }}
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  disabled={uploading}
+                >
+                  <Upload className="h-3.5 w-3.5 mr-1.5" />
+                  {uploading ? "Enviando..." : "Trocar avatar"}
+                </Button>
+                <span className="text-xs text-muted-foreground">PNG, JPG ou WebP — máx. 5MB</span>
+              </div>
             </div>
           </div>
         </CardHeader>
@@ -190,8 +271,8 @@ export function BotSettingsTab() {
             })
           )}
           <p className="text-xs text-muted-foreground pt-2">
-            💡 Dica: você pode direcionar cada evento para canais diferentes (ex: SLA vencido em
-            #urgencias, conclusões em #chamados-ti).
+            💡 Dica: o avatar atualizado aparece em todas as mensagens novas do Sr. Bot. Mensagens
+            antigas mantêm o avatar que tinha no momento do envio.
           </p>
         </CardContent>
       </Card>
