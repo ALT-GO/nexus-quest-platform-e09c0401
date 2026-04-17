@@ -151,6 +151,28 @@ Deno.serve(async (req) => {
       await supabase.from("attachments").insert(attachments);
     }
 
+    // Post to chat via Sr. Bot (admin-configurable per event)
+    try {
+      const summary =
+        `📨 **Nova solicitação de marketing** — ${request_type}\n` +
+        `👤 Solicitante: ${requester_name}\n` +
+        `📝 ${description.length > 200 ? description.slice(0, 200) + "…" : description}`;
+
+      await fetch(`${Deno.env.get("SUPABASE_URL")}/functions/v1/bot-post-message`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")}`,
+        },
+        body: JSON.stringify({
+          event_key: "marketing_request_created",
+          content: summary,
+        }),
+      });
+    } catch (e) {
+      console.warn("[create-marketing-request] bot post failed:", e);
+    }
+
     return new Response(
       JSON.stringify({ success: true, taskId: task!.id }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
