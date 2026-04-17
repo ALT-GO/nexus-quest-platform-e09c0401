@@ -19,7 +19,7 @@ import EventosPublico from "./pages/marketing/EventosPublico";
 import Configuracoes from "./pages/Configuracoes";
 import GestaoFaturas from "./pages/ti/GestaoFaturas";
 import CofreSenhas from "./pages/ti/CofreSenhas";
-import ChatPage from "./pages/Chat";
+
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
 import ForgotPassword from "./pages/auth/ForgotPassword";
@@ -94,7 +94,7 @@ function AppRoutes() {
           <>
             <Route path="/" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
             <Route path="/configuracoes" element={<ProtectedRoute><Configuracoes /></ProtectedRoute>} />
-            <Route path="/chat" element={<ProtectedRoute><ChatPage /></ProtectedRoute>} />
+            <Route path="/chat" element={<Navigate to="/" replace />} />
 
             <Route path="/marketing/solicitacoes" element={
               <PermissionRoute permission="ver_solicitacoes_marketing"><Solicitacoes /></PermissionRoute>

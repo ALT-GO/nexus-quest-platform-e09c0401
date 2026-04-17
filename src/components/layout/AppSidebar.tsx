@@ -144,24 +144,41 @@ export function AppSidebar() {
         {navigation.map((item) => (
           <div key={item.title}>
             {item.href ? (
-              <Link
-                to={item.href}
-                onClick={() => setIsMobileOpen(false)}
-                className={cn(
-                  "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
-                  isActive(item.href)
-                    ? "bg-accent text-accent-foreground"
-                    : "text-sidebar-foreground hover:bg-muted"
-                )}
-              >
-                <item.icon className="h-4 w-4" />
-                {item.title}
-                {item.title === "Chat" && totalUnreadChat > 0 && (
-                  <Badge variant="destructive" className="ml-auto h-5 px-1.5 text-[10px]">
-                    {totalUnreadChat > 99 ? "99+" : totalUnreadChat}
-                  </Badge>
-                )}
-              </Link>
+              item.title === "Chat" ? (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsMobileOpen(false);
+                    window.dispatchEvent(new CustomEvent("nexus:open-chat"));
+                  }}
+                  className={cn(
+                    "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
+                    "text-sidebar-foreground hover:bg-muted"
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.title}
+                  {totalUnreadChat > 0 && (
+                    <Badge variant="destructive" className="ml-auto h-5 px-1.5 text-[10px]">
+                      {totalUnreadChat > 99 ? "99+" : totalUnreadChat}
+                    </Badge>
+                  )}
+                </button>
+              ) : (
+                <Link
+                  to={item.href}
+                  onClick={() => setIsMobileOpen(false)}
+                  className={cn(
+                    "flex items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
+                    isActive(item.href)
+                      ? "bg-accent text-accent-foreground"
+                      : "text-sidebar-foreground hover:bg-muted"
+                  )}
+                >
+                  <item.icon className="h-4 w-4" />
+                  {item.title}
+                </Link>
+              )
             ) : (
               <>
                 <button
