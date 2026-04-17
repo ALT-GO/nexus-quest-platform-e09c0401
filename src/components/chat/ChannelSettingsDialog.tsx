@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Input } from "@/components/ui/input";
@@ -56,6 +56,14 @@ export function ChannelSettingsDialog({ channel, open, onOpenChange, onDeleted }
   const [icon, setIcon] = useState(channel.icon);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [search, setSearch] = useState("");
+
+  // Sync local form state whenever the active channel changes or dialog reopens
+  useEffect(() => {
+    setName(channel.name);
+    setDescription(channel.description);
+    setIcon(channel.icon);
+    setSearch("");
+  }, [channel.id, channel.name, channel.description, channel.icon, open]);
 
   const updateChannel = useUpdateChannel();
   const archiveChannel = useArchiveChannel();
