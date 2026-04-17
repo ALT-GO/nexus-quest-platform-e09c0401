@@ -8,7 +8,16 @@ import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import {
   ChatChannel,
@@ -195,7 +204,7 @@ export function ChannelSettingsDialog({ channel, open, onOpenChange, onDeleted }
                           className="flex items-center justify-between p-2 rounded hover:bg-accent"
                         >
                           <div className="flex items-center gap-2">
-                            <UserAvatar name={u.full_name} avatarUrl={u.avatar_url} size="sm" />
+                            <UserAvatar name={u.full_name} avatarUrl={u.avatar_url} className="h-7 w-7" />
                             <span className="text-sm">{u.full_name || "Sem nome"}</span>
                           </div>
                           <Button
@@ -232,7 +241,7 @@ export function ChannelSettingsDialog({ channel, open, onOpenChange, onDeleted }
                         className="flex items-center justify-between p-2 rounded hover:bg-accent"
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <UserAvatar name={m.user!.full_name} avatarUrl={m.user!.avatar_url} size="sm" />
+                          <UserAvatar name={m.user!.full_name} avatarUrl={m.user!.avatar_url} className="h-7 w-7" />
                           <div className="min-w-0">
                             <p className="text-sm truncate">{m.user!.full_name || "Sem nome"}</p>
                             {m.role === "admin" && (
@@ -314,13 +323,25 @@ export function ChannelSettingsDialog({ channel, open, onOpenChange, onDeleted }
         </DialogContent>
       </Dialog>
 
-      <ConfirmDeleteDialog
-        open={confirmDelete}
-        onOpenChange={setConfirmDelete}
-        onConfirm={handleDelete}
-        title="Excluir canal?"
-        description={`Todas as mensagens e membros do canal #${channel.name} serão removidos permanentemente.`}
-      />
+      <AlertDialog open={confirmDelete} onOpenChange={setConfirmDelete}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Excluir canal?</AlertDialogTitle>
+            <AlertDialogDescription>
+              Todas as mensagens e membros do canal #{channel.name} serão removidos permanentemente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => { e.preventDefault(); handleDelete(); }}
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+            >
+              Excluir permanentemente
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </>
   );
 }
