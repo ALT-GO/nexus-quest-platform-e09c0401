@@ -42,9 +42,20 @@ const EVENT_LABELS: Record<string, { title: string; description: string; emoji: 
     description: "Confirma no chat quando um chamado é finalizado.",
     emoji: "✅",
   },
+  marketing_request_created: {
+    title: "Nova solicitação de marketing",
+    description: "Anuncia quando uma solicitação chega pelo formulário público de marketing.",
+    emoji: "📨",
+  },
 };
 
-const EVENT_ORDER = ["ticket_created", "sla_near", "sla_expired", "ticket_completed"];
+const EVENT_ORDER = [
+  "ticket_created",
+  "sla_near",
+  "sla_expired",
+  "ticket_completed",
+  "marketing_request_created",
+];
 
 export function BotSettingsTab() {
   const [settings, setSettings] = useState<BotSetting[]>([]);
