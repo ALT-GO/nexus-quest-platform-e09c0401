@@ -117,7 +117,28 @@ export default function ServiceDesk() {
   } = useAssets();
 
   const loggedExpired = useRef<Set<string>>(new Set());
-  const loggedSlaNear = useRef<Set<string>>(new Set());
+
+  // Persisted set of ticket IDs already notified for "SLA near" — prevents
+  // duplicate bot messages across reloads/tabs. One notification per ticket.
+  const SLA_NEAR_KEY = "sla_near_notified_v1";
+  const loggedSlaNear = useRef<Set<string>>(
+    new Set(
+      (() => {
+        try {
+          return JSON.parse(localStorage.getItem(SLA_NEAR_KEY) || "[]") as string[];
+        } catch {
+          return [];
+        }
+      })()
+    )
+  );
+  const persistSlaNear = () => {
+    try {
+      localStorage.setItem(SLA_NEAR_KEY, JSON.stringify([...loggedSlaNear.current]));
+    } catch {
+      // ignore quota errors
+    }
+  };
 
   // SLA expiry check — update in DB when expired
   useEffect(() => {
@@ -126,14 +147,16 @@ export default function ServiceDesk() {
 
       const sla = getSlaInfo(ticket.created_at, ticket.category, false);
 
-      // SLA near expiration (< 30 min remaining, not yet expired)
+      // SLA near expiration: fire ONCE per ticket when ≤15 min remain.
+      // Persisted in localStorage so reloads don't re-trigger.
       if (
         !sla.slaVencido &&
         sla.remainingMs > 0 &&
-        sla.remainingMs <= 30 * 60 * 1000 &&
+        sla.remainingMs <= 15 * 60 * 1000 &&
         !loggedSlaNear.current.has(ticket.id)
       ) {
         loggedSlaNear.current.add(ticket.id);
+        persistSlaNear();
         ChatSuporteTI.slaNear({
           ticket_number: ticket.ticket_number,
           title: ticket.title,
