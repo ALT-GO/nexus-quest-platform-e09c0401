@@ -122,6 +122,27 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_profile: {
+        Row: {
+          avatar_url: string
+          display_name: string
+          id: boolean
+          updated_at: string
+        }
+        Insert: {
+          avatar_url?: string
+          display_name?: string
+          id?: boolean
+          updated_at?: string
+        }
+        Update: {
+          avatar_url?: string
+          display_name?: string
+          id?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
       bot_settings: {
         Row: {
           channel_id: string | null
