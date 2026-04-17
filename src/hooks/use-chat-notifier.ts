@@ -70,7 +70,7 @@ export function useChatNotifier() {
             description: msg.content.slice(0, 100),
             action: {
               label: "Abrir",
-              onClick: () => navigate(`/chat?canal=${msg.channel_id}`),
+              onClick: () => window.dispatchEvent(new CustomEvent("nexus:open-chat")),
             },
           });
           // Web Push
