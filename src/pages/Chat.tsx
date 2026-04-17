@@ -5,7 +5,9 @@ import { ChannelList } from "@/components/chat/ChannelList";
 import { MessageList } from "@/components/chat/MessageList";
 import { MessageComposer } from "@/components/chat/MessageComposer";
 import { NewChannelDialog } from "@/components/chat/NewChannelDialog";
+import { ChannelSettingsDialog } from "@/components/chat/ChannelSettingsDialog";
 import { useChannelMembers, useChatChannels } from "@/hooks/use-chat";
+import { useAuth } from "@/hooks/use-auth";
 import { Hash, Users, Settings as SettingsIcon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -16,8 +18,10 @@ export default function ChatPage() {
   const [searchParams, setSearchParams] = useSearchParams();
   const initialChannel = searchParams.get("canal");
   const { data: channels = [] } = useChatChannels();
+  const { isAdmin } = useAuth();
   const [activeId, setActiveId] = useState<string | null>(initialChannel);
   const [newChannelOpen, setNewChannelOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   // Auto-select first channel if none active
   useEffect(() => {
@@ -83,6 +87,17 @@ export default function ChatPage() {
                     <Users className="h-3 w-3" />
                     {members.length}
                   </Badge>
+                  {isAdmin && (
+                    <Button
+                      size="icon"
+                      variant="ghost"
+                      className="h-8 w-8"
+                      title="Configurações do canal"
+                      onClick={() => setSettingsOpen(true)}
+                    >
+                      <SettingsIcon className="h-4 w-4" />
+                    </Button>
+                  )}
                 </div>
               </header>
               <MessageList channelId={active.id} memberNames={memberNames} />
@@ -100,6 +115,14 @@ export default function ChatPage() {
         onOpenChange={setNewChannelOpen}
         onCreated={(id) => setActiveId(id)}
       />
+      {active && isAdmin && (
+        <ChannelSettingsDialog
+          channel={active}
+          open={settingsOpen}
+          onOpenChange={setSettingsOpen}
+          onDeleted={() => setActiveId(null)}
+        />
+      )}
     </AppLayout>
   );
 }
