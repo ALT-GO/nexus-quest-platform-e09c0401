@@ -1,6 +1,6 @@
 import { MessageCircle } from "lucide-react";
 import { useLocation } from "react-router-dom";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Badge } from "@/components/ui/badge";
 import { useTotalUnread } from "@/hooks/use-chat";
 import { useAuth } from "@/hooks/use-auth";
@@ -12,6 +12,12 @@ export function ChatFloatingButton() {
   const total = useTotalUnread();
   const location = useLocation();
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const handler = () => setOpen(true);
+    window.addEventListener("nexus:open-chat", handler);
+    return () => window.removeEventListener("nexus:open-chat", handler);
+  }, []);
 
   if (!user) return null;
   if (
