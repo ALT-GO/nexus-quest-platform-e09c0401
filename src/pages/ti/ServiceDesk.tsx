@@ -211,6 +211,15 @@ export default function ServiceDesk() {
         completed_at: completedAt,
       });
 
+      // Notify #suporte-ti when ticket is completed (final status reached)
+      if (isFinal && !ticket.completed_at) {
+        ChatSuporteTI.ticketCompleted({
+          ticket_number: ticket.ticket_number,
+          title: ticket.title,
+          assignee: ticket.assignee,
+        });
+      }
+
       if (isFinal && ticket.asset_id) {
         deliverAsset(ticket.asset_id, ticket.ticket_number, ticket.requester);
         toast.success(
