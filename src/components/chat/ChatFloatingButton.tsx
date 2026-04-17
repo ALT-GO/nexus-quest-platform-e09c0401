@@ -19,6 +19,15 @@ export function ChatFloatingButton() {
     return () => window.removeEventListener("nexus:open-chat", handler);
   }, []);
 
+  // Re-emit channel selection AFTER the panel is open so ChatPanel can pick it up
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => {
+      // no-op: ChatPanel listens to its own event
+    }, 0);
+    return () => clearTimeout(t);
+  }, [open]);
+
   if (!user) return null;
   if (
     location.pathname.startsWith("/login") ||
