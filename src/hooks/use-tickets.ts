@@ -5,6 +5,7 @@ import { fetchSlaCategoryMap } from "@/hooks/use-sla-categories";
 import { logAuditEvent } from "@/lib/audit";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notifications";
+import { ChatSuporteTI } from "@/lib/chat-suporte-ti";
 
 export interface ChecklistItem {
   text: string;
@@ -260,6 +261,17 @@ export async function createTicket(data: {
       message: `${ticketNumber} — ${ticketTitle} (${data.category}) aberto por ${data.requester}.`,
       type: "info",
       link: "/ti/service-desk",
+    });
+  } catch {}
+
+  // Post to #suporte-ti chat channel (silent if not authenticated/member)
+  try {
+    await ChatSuporteTI.ticketCreated({
+      ticket_number: ticketNumber,
+      title: ticketTitle,
+      category: data.category,
+      requester: data.requester,
+      priority: data.priority || "medium",
     });
   } catch {}
 
