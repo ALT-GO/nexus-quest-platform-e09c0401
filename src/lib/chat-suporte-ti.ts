@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const SUPORTE_TI_CHANNEL_NAME = "suporte-ti";
+const SUPORTE_TI_CHANNEL_NAME = "chamados-ti";
 
 /**
  * Posts a system message as "Sr. Bot" via secure edge function.
