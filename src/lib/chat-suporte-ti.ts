@@ -1,52 +1,22 @@
 import { supabase } from "@/integrations/supabase/client";
 
-const SUPORTE_TI_CHANNEL_NAME = "suporte-ti";
-
-let cachedChannelId: string | null = null;
-
-async function getSuporteTIChannelId(): Promise<string | null> {
-  if (cachedChannelId) return cachedChannelId;
-  const { data } = await supabase
-    .from("chat_channels")
-    .select("id")
-    .eq("name", SUPORTE_TI_CHANNEL_NAME)
-    .eq("archived", false)
-    .maybeSingle();
-  if (data?.id) {
-    cachedChannelId = data.id;
-    return data.id;
-  }
-  return null;
-}
+const SUPORTE_TI_CHANNEL_NAME = "chamados-ti";
 
 /**
- * Posts a system message to the #suporte-ti channel.
- * Uses the current authenticated user as author (RLS requires membership).
- * Silently fails if channel does not exist or user is not a member.
+ * Posts a system message as "Sr. Bot" via secure edge function.
+ * Bypasses RLS membership requirements — works for anon (public ticket form)
+ * and any authenticated user, regardless of channel membership.
  */
 export async function postToSuporteTI(content: string, attachments: any[] = []) {
   try {
-    const channelId = await getSuporteTIChannelId();
-    if (!channelId) return;
-
-    const { data: userRes } = await supabase.auth.getUser();
-    const user = userRes?.user;
-    if (!user) return;
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("full_name, avatar_url")
-      .eq("id", user.id)
-      .maybeSingle();
-
-    await supabase.from("chat_messages").insert({
-      channel_id: channelId,
-      author_id: user.id,
-      author_name: profile?.full_name || user.email || "Sistema",
-      avatar_url: profile?.avatar_url || null,
-      content,
-      attachments,
+    const { error } = await supabase.functions.invoke("bot-post-message", {
+      body: {
+        channel_name: SUPORTE_TI_CHANNEL_NAME,
+        content,
+        attachments,
+      },
     });
+    if (error) console.warn("[chat-suporte-ti] bot-post-message error:", error);
   } catch (e) {
     console.warn("[chat-suporte-ti] Failed to post:", e);
   }
