@@ -32,6 +32,8 @@ export function ChatFloatingButton() {
     return null;
   }
 
+  const hasUnread = total > 0;
+
   return (
     <>
       <button
@@ -46,16 +48,19 @@ export function ChatFloatingButton() {
         title="Abrir chat"
       >
         <MessageCircle className="h-6 w-6" />
-        {total > 0 && (
-          <Badge
-            variant="destructive"
-            className="absolute -top-1 -right-1 h-6 min-w-6 px-1.5 rounded-full text-[11px] font-bold border-2 border-background"
-          >
-            {total > 99 ? "99+" : total}
-          </Badge>
+        {hasUnread && (
+          <>
+            <span className="absolute -top-0.5 -right-0.5 h-4 w-4 rounded-full bg-destructive opacity-75 animate-ping" />
+            <Badge
+              variant="destructive"
+              className="absolute -top-1 -right-1 h-6 min-w-6 px-1.5 rounded-full text-[11px] font-bold border-2 border-background z-10"
+            >
+              {total > 99 ? "99+" : total}
+            </Badge>
+          </>
         )}
         <span className="absolute right-full mr-3 bg-foreground text-background text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none">
-          Chat
+          Chat{hasUnread ? ` (${total})` : ""}
         </span>
       </button>
       <ChatPanel open={open} onOpenChange={setOpen} />
