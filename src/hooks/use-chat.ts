@@ -369,14 +369,21 @@ export function useRemoveChannelMember() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ channelId, userId }: { channelId: string; userId: string }) => {
-      const { error } = await supabase
+      const { error, count } = await supabase
         .from("chat_channel_members")
-        .delete()
+        .delete({ count: "exact" })
         .eq("channel_id", channelId)
         .eq("user_id", userId);
       if (error) throw error;
+      if (count === 0) {
+        throw new Error("Sem permissão para remover este membro ou ele já foi removido.");
+      }
     },
-    onSuccess: (_d, vars) => qc.invalidateQueries({ queryKey: ["chat-members", vars.channelId] }),
+    onSuccess: (_d, vars) => {
+      qc.invalidateQueries({ queryKey: ["chat-members", vars.channelId] });
+      qc.invalidateQueries({ queryKey: ["chat-channels"] });
+      qc.invalidateQueries({ queryKey: ["chat-unread"] });
+    },
   });
 }
 

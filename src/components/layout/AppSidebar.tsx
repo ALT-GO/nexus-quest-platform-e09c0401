@@ -152,14 +152,19 @@ export function AppSidebar() {
                     window.dispatchEvent(new CustomEvent("nexus:open-chat"));
                   }}
                   className={cn(
-                    "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors",
+                    "flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-[13px] font-medium transition-colors relative",
                     "text-sidebar-foreground hover:bg-muted"
                   )}
                 >
-                  <item.icon className="h-4 w-4" />
+                  <span className="relative flex items-center justify-center">
+                    <item.icon className="h-4 w-4" />
+                    {totalUnreadChat > 0 && (
+                      <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-destructive ring-2 ring-sidebar" />
+                    )}
+                  </span>
                   {item.title}
                   {totalUnreadChat > 0 && (
-                    <Badge variant="destructive" className="ml-auto h-5 px-1.5 text-[10px]">
+                    <Badge variant="destructive" className="ml-auto h-5 px-1.5 text-[10px] font-bold">
                       {totalUnreadChat > 99 ? "99+" : totalUnreadChat}
                     </Badge>
                   )}
