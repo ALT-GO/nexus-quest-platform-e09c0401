@@ -17,9 +17,10 @@ import { DangerZoneTab } from "@/components/settings/DangerZoneTab";
 import { SlaSettingsSection } from "@/components/settings/SlaSettingsSection";
 import { InventoryStatusTab } from "@/components/settings/InventoryStatusTab";
 import { AuditLogSection } from "@/components/settings/AuditLogSection";
+import { BotSettingsTab } from "@/components/settings/BotSettingsTab";
 import {
   User, Users, Upload, Package,
-  ListChecks, Zap, Clock, Shapes, ScrollText, Search, AlertTriangle, Megaphone, FileSpreadsheet,
+  ListChecks, Zap, Clock, Shapes, ScrollText, Search, AlertTriangle, Megaphone, FileSpreadsheet, Bot,
 } from "lucide-react";
 
 type Section =
@@ -28,6 +29,7 @@ type Section =
   | "sd-status"
   | "sd-sla"
   | "sd-automations"
+  | "sd-bot"
   | "inv-status"
   | "mkt-workflow"
   | "mkt-types"
@@ -65,6 +67,7 @@ const navGroups: NavGroup[] = [
       { id: "sd-status", label: "Status dos Chamados", icon: ListChecks, roles: ["admin", "ti"] },
       { id: "sd-sla", label: "Horário & SLA", icon: Clock, roles: ["admin", "ti"] },
       { id: "sd-automations", label: "Automações", icon: Zap, roles: ["admin", "ti"] },
+      { id: "sd-bot", label: "Sr. Bot (Chat)", icon: Bot, adminOnly: true },
     ],
   },
   {
@@ -178,6 +181,7 @@ export default function Configuracoes() {
           {currentSection === "sd-status" && <StatusManagerTab />}
           {currentSection === "sd-sla" && <SlaSettingsSection />}
           {currentSection === "sd-automations" && <AutomationsTab />}
+          {currentSection === "sd-bot" && <BotSettingsTab />}
           {currentSection === "inv-status" && <InventoryStatusTab />}
           {currentSection === "mkt-workflow" && <MarketingWorkflowTab />}
           {currentSection === "mkt-types" && <TaskTypesManagerTab />}
