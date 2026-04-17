@@ -7,8 +7,8 @@ const corsHeaders = {
 
 // Fixed bot identity (must be a valid UUID; not tied to any auth user)
 const BOT_USER_ID = "00000000-0000-0000-0000-000000000b07";
-const BOT_NAME = "Sr. Bot";
-const BOT_AVATAR_URL =
+const DEFAULT_BOT_NAME = "Sr. Bot";
+const DEFAULT_BOT_AVATAR_URL =
   "https://fxpvvcdtpvalamutozzn.supabase.co/storage/v1/object/public/chat-assets/sr-bot-avatar.png";
 
 Deno.serve(async (req) => {
@@ -83,11 +83,23 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Resolve customizable bot identity from bot_profile (singleton)
+    let botName = DEFAULT_BOT_NAME;
+    let botAvatarUrl = DEFAULT_BOT_AVATAR_URL;
+    const { data: botProfile } = await supabase
+      .from("bot_profile")
+      .select("display_name, avatar_url")
+      .maybeSingle();
+    if (botProfile) {
+      botName = botProfile.display_name || DEFAULT_BOT_NAME;
+      botAvatarUrl = botProfile.avatar_url || DEFAULT_BOT_AVATAR_URL;
+    }
+
     const { error: insErr } = await supabase.from("chat_messages").insert({
       channel_id: resolvedChannelId,
       author_id: BOT_USER_ID,
-      author_name: BOT_NAME,
-      avatar_url: BOT_AVATAR_URL,
+      author_name: botName,
+      avatar_url: botAvatarUrl,
       content,
       attachments: attachments || [],
     });
