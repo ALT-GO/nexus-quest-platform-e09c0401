@@ -2,3 +2,6 @@ project_id = "fxpvvcdtpvalamutozzn"
 
 [functions.create-marketing-request]
 verify_jwt = false
+
+[functions.bot-post-message]
+verify_jwt = false
