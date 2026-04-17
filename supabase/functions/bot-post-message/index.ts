@@ -23,37 +23,68 @@ Deno.serve(async (req) => {
     );
 
     const body = await req.json();
-    const { channel_name, content, attachments } = body as {
-      channel_name: string;
+    const { channel_name, channel_id, content, attachments, event_key } = body as {
+      channel_name?: string;
+      channel_id?: string;
       content: string;
       attachments?: any[];
+      event_key?: string;
     };
 
-    if (!channel_name || !content) {
+    if (!content) {
       return new Response(
-        JSON.stringify({ error: "channel_name and content are required" }),
+        JSON.stringify({ error: "content is required" }),
         { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
-    // Resolve channel id from name
-    const { data: channel, error: chErr } = await supabase
-      .from("chat_channels")
-      .select("id")
-      .eq("name", channel_name)
-      .eq("archived", false)
-      .maybeSingle();
+    let resolvedChannelId: string | null = channel_id ?? null;
 
-    if (chErr) throw chErr;
-    if (!channel) {
+    // If event_key provided, look up bot_settings (admin-configurable)
+    if (event_key) {
+      const { data: setting, error: settingErr } = await supabase
+        .from("bot_settings")
+        .select("enabled, channel_id")
+        .eq("event_key", event_key)
+        .maybeSingle();
+
+      if (settingErr) throw settingErr;
+      if (!setting || !setting.enabled) {
+        return new Response(
+          JSON.stringify({ ok: true, skipped: true, reason: "event disabled or not configured" }),
+          { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      resolvedChannelId = setting.channel_id;
+    }
+
+    // Fallback: resolve channel by name when neither id nor event_key was provided
+    if (!resolvedChannelId && channel_name) {
+      const { data: channel, error: chErr } = await supabase
+        .from("chat_channels")
+        .select("id")
+        .eq("name", channel_name)
+        .eq("archived", false)
+        .maybeSingle();
+      if (chErr) throw chErr;
+      if (!channel) {
+        return new Response(
+          JSON.stringify({ error: `Channel '${channel_name}' not found` }),
+          { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        );
+      }
+      resolvedChannelId = channel.id;
+    }
+
+    if (!resolvedChannelId) {
       return new Response(
-        JSON.stringify({ error: `Channel '${channel_name}' not found` }),
-        { status: 404, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+        JSON.stringify({ ok: true, skipped: true, reason: "no channel configured" }),
+        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
       );
     }
 
     const { error: insErr } = await supabase.from("chat_messages").insert({
-      channel_id: channel.id,
+      channel_id: resolvedChannelId,
       author_id: BOT_USER_ID,
       author_name: BOT_NAME,
       avatar_url: BOT_AVATAR_URL,
