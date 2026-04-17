@@ -285,6 +285,11 @@ export default function ServiceDesk() {
         });
         if (success) {
           toast.success(`${ticket.ticket_number}: marcado como concluído`);
+          ChatSuporteTI.ticketCompleted({
+            ticket_number: ticket.ticket_number,
+            title: ticket.title,
+            assignee: ticket.assignee,
+          });
         }
       }
     },
