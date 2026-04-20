@@ -63,13 +63,14 @@ Deno.serve(async (req) => {
       const titleKey = `Tarefa atrasada: ${task.title}`;
       if (wasNotified(titleKey, msgKey)) continue;
 
+      const taskLink = `/marketing/solicitacoes?task=${task.id}`;
       if (task.assignee_id) {
         notifications.push({
           user_id: task.assignee_id,
           title: titleKey,
           message: msgKey,
           type: 'warning',
-          link: '/marketing/solicitacoes',
+          link: taskLink,
           scope: 'marketing',
         });
       }
@@ -81,7 +82,7 @@ Deno.serve(async (req) => {
           title: titleKey,
           message: msgKey,
           type: 'warning',
-          link: '/marketing/solicitacoes',
+          link: taskLink,
           scope: 'marketing',
         });
       }
