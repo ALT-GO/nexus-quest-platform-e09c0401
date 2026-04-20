@@ -123,8 +123,21 @@ function MensalidadeTab({ category }: { category: "linhas" | "licencas" }) {
       );
     }
 
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter((i) => {
+        const fields = [
+          i.asset_code, i.status, i.numero, i.collaborator, i.operadora,
+          i.email_address, i.licenca, i.cost_center_eng, i.cost_center_man,
+          i.imei1, i.imei2, i.notes, i.comments, i.cargo, i.sector,
+          (i as any).valor_mensal != null ? String((i as any).valor_mensal) : "",
+        ];
+        return fields.some((f) => (f || "").toString().toLowerCase().includes(q));
+      });
+    }
+
     return result;
-  }, [items, filterStatus, filterOperadora, filterCC, filterLicenca, isLinhas]);
+  }, [items, filterStatus, filterOperadora, filterCC, filterLicenca, isLinhas, searchQuery]);
 
   const activeFilterCount = [
     filterStatus !== "todas",
