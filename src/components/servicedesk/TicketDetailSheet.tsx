@@ -381,7 +381,7 @@ export function TicketDetailSheet({
           authorName: currentUserName,
           contextTitle: ticket.title,
           contextType: "ticket",
-          link: "/ti/service-desk",
+          link: `/ti/service-desk?ticket=${ticket.id}`,
         });
       }
     }
