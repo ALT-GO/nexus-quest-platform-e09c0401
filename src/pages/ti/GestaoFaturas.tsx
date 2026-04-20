@@ -510,6 +510,49 @@ export default function GestaoFaturas() {
     setTimeout(() => window.print(), 400);
   };
 
+  const handleDownloadPDF = async () => {
+    setPdfOpen(true);
+    // Wait for dialog content to render
+    await new Promise((r) => setTimeout(r, 500));
+    const node = printRef.current;
+    if (!node) {
+      toast.error("Não foi possível gerar o PDF");
+      return;
+    }
+    try {
+      toast.loading("Gerando PDF...", { id: "pdf-gen" });
+      const canvas = await html2canvas(node, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      const filename = `rateio_${generatedOp}_${generatedMesAno.replace(/ /g, "_")}.pdf`;
+      pdf.save(filename);
+      toast.success("PDF baixado com sucesso", { id: "pdf-gen" });
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao gerar PDF", { id: "pdf-gen" });
+    }
+  };
+
   const today = new Date().toLocaleDateString("pt-BR");
 
   return (
