@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -95,41 +95,34 @@ function unsubscribeFromRealtime() {
   }
 }
 
-function subscribe(listener: () => void): () => void {
-  listeners.add(listener);
-  refCount += 1;
-  // Lazy init on first subscriber
-  if (refCount === 1) {
-    subscribeToRealtime();
-  }
-  // Trigger initial fetch (no-op if already loaded)
-  fetchOnce();
-  return () => {
-    listeners.delete(listener);
-    refCount -= 1;
-    if (refCount === 0) {
-      unsubscribeFromRealtime();
-    }
-  };
-}
-
-const getSnapshot = () => cache;
-const getServerSnapshot = () => cache;
-
 export function useInventoryStatuses() {
-  const statuses = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const [statuses, setStatuses] = useState<InventoryStatus[]>(cache);
   const [loadingState, setLoadingState] = useState(!loaded);
 
   useEffect(() => {
-    if (loaded) {
-      setLoadingState(false);
-      return;
+    const listener = () => setStatuses(cache);
+    listeners.add(listener);
+    refCount += 1;
+    if (refCount === 1) {
+      subscribeToRealtime();
     }
+
     let cancelled = false;
     fetchOnce().then(() => {
-      if (!cancelled) setLoadingState(false);
+      if (!cancelled) {
+        setStatuses(cache);
+        setLoadingState(false);
+      }
     });
-    return () => { cancelled = true; };
+
+    return () => {
+      cancelled = true;
+      listeners.delete(listener);
+      refCount -= 1;
+      if (refCount === 0) {
+        unsubscribeFromRealtime();
+      }
+    };
   }, []);
 
   const getStatusesByGroup = useCallback(
