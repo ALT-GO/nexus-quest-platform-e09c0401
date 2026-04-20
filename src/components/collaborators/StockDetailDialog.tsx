@@ -18,6 +18,10 @@ import {
 import {
   Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem,
 } from "@/components/ui/command";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { useInventoryStatuses } from "@/hooks/use-inventory-statuses";
 
 interface Props {
   asset: CollaboratorAsset;
