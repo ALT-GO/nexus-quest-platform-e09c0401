@@ -191,6 +191,7 @@ export function CommentInput({
               <UserAvatar
                 name={m.name}
                 avatarUrl={m.avatar_url ?? undefined}
+                userId={m.id}
                 className="h-5 w-5"
                 fallbackClassName="text-[8px]"
               />
