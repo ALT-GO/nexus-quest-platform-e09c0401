@@ -289,6 +289,21 @@ export function StockDetailDialog({ asset, onUpdated }: Props) {
                       value={formData[f.key] || ""}
                       onChange={(v) => handleChange(f.key, v)}
                     />
+                  ) : f.key === "status" ? (
+                    <Select
+                      value={formData[f.key] || ""}
+                      onValueChange={(v) => handleChange(f.key, v)}
+                    >
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Selecione um status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statusOptions.map((opt) => (
+                          <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  
                   ) : f.key === "valor_pago" ? (
                     <Input
                       type="number"
