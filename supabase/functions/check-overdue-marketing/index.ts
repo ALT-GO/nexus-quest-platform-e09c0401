@@ -133,10 +133,11 @@ Deno.serve(async (req) => {
         .single();
 
       if (newTask) {
+        const newTaskId = (newTask as any).id;
         await supabase
           .from('marketing_task_links')
           .insert({
-            task_id: (newTask as any).id,
+            task_id: newTaskId,
             linked_event_id: eventId,
             link_type: 'related',
           } as any);
@@ -151,7 +152,7 @@ Deno.serve(async (req) => {
               title: notifTitle,
               message: notifMsg,
               type: 'info',
-              link: '/marketing/solicitacoes',
+              link: `/marketing/solicitacoes?task=${newTaskId}`,
               scope: 'marketing',
             });
           }
