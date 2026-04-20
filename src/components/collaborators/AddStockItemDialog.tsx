@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Plus, AlertCircle, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { useInventoryStatuses } from "@/hooks/use-inventory-statuses";
 
 interface FieldDef {
   id: string;
@@ -306,8 +307,16 @@ export function AddStockItemDialog({ category, onCreated }: Props) {
   const [saving, setSaving] = useState(false);
   const [values, setValues] = useState<Record<string, string>>({});
   const [dupErrors, setDupErrors] = useState<Record<string, string>>({});
+  const { getStatusesForCategory } = useInventoryStatuses();
 
-  const fields = fieldsByCategory[category] || [];
+  const baseFields = fieldsByCategory[category] || [];
+  // Inject dynamic statuses configured in /configuracoes
+  const dynamicStatuses = getStatusesForCategory(category);
+  const fields = baseFields.map((f) =>
+    f.id === "status" && f.type === "select"
+      ? { ...f, options: dynamicStatuses }
+      : f
+  );
   const label = categoryLabels[category] || "Item";
   const uniqueRules = uniqueFieldByCategory[category] || [];
 

@@ -18,6 +18,10 @@ import {
 import {
   Command, CommandInput, CommandList, CommandEmpty, CommandGroup, CommandItem,
 } from "@/components/ui/command";
+import {
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
+} from "@/components/ui/select";
+import { useInventoryStatuses } from "@/hooks/use-inventory-statuses";
 
 interface Props {
   asset: CollaboratorAsset;
@@ -185,6 +189,8 @@ export function StockDetailDialog({ asset, onUpdated }: Props) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const { getStatusesForCategory } = useInventoryStatuses();
+  const statusOptions = getStatusesForCategory(asset.category);
 
   useEffect(() => {
     if (open) {
@@ -283,6 +289,21 @@ export function StockDetailDialog({ asset, onUpdated }: Props) {
                       value={formData[f.key] || ""}
                       onChange={(v) => handleChange(f.key, v)}
                     />
+                  ) : f.key === "status" ? (
+                    <Select
+                      value={formData[f.key] || ""}
+                      onValueChange={(v) => handleChange(f.key, v)}
+                    >
+                      <SelectTrigger className="h-8 text-sm">
+                        <SelectValue placeholder="Selecione um status" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {statusOptions.map((opt) => (
+                          <SelectItem key={opt} value={opt}>{opt}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  
                   ) : f.key === "valor_pago" ? (
                     <Input
                       type="number"
