@@ -68,6 +68,7 @@ function MensalidadeTab({ category }: { category: "linhas" | "licencas" }) {
   const [filterCC, setFilterCC] = useState("");
   const [filterLicenca, setFilterLicenca] = useState("todas");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["mensalidade", category],
