@@ -126,7 +126,7 @@ export function useCreateMarketingTask() {
           title: "Nova tarefa atribuída",
           message: `Você foi atribuído(a) à tarefa "${created.title}".`,
           type: "task_assigned",
-          link: "/marketing/solicitacoes",
+          link: `/marketing/solicitacoes?task=${created.id}`,
           scope: "marketing",
         } as any);
       }
