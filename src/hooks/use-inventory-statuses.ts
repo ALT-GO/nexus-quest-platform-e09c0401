@@ -11,53 +11,49 @@ export interface InventoryStatus {
   isActive: boolean;
 }
 
-/**
- * Resolve which config group powers a given inventory category + field.
- * - Hardware (notebooks/celulares/tablets/perifericos) → "Condição" → group "condition_hardware"
- * - Linhas → "Status" → group "status_linhas"
- * - Licenças → "Status" → group "status_licencas"
- */
 export function resolveStatusGroup(category: string, field: "condition" | "status" = "status"): string {
   const cat = (category || "").toLowerCase();
   if (cat === "linhas" || cat === "telecom") return "status_linhas";
   if (cat === "licencas" || cat === "licenses") return "status_licencas";
-  // hardware → only "condition" is editable
   return "condition_hardware";
 }
 
 /* ─────────────────────────────────────────────────────────────
- * Singleton store: ONE fetch + ONE realtime channel for the
- * whole app. Components subscribe via useSyncExternalStore so
- * we avoid N fetches / N channels when dozens of cells mount.
+ * Shared cache + single realtime channel for the whole app.
+ * Multiple components consume the same in-memory snapshot and
+ * are notified through a simple event emitter, avoiding N
+ * fetches / N subscriptions when many cells mount at once.
  * ──────────────────────────────────────────────────────────── */
-let cache: InventoryStatus[] = [];
-let loaded = false;
-let loadingPromise: Promise<void> | null = null;
-let channelRef: ReturnType<typeof supabase.channel> | null = null;
-let refCount = 0;
-const listeners = new Set<() => void>();
+type Listener = (data: InventoryStatus[]) => void;
+
+const store = {
+  data: [] as InventoryStatus[],
+  loaded: false,
+  inflight: null as Promise<void> | null,
+  channel: null as ReturnType<typeof supabase.channel> | null,
+  listeners: new Set<Listener>(),
+};
 
 function emit() {
-  for (const l of listeners) l();
+  store.listeners.forEach((l) => l(store.data));
 }
 
-async function fetchOnce(force = false): Promise<void> {
-  if (loaded && !force) return;
-  if (loadingPromise) return loadingPromise;
+async function loadStatuses(force = false) {
+  if (store.loaded && !force) return;
+  if (store.inflight) return store.inflight;
 
-  loadingPromise = (async () => {
-    const { data, error } = await supabase
-      .from("inventory_status_config")
-      .select("*")
-      .order("order_index", { ascending: true });
+  store.inflight = (async () => {
+    try {
+      const { data, error } = await supabase
+        .from("inventory_status_config")
+        .select("*")
+        .order("order_index", { ascending: true });
 
-    if (error) {
-      console.error("Error fetching inventory statuses:", error);
-      loadingPromise = null;
-      return;
-    }
-    if (data) {
-      cache = data.map((s: any) => ({
+      if (error) {
+        console.error("Error fetching inventory statuses:", error);
+        return;
+      }
+      store.data = (data || []).map((s: any) => ({
         id: s.id,
         categoryGroup: s.category_group,
         name: s.name,
@@ -65,63 +61,44 @@ async function fetchOnce(force = false): Promise<void> {
         orderIndex: s.order_index,
         isActive: s.is_active,
       }));
-      loaded = true;
+      store.loaded = true;
       emit();
+    } finally {
+      store.inflight = null;
     }
-    loadingPromise = null;
   })();
 
-  return loadingPromise;
+  return store.inflight;
 }
 
-function subscribeToRealtime() {
-  if (channelRef) return;
-  channelRef = supabase
+function ensureRealtime() {
+  if (store.channel) return;
+  store.channel = supabase
     .channel("inventory-status-config-realtime")
     .on(
       "postgres_changes",
       { event: "*", schema: "public", table: "inventory_status_config" },
-      () => {
-        fetchOnce(true);
-      }
+      () => loadStatuses(true)
     )
     .subscribe();
 }
 
-function unsubscribeFromRealtime() {
-  if (channelRef) {
-    supabase.removeChannel(channelRef);
-    channelRef = null;
-  }
-}
-
 export function useInventoryStatuses() {
-  const [statuses, setStatuses] = useState<InventoryStatus[]>(cache);
-  const [loadingState, setLoadingState] = useState(!loaded);
+  const [statuses, setStatuses] = useState<InventoryStatus[]>(store.data);
+  const [loading, setLoading] = useState(!store.loaded);
 
   useEffect(() => {
-    const listener = () => setStatuses(cache);
-    listeners.add(listener);
-    refCount += 1;
-    if (refCount === 1) {
-      subscribeToRealtime();
-    }
+    const listener: Listener = (data) => setStatuses(data);
+    store.listeners.add(listener);
+    ensureRealtime();
 
-    let cancelled = false;
-    fetchOnce().then(() => {
-      if (!cancelled) {
-        setStatuses(cache);
-        setLoadingState(false);
-      }
+    loadStatuses().then(() => {
+      setStatuses(store.data);
+      setLoading(false);
     });
 
     return () => {
-      cancelled = true;
-      listeners.delete(listener);
-      refCount -= 1;
-      if (refCount === 0) {
-        unsubscribeFromRealtime();
-      }
+      store.listeners.delete(listener);
     };
   }, []);
 
@@ -134,18 +111,11 @@ export function useInventoryStatuses() {
     [statuses]
   );
 
-  /**
-   * Returns options for the Status field based on category.
-   * - Hardware → returns Condição options (since hardware doesn't have a separate Status field anymore).
-   * - Linhas → returns status_linhas
-   * - Licenças → returns status_licencas
-   */
   const getStatusesForCategory = useCallback(
     (category: string) => getStatusesByGroup(resolveStatusGroup(category, "status")),
     [getStatusesByGroup]
   );
 
-  /** Returns Condição options (hardware only) */
   const conditionOptions = useMemo(
     () =>
       statuses
@@ -164,7 +134,10 @@ export function useInventoryStatuses() {
 
   const addStatus = useCallback(
     async (categoryGroup: string, name: string, color: string) => {
-      const maxOrder = Math.max(...statuses.filter((s) => s.categoryGroup === categoryGroup).map((s) => s.orderIndex), 0);
+      const maxOrder = Math.max(
+        ...statuses.filter((s) => s.categoryGroup === categoryGroup).map((s) => s.orderIndex),
+        0
+      );
       const { error } = await supabase.from("inventory_status_config").insert({
         category_group: categoryGroup,
         name,
@@ -212,7 +185,7 @@ export function useInventoryStatuses() {
 
   return {
     statuses,
-    loading: loadingState,
+    loading,
     conditionOptions,
     getStatusesByGroup,
     getStatusesForCategory,
