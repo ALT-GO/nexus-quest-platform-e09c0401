@@ -211,8 +211,9 @@ export function StockDetailDialog({ asset, onUpdated }: Props) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-  const { getStatusesForCategory } = useInventoryStatuses();
+  const { getStatusesForCategory, conditionOptions } = useInventoryStatuses();
   const statusOptions = getStatusesForCategory(asset.category);
+  const conditionNames = conditionOptions.map((o) => o.name);
 
   useEffect(() => {
     if (open) {
@@ -313,16 +314,16 @@ export function StockDetailDialog({ asset, onUpdated }: Props) {
                       value={formData[f.key] || ""}
                       onChange={(v) => handleChange(f.key, v)}
                     />
-                  ) : f.key === "status" ? (
+                  ) : f.key === "status" || f.key === "condition" ? (
                     <Select
                       value={formData[f.key] || ""}
                       onValueChange={(v) => handleChange(f.key, v)}
                     >
                       <SelectTrigger className="h-8 text-sm">
-                        <SelectValue placeholder="Selecione um status" />
+                        <SelectValue placeholder={f.key === "condition" ? "Selecione uma condição" : "Selecione um status"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {statusOptions.map((opt) => (
+                        {(f.key === "condition" ? conditionNames : statusOptions).map((opt) => (
                           <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                         ))}
                       </SelectContent>
