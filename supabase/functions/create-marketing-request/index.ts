@@ -131,7 +131,7 @@ Deno.serve(async (req) => {
       title: "Nova Solicitação ao Marketing",
       message: `${requester_name} enviou uma solicitação: ${request_type}`,
       type: "info",
-      link: "/marketing/solicitacoes",
+      link: `/marketing/solicitacoes?task=${task!.id}`,
       scope: "marketing",
     }));
 

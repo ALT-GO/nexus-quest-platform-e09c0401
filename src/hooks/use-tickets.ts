@@ -256,11 +256,12 @@ export async function createTicket(data: {
   // Notify all TI team members about the new ticket (may fail for anon users)
   try {
     const { notifyTITeam } = await import("@/lib/notifications");
+    const newTicketId = (result as any)?.id;
     notifyTITeam({
       title: "Novo Chamado Aberto",
       message: `${ticketNumber} — ${ticketTitle} (${data.category}) aberto por ${data.requester}.`,
       type: "info",
-      link: "/ti/service-desk",
+      link: newTicketId ? `/ti/service-desk?ticket=${newTicketId}` : "/ti/service-desk",
     });
   } catch {}
 
@@ -326,7 +327,7 @@ export async function runTicketCreatedAutomations(
             title: "Nova Tarefa Atribuída",
             message: `Você foi atribuído automaticamente a um chamado na categoria "${category}".`,
             type: "task_assigned",
-            link: "/ti/service-desk",
+            link: `/ti/service-desk?ticket=${ticketId}`,
           });
         }
         break;

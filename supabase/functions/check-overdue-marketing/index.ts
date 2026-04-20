@@ -63,13 +63,14 @@ Deno.serve(async (req) => {
       const titleKey = `Tarefa atrasada: ${task.title}`;
       if (wasNotified(titleKey, msgKey)) continue;
 
+      const taskLink = `/marketing/solicitacoes?task=${task.id}`;
       if (task.assignee_id) {
         notifications.push({
           user_id: task.assignee_id,
           title: titleKey,
           message: msgKey,
           type: 'warning',
-          link: '/marketing/solicitacoes',
+          link: taskLink,
           scope: 'marketing',
         });
       }
@@ -81,7 +82,7 @@ Deno.serve(async (req) => {
           title: titleKey,
           message: msgKey,
           type: 'warning',
-          link: '/marketing/solicitacoes',
+          link: taskLink,
           scope: 'marketing',
         });
       }
@@ -132,10 +133,11 @@ Deno.serve(async (req) => {
         .single();
 
       if (newTask) {
+        const newTaskId = (newTask as any).id;
         await supabase
           .from('marketing_task_links')
           .insert({
-            task_id: (newTask as any).id,
+            task_id: newTaskId,
             linked_event_id: eventId,
             link_type: 'related',
           } as any);
@@ -150,7 +152,7 @@ Deno.serve(async (req) => {
               title: notifTitle,
               message: notifMsg,
               type: 'info',
-              link: '/marketing/solicitacoes',
+              link: `/marketing/solicitacoes?task=${newTaskId}`,
               scope: 'marketing',
             });
           }
@@ -220,7 +222,7 @@ Deno.serve(async (req) => {
               title: titleKey,
               message: msgKey,
               type: threshold.days <= 1 ? 'warning' : 'info',
-              link: '/marketing/eventos',
+              link: `/marketing/eventos?event=${evt.id}`,
               scope: 'marketing',
             });
           }
@@ -251,7 +253,7 @@ Deno.serve(async (req) => {
           title: titleKey,
           message: msgKey,
           type: 'warning',
-          link: '/marketing/eventos',
+          link: `/marketing/eventos?event=${evt.id}`,
           scope: 'marketing',
         });
       }
