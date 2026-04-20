@@ -324,7 +324,7 @@ export function MarketingTaskDetailSheet({
         title: "Novo comentário",
         message: `${authorName} comentou na tarefa "${task.title}"`,
         type: "info",
-        link: "/marketing/solicitacoes",
+        link: `/marketing/solicitacoes?task=${task.id}`,
         scope: "marketing",
       } as any);
     }
@@ -340,7 +340,7 @@ export function MarketingTaskDetailSheet({
         authorName,
         contextTitle: task.title,
         contextType: "marketing",
-        link: "/marketing/solicitacoes",
+        link: `/marketing/solicitacoes?task=${task.id}`,
         excludeUserId: user.id,
       });
     }
