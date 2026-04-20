@@ -25,26 +25,32 @@ import { StockFilters, getFiltersForCategory } from "./StockFilters";
 import { AddStockItemDialog } from "./AddStockItemDialog";
 import { SortDropdown, usePersistentSort, applySorting, SortOption } from "@/components/ui/sort-dropdown";
 import { cn } from "@/lib/utils";
+import { useInventoryStatuses } from "@/hooks/use-inventory-statuses";
 
-/* ── Condition labels ───────────────────────────────────────── */
-const conditionOptions = [
-  { value: "ready", label: "Pronto para uso", color: "bg-success/15 text-success" },
-  { value: "maintenance", label: "Em manutenção", color: "bg-warning/15 text-warning" },
-  { value: "blocked", label: "Bloqueado", color: "bg-destructive/15 text-destructive" },
-  { value: "scrap", label: "Sucata", color: "bg-muted text-muted-foreground" },
-];
+/* ── Condition (hardware) — backwards-compatible label resolver.
+ *  Old DB values (ready/maintenance/blocked/scrap) were migrated to PT,
+ *  but we keep this map so any leftover english value still renders nicely. */
+const legacyConditionMap: Record<string, string> = {
+  ready: "Pronto para uso",
+  maintenance: "Em manutenção",
+  blocked: "Bloqueado",
+  scrap: "Sucata",
+};
 
-export function getConditionLabel(value: string) {
-  return conditionOptions.find((o) => o.value === value) || conditionOptions[0];
+export function getConditionLabel(value: string): { value: string; label: string; color: string } {
+  const label = legacyConditionMap[value] || value || "Pronto para uso";
+  return { value, label, color: "bg-secondary text-secondary-foreground" };
 }
 
-/* ── Condition Select Cell ─────────────────────────────────── */
+/* ── Condition Select Cell (dynamic, fed by inventory_status_config) ───── */
 function ConditionSelectCell({ value, onSave }: { value: string; onSave: (v: string) => Promise<void> }) {
   const [saving, setSaving] = useState(false);
-  const current = getConditionLabel(value);
+  const { conditionOptions, statusColorMap } = useInventoryStatuses();
+  const displayValue = legacyConditionMap[value] || value || "";
+  const hsl = statusColorMap[displayValue];
 
   const handleChange = async (v: string) => {
-    if (v === value) return;
+    if (v === displayValue) return;
     setSaving(true);
     try {
       await onSave(v);
@@ -55,20 +61,41 @@ function ConditionSelectCell({ value, onSave }: { value: string; onSave: (v: str
 
   return (
     <div className="flex items-center gap-1">
-      <Select value={value || "ready"} onValueChange={handleChange} disabled={saving}>
-        <SelectTrigger className="h-7 text-xs border-0 shadow-none px-1.5 w-[140px]">
-          <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", current.color)}>
-            {current.label}
-          </span>
+      <Select value={displayValue} onValueChange={handleChange} disabled={saving}>
+        <SelectTrigger className="h-7 text-xs border-0 shadow-none px-1.5 w-auto min-w-[140px] [&>svg]:ml-1">
+          <SelectValue>
+            {hsl ? (
+              <span
+                className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium"
+                style={{ backgroundColor: `hsl(${hsl} / 0.15)`, color: `hsl(${hsl})` }}
+              >
+                {displayValue || "—"}
+              </span>
+            ) : (
+              <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground">
+                {displayValue || "—"}
+              </span>
+            )}
+          </SelectValue>
         </SelectTrigger>
         <SelectContent>
-          {conditionOptions.map((opt) => (
-            <SelectItem key={opt.value} value={opt.value}>
-              <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", opt.color)}>
-                {opt.label}
-              </span>
-            </SelectItem>
-          ))}
+          {conditionOptions.length === 0 ? (
+            <div className="px-2 py-1.5 text-xs text-muted-foreground">
+              Nenhuma opção configurada
+            </div>
+          ) : (
+            conditionOptions.map((opt) => (
+              <SelectItem key={opt.id} value={opt.name}>
+                <span className="flex items-center gap-2">
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: `hsl(${opt.color})` }}
+                  />
+                  {opt.name}
+                </span>
+              </SelectItem>
+            ))
+          )}
         </SelectContent>
       </Select>
       {saving && <Loader2 className="h-3 w-3 animate-spin text-muted-foreground" />}
@@ -191,8 +218,7 @@ interface ColDef {
 }
 
 const notebookCols: ColDef[] = [
-  { id: "condition", header: "Condição", field: "condition", accessor: (i) => i.condition || "ready" },
-  { id: "status", header: "Status", field: "status", accessor: (i) => i.status || "" },
+  { id: "condition", header: "Condição", field: "condition", accessor: (i) => i.condition || "" },
   { id: "service_tag", header: "Service tag", field: "service_tag", accessor: (i) => i.service_tag || "" },
   { id: "marca", header: "Marca", field: "marca", accessor: (i) => i.marca || "" },
   { id: "model", header: "Modelo", field: "model", accessor: (i) => i.model || "" },
@@ -204,8 +230,7 @@ const notebookCols: ColDef[] = [
 ];
 
 const celularCols: ColDef[] = [
-  { id: "condition", header: "Condição", field: "condition", accessor: (i) => i.condition || "ready" },
-  { id: "status", header: "Status", field: "status", accessor: (i) => i.status || "" },
+  { id: "condition", header: "Condição", field: "condition", accessor: (i) => i.condition || "" },
   { id: "service_tag", header: "Service tag", field: "service_tag", accessor: (i) => i.service_tag || "" },
   { id: "marca", header: "Marca", field: "marca", accessor: (i) => i.marca || "" },
   { id: "model", header: "Modelo", field: "model", accessor: (i) => i.model || "" },
@@ -244,8 +269,7 @@ const licencaCols: ColDef[] = [
 ];
 
 const tabletCols: ColDef[] = [
-  { id: "condition", header: "Condição", field: "condition", accessor: (i) => i.condition || "ready" },
-  { id: "status", header: "Status", field: "status", accessor: (i) => i.status || "" },
+  { id: "condition", header: "Condição", field: "condition", accessor: (i) => i.condition || "" },
   { id: "service_tag", header: "Service tag", field: "service_tag", accessor: (i) => i.service_tag || "" },
   { id: "marca", header: "Marca", field: "marca", accessor: (i) => i.marca || "" },
   { id: "model", header: "Modelo", field: "model", accessor: (i) => i.model || "" },
@@ -256,8 +280,7 @@ const tabletCols: ColDef[] = [
 ];
 
 const perifericoCols: ColDef[] = [
-  { id: "condition", header: "Condição", field: "condition", accessor: (i) => i.condition || "ready" },
-  { id: "status", header: "Status", field: "status", accessor: (i) => i.status || "" },
+  { id: "condition", header: "Condição", field: "condition", accessor: (i) => i.condition || "" },
   { id: "service_tag", header: "Service tag / P/N", field: "service_tag", accessor: (i) => i.service_tag || "" },
   { id: "marca", header: "Marca", field: "marca", accessor: (i) => i.marca || "" },
   { id: "model", header: "Modelo", field: "model", accessor: (i) => i.model || "" },
