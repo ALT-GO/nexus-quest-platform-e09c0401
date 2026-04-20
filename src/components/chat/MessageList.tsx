@@ -175,7 +175,7 @@ function MessageRow({
   return (
     <div className={cn("group flex gap-3 hover:bg-muted/30 -mx-4 px-4 py-1 rounded relative", compact && "py-0.5")}>
       <div className="w-9 shrink-0">
-        {!compact && <UserAvatar name={message.author_name} avatarUrl={message.avatar_url} className="h-9 w-9" />}
+        {!compact && <UserAvatar name={message.author_name} avatarUrl={message.avatar_url} userId={message.author_id} className="h-9 w-9" />}
         {compact && (
           <span className="text-[10px] text-muted-foreground opacity-0 group-hover:opacity-100 mt-1 block text-right">
             {time}

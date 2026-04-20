@@ -381,6 +381,7 @@ export function MarketingKanban({ stages, tasks, onTaskClick, filterTagIds }: Pr
                                           <UserAvatar
                                             name={task.assignee_name}
                                             avatarUrl={task.assignee_id ? avatars?.byId[task.assignee_id] : avatars?.byName[task.assignee_name.toLowerCase()]}
+                                            userId={task.assignee_id}
                                             className="h-5 w-5"
                                             fallbackClassName="text-[9px]"
                                           />

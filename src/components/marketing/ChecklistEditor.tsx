@@ -487,6 +487,7 @@ function ChecklistItemRow({
         {item.assignee_id && (
           <UserAvatar
             name={item.assignee_name}
+            userId={item.assignee_id}
             className="h-5 w-5"
             fallbackClassName="text-[9px]"
           />

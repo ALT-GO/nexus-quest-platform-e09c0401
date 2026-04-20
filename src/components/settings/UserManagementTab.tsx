@@ -523,7 +523,7 @@ export function UserManagementTab() {
                         <TableRow key={u.id}>
                           <TableCell>
                             <div className="flex items-center gap-3">
-                              <UserAvatar name={u.full_name || "?"} avatarUrl={u.avatar_url} className="h-8 w-8" fallbackClassName="bg-primary/10 text-primary text-xs" />
+                              <UserAvatar name={u.full_name || "?"} avatarUrl={u.avatar_url} userId={u.id} className="h-8 w-8" fallbackClassName="bg-primary/10 text-primary text-xs" />
                               <div className="min-w-0">
                                 <p className="text-sm font-medium truncate">
                                   {u.full_name || "Sem nome"}

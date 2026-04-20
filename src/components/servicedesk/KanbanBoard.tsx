@@ -232,7 +232,7 @@ export function KanbanBoard({
                                     <div className="flex items-center gap-2 text-xs">
                                       {ticket.assignee ? (
                                         <>
-                                          <UserAvatar name={ticket.assignee} avatarUrl={avatars?.byName[ticket.assignee.toLowerCase()]} className="h-5 w-5" fallbackClassName="text-[9px]" />
+                                          <UserAvatar name={ticket.assignee} avatarUrl={avatars?.byName[ticket.assignee.toLowerCase()]} userId={avatars?.idByName[ticket.assignee.toLowerCase()]} className="h-5 w-5" fallbackClassName="text-[9px]" />
                                           <span className="text-foreground truncate">{ticket.assignee}</span>
                                         </>
                                       ) : (

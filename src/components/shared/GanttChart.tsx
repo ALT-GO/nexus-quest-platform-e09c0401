@@ -22,6 +22,7 @@ export interface GanttItem {
   priority?: string;
   assigneeName?: string;
   assigneeAvatarUrl?: string;
+  assigneeId?: string;
   color?: string;
 }
 
@@ -266,6 +267,7 @@ export function GanttChart({ items, onItemClick }: GanttChartProps) {
                         <UserAvatar
                           name={item.assigneeName}
                           avatarUrl={item.assigneeAvatarUrl}
+                          userId={item.assigneeId}
                           className="h-5 w-5 shrink-0"
                           fallbackClassName="text-[8px]"
                         />

@@ -28,7 +28,7 @@ import NotFound from "./pages/NotFound";
 import { Loader2 } from "lucide-react";
 import { ChatFloatingButton } from "@/components/chat/ChatFloatingButton";
 import { useChatNotifier } from "@/hooks/use-chat-notifier";
-import { usePresence } from "@/hooks/use-chat";
+import { usePresenceTracker } from "@/hooks/use-presence";
 
 
 const queryClient = new QueryClient();
@@ -66,7 +66,7 @@ function GlobalChatLayer() {
   // Initializes presence + notification side effects globally
   const { user } = useAuth();
   useChatNotifier();
-  usePresence();
+  usePresenceTracker();
   if (!user) return null;
   return <ChatFloatingButton />;
 }

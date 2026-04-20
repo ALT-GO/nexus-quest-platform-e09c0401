@@ -10,11 +10,15 @@ export function useProfileAvatars() {
         .select("id, full_name, avatar_url");
       const byId: Record<string, string | null> = {};
       const byName: Record<string, string | null> = {};
+      const idByName: Record<string, string> = {};
       (data || []).forEach((p) => {
         byId[p.id] = p.avatar_url;
-        if (p.full_name) byName[p.full_name.toLowerCase()] = p.avatar_url;
+        if (p.full_name) {
+          byName[p.full_name.toLowerCase()] = p.avatar_url;
+          idByName[p.full_name.toLowerCase()] = p.id;
+        }
       });
-      return { byId, byName };
+      return { byId, byName, idByName };
     },
     staleTime: 60_000,
   });

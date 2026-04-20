@@ -363,6 +363,7 @@ export default function Solicitacoes() {
               priority: t.priority,
               assigneeName: t.assignee_name || undefined,
               assigneeAvatarUrl: t.assignee_id ? avatars?.byId[t.assignee_id] || undefined : undefined,
+              assigneeId: t.assignee_id || undefined,
             };
           })}
           onItemClick={(id) => {

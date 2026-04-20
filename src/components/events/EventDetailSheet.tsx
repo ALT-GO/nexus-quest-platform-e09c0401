@@ -512,6 +512,7 @@ export function EventDetailSheet({ event, open, onOpenChange }: Props) {
                             <UserAvatar
                               name={task.assignee_name}
                               avatarUrl={task.assignee_id ? avatars?.byId[task.assignee_id] : null}
+                              userId={task.assignee_id}
                               className="h-5 w-5"
                               fallbackClassName="text-[8px]"
                             />
