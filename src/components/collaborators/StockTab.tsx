@@ -499,10 +499,11 @@ function CategoryStockTable({
                           value={col.accessor(item)}
                           onSave={(v) => onCellSave(item.id, "condition", v)}
                         />
-                      ) : col.id === "status" && category === "licencas" ? (
+                      ) : col.id === "status" ? (
                         <StatusSelectCell
                           value={col.accessor(item)}
                           onSave={(v) => onCellSave(item.id, "status", v)}
+                          category={category}
                         />
                       ) : col.field ? (
                         <InlineStockCell
