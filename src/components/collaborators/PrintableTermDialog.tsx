@@ -55,8 +55,23 @@ function getItemType(asset: any): string {
 
 /** Returns technical detail depending on category */
 function getAssetDetail(asset: any): string {
-  if (asset.category === "notebooks" || asset.category === "celulares" || asset.category === "tablets" || asset.category === "perifericos") {
-    return asset.model || "—";
+  if (asset.category === "perifericos") {
+    // Always include the peripheral type (mouse, headset, teclado…) so the term
+    // doesn't show only a model code like "M90" with no context.
+    const tipo = asset.asset_type?.trim();
+    const modelo = asset.model?.trim();
+    const marca = asset.marca?.trim();
+    const descricao = [marca, modelo].filter(Boolean).join(" ");
+    if (tipo && descricao) return `${tipo} – ${descricao}`;
+    if (tipo) return tipo;
+    if (descricao) return descricao;
+    return asset.service_tag || "—";
+  }
+  if (asset.category === "notebooks" || asset.category === "celulares" || asset.category === "tablets") {
+    const marca = asset.marca?.trim();
+    const modelo = asset.model?.trim();
+    const descricao = [marca, modelo].filter(Boolean).join(" ");
+    return descricao || "—";
   }
   if (asset.category === "linhas") return asset.numero || "—";
   if (asset.category === "licencas" || asset.category === "licenses") return asset.email_address || "—";
