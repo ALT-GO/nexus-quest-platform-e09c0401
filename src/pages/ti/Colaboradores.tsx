@@ -14,7 +14,7 @@ import { StockTab } from "@/components/collaborators/StockTab";
 import { SortDropdown, usePersistentSort, applySorting } from "@/components/ui/sort-dropdown";
 import {
   Loader2, Search, Users, Laptop, Smartphone, Phone, FileText, Package,
-  LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown,
+  LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown, Tablet, Mouse,
 } from "lucide-react";
 import { DeleteCollaboratorDialog } from "@/components/collaborators/DeleteCollaboratorDialog";
 import { NewCollaboratorDialog } from "@/components/collaborators/NewCollaboratorDialog";
@@ -27,6 +27,8 @@ import { toast } from "sonner";
 const catConfig: Record<string, { label: string; icon: React.ElementType; color: string }> = {
   notebooks: { label: "Notebook", icon: Laptop, color: "bg-blue-500/15 text-blue-700 border-blue-300" },
   celulares: { label: "Celular", icon: Smartphone, color: "bg-emerald-500/15 text-emerald-700 border-emerald-300" },
+  tablets: { label: "Tablet", icon: Tablet, color: "bg-cyan-500/15 text-cyan-700 border-cyan-300" },
+  perifericos: { label: "Periférico", icon: Mouse, color: "bg-pink-500/15 text-pink-700 border-pink-300" },
   linhas: { label: "Linha Telefônica", icon: Phone, color: "bg-purple-500/15 text-purple-700 border-purple-300" },
   licencas: { label: "Licença", icon: FileText, color: "bg-yellow-500/15 text-yellow-700 border-yellow-300" },
   hardware: { label: "Notebook", icon: Laptop, color: "bg-blue-500/15 text-blue-700 border-blue-300" },
