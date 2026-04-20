@@ -189,6 +189,8 @@ export function StockDetailDialog({ asset, onUpdated }: Props) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const { getStatusesForCategory } = useInventoryStatuses();
+  const statusOptions = getStatusesForCategory(asset.category);
 
   useEffect(() => {
     if (open) {
