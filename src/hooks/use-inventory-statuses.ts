@@ -11,6 +11,20 @@ export interface InventoryStatus {
   isActive: boolean;
 }
 
+/**
+ * Resolve which config group powers a given inventory category + field.
+ * - Hardware (notebooks/celulares/tablets/perifericos) → "Condição" → group "condition_hardware"
+ * - Linhas → "Status" → group "status_linhas"
+ * - Licenças → "Status" → group "status_licencas"
+ */
+export function resolveStatusGroup(category: string, field: "condition" | "status" = "status"): string {
+  const cat = (category || "").toLowerCase();
+  if (cat === "linhas" || cat === "telecom") return "status_linhas";
+  if (cat === "licencas" || cat === "licenses") return "status_licencas";
+  // hardware → only "condition" is editable
+  return "condition_hardware";
+}
+
 export function useInventoryStatuses() {
   const [statuses, setStatuses] = useState<InventoryStatus[]>([]);
   const [loading, setLoading] = useState(true);
@@ -54,22 +68,33 @@ export function useInventoryStatuses() {
     return () => { supabase.removeChannel(channel); };
   }, [fetchStatuses]);
 
-  const hardwareStatuses = useMemo(
-    () => statuses.filter((s) => s.categoryGroup === "hardware" && s.isActive).map((s) => s.name),
+  const getStatusesByGroup = useCallback(
+    (group: string) =>
+      statuses
+        .filter((s) => s.categoryGroup === group && s.isActive)
+        .sort((a, b) => a.orderIndex - b.orderIndex)
+        .map((s) => s.name),
     [statuses]
   );
 
-  const softwareStatuses = useMemo(
-    () => statuses.filter((s) => s.categoryGroup === "software" && s.isActive).map((s) => s.name),
-    [statuses]
-  );
-
+  /**
+   * Returns options for the Status field based on category.
+   * - Hardware → returns Condição options (since hardware doesn't have a separate Status field anymore).
+   * - Linhas → returns status_linhas
+   * - Licenças → returns status_licencas
+   */
   const getStatusesForCategory = useCallback(
-    (category: string) => {
-      if (category === "licencas" || category === "licenses") return softwareStatuses;
-      return hardwareStatuses;
-    },
-    [hardwareStatuses, softwareStatuses]
+    (category: string) => getStatusesByGroup(resolveStatusGroup(category, "status")),
+    [getStatusesByGroup]
+  );
+
+  /** Returns Condição options (hardware only) */
+  const conditionOptions = useMemo(
+    () =>
+      statuses
+        .filter((s) => s.categoryGroup === "condition_hardware" && s.isActive)
+        .sort((a, b) => a.orderIndex - b.orderIndex),
+    [statuses]
   );
 
   const statusColorMap = useMemo(() => {
@@ -94,7 +119,7 @@ export function useInventoryStatuses() {
         toast.error("Erro ao criar status");
         return;
       }
-      toast.success(`Status "${name}" criado`);
+      toast.success(`"${name}" criado`);
     },
     [statuses]
   );
@@ -109,7 +134,7 @@ export function useInventoryStatuses() {
 
       const { error } = await supabase.from("inventory_status_config").update(dbUpdates).eq("id", id as any);
       if (error) {
-        toast.error("Erro ao atualizar status");
+        toast.error("Erro ao atualizar");
         return;
       }
     },
@@ -120,10 +145,10 @@ export function useInventoryStatuses() {
     async (id: string) => {
       const { error } = await supabase.from("inventory_status_config").delete().eq("id", id as any);
       if (error) {
-        toast.error("Erro ao remover status");
+        toast.error("Erro ao remover");
         return;
       }
-      toast.success("Status removido");
+      toast.success("Removido");
     },
     []
   );
@@ -131,8 +156,8 @@ export function useInventoryStatuses() {
   return {
     statuses,
     loading,
-    hardwareStatuses,
-    softwareStatuses,
+    conditionOptions,
+    getStatusesByGroup,
     getStatusesForCategory,
     statusColorMap,
     addStatus,
