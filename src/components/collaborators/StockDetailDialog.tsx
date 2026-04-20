@@ -267,9 +267,11 @@ export function StockDetailDialog({ asset, onUpdated }: Props) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {asset.model || asset.licenca || asset.numero || asset.category}
-              <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", condition.color)}>
-                {condition.label}
-              </span>
+              {asset.condition && (
+                <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground">
+                  {condition.label}
+                </span>
+              )}
             </DialogTitle>
           </DialogHeader>
 
