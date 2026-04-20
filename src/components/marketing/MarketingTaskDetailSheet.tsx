@@ -614,7 +614,7 @@ export function MarketingTaskDetailSheet({
                         {teamMembers.map(m => (
                           <SelectItem key={m.id} value={m.id}>
                             <span className="flex items-center gap-1.5">
-                              <UserAvatar name={m.name} avatarUrl={m.avatar_url || undefined} className="h-5 w-5" fallbackClassName="text-[9px]" />
+                              <UserAvatar name={m.name} avatarUrl={m.avatar_url || undefined} userId={m.id} className="h-5 w-5" fallbackClassName="text-[9px]" />
                               {m.name}
                             </span>
                           </SelectItem>
