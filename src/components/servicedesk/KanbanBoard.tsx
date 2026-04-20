@@ -37,6 +37,7 @@ interface KanbanTicket {
   assignee?: string;
   assigneeAvatarUrl?: string;
   createdAt: string;
+  slaDeadline?: string;
   completedAt?: string;
   ativoId?: string;
   subtaskAssetIds?: string[];
@@ -246,7 +247,9 @@ export function KanbanBoard({
                                     {/* SLA Deadline row */}
                                     <div className="flex items-center gap-2 text-xs" title="Vencimento SLA">
                                       <CalendarIcon className="h-3.5 w-3.5 shrink-0" />
-                                      <span className="text-foreground">{format(sla.dataLimiteSla, "dd/MM/yyyy HH:mm")}</span>
+                                      <span className="text-foreground">
+                                        {format(ticket.slaDeadline ? new Date(ticket.slaDeadline) : sla.dataLimiteSla, "dd/MM/yyyy HH:mm")}
+                                      </span>
                                     </div>
 
                                     {/* Priority row */}
