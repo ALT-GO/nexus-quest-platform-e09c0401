@@ -12,6 +12,7 @@ import { toast } from "sonner";
 import { Plus, AlertCircle, Check } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { format } from "date-fns";
+import { useInventoryStatuses } from "@/hooks/use-inventory-statuses";
 
 interface FieldDef {
   id: string;
