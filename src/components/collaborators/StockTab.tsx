@@ -192,6 +192,7 @@ interface ColDef {
 
 const notebookCols: ColDef[] = [
   { id: "condition", header: "Condição", field: "condition", accessor: (i) => i.condition || "ready" },
+  { id: "status", header: "Status", field: "status", accessor: (i) => i.status || "" },
   { id: "service_tag", header: "Service tag", field: "service_tag", accessor: (i) => i.service_tag || "" },
   { id: "marca", header: "Marca", field: "marca", accessor: (i) => i.marca || "" },
   { id: "model", header: "Modelo", field: "model", accessor: (i) => i.model || "" },
@@ -204,6 +205,7 @@ const notebookCols: ColDef[] = [
 
 const celularCols: ColDef[] = [
   { id: "condition", header: "Condição", field: "condition", accessor: (i) => i.condition || "ready" },
+  { id: "status", header: "Status", field: "status", accessor: (i) => i.status || "" },
   { id: "service_tag", header: "Service tag", field: "service_tag", accessor: (i) => i.service_tag || "" },
   { id: "marca", header: "Marca", field: "marca", accessor: (i) => i.marca || "" },
   { id: "model", header: "Modelo", field: "model", accessor: (i) => i.model || "" },
@@ -216,6 +218,7 @@ const celularCols: ColDef[] = [
 ];
 
 const linhaCols: ColDef[] = [
+  { id: "status", header: "Status", field: "status", accessor: (i) => i.status || "" },
   { id: "numero", header: "Número", field: "numero", accessor: (i) => i.numero || "" },
   { id: "asset_type", header: "Tipo", field: "asset_type", accessor: (i) => i.asset_type || "" },
   { id: "gestor", header: "Gestor", field: "gestor", accessor: (i) => i.gestor || "" },
@@ -242,6 +245,7 @@ const licencaCols: ColDef[] = [
 
 const tabletCols: ColDef[] = [
   { id: "condition", header: "Condição", field: "condition", accessor: (i) => i.condition || "ready" },
+  { id: "status", header: "Status", field: "status", accessor: (i) => i.status || "" },
   { id: "service_tag", header: "Service tag", field: "service_tag", accessor: (i) => i.service_tag || "" },
   { id: "marca", header: "Marca", field: "marca", accessor: (i) => i.marca || "" },
   { id: "model", header: "Modelo", field: "model", accessor: (i) => i.model || "" },
@@ -253,6 +257,7 @@ const tabletCols: ColDef[] = [
 
 const perifericoCols: ColDef[] = [
   { id: "condition", header: "Condição", field: "condition", accessor: (i) => i.condition || "ready" },
+  { id: "status", header: "Status", field: "status", accessor: (i) => i.status || "" },
   { id: "service_tag", header: "Service tag / P/N", field: "service_tag", accessor: (i) => i.service_tag || "" },
   { id: "marca", header: "Marca", field: "marca", accessor: (i) => i.marca || "" },
   { id: "model", header: "Modelo", field: "model", accessor: (i) => i.model || "" },
@@ -494,10 +499,11 @@ function CategoryStockTable({
                           value={col.accessor(item)}
                           onSave={(v) => onCellSave(item.id, "condition", v)}
                         />
-                      ) : col.id === "status" && category === "licencas" ? (
+                      ) : col.id === "status" ? (
                         <StatusSelectCell
                           value={col.accessor(item)}
                           onSave={(v) => onCellSave(item.id, "status", v)}
+                          category={category}
                         />
                       ) : col.field ? (
                         <InlineStockCell
