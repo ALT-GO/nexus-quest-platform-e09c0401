@@ -14,7 +14,7 @@ import { StockTab } from "@/components/collaborators/StockTab";
 import { SortDropdown, usePersistentSort, applySorting } from "@/components/ui/sort-dropdown";
 import {
   Loader2, Search, Users, Laptop, Smartphone, Phone, FileText, Package,
-  LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown,
+  LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown, Tablet, Mouse,
 } from "lucide-react";
 import { DeleteCollaboratorDialog } from "@/components/collaborators/DeleteCollaboratorDialog";
 import { NewCollaboratorDialog } from "@/components/collaborators/NewCollaboratorDialog";
