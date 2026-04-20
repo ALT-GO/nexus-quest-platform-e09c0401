@@ -243,10 +243,10 @@ export function KanbanBoard({
                                       )}
                                     </div>
 
-                                    {/* Date row */}
-                                    <div className="flex items-center gap-2 text-xs">
+                                    {/* SLA Deadline row */}
+                                    <div className="flex items-center gap-2 text-xs" title="Vencimento SLA">
                                       <CalendarIcon className="h-3.5 w-3.5 shrink-0" />
-                                      <span className="text-foreground">{format(new Date(ticket.createdAt), "dd/MM/yyyy")}</span>
+                                      <span className="text-foreground">{format(sla.dataLimiteSla, "dd/MM/yyyy HH:mm")}</span>
                                     </div>
 
                                     {/* Priority row */}
