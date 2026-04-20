@@ -19,8 +19,10 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { supabase } from "@/integrations/supabase/client";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Loader2, FileDown, Calculator, DollarSign, Printer, Phone, FileText, ClipboardList, Filter, X } from "lucide-react";
+import { Loader2, FileDown, Calculator, DollarSign, Printer, Phone, FileText, ClipboardList, Filter, X, Search, Download } from "lucide-react";
 import { toast } from "sonner";
+import jsPDF from "jspdf";
+import html2canvas from "html2canvas-pro";
 import { HeaderTimbrado } from "@/components/collaborators/HeaderTimbrado";
 import { FooterTimbrado } from "@/components/collaborators/FooterTimbrado";
 import { InlineCellEditor } from "@/components/assets/InlineCellEditor";
@@ -66,6 +68,7 @@ function MensalidadeTab({ category }: { category: "linhas" | "licencas" }) {
   const [filterCC, setFilterCC] = useState("");
   const [filterLicenca, setFilterLicenca] = useState("todas");
   const [filtersOpen, setFiltersOpen] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
 
   const { data: items = [], isLoading } = useQuery({
     queryKey: ["mensalidade", category],
@@ -120,8 +123,21 @@ function MensalidadeTab({ category }: { category: "linhas" | "licencas" }) {
       );
     }
 
+    if (searchQuery.trim()) {
+      const q = searchQuery.trim().toLowerCase();
+      result = result.filter((i) => {
+        const fields = [
+          i.asset_code, i.status, i.numero, i.collaborator, i.operadora,
+          i.email_address, i.licenca, i.cost_center_eng, i.cost_center_man,
+          i.imei1, i.imei2, i.notes, i.comments, i.cargo, i.sector,
+          (i as any).valor_mensal != null ? String((i as any).valor_mensal) : "",
+        ];
+        return fields.some((f) => (f || "").toString().toLowerCase().includes(q));
+      });
+    }
+
     return result;
-  }, [items, filterStatus, filterOperadora, filterCC, filterLicenca, isLinhas]);
+  }, [items, filterStatus, filterOperadora, filterCC, filterLicenca, isLinhas, searchQuery]);
 
   const activeFilterCount = [
     filterStatus !== "todas",
@@ -173,6 +189,24 @@ function MensalidadeTab({ category }: { category: "linhas" | "licencas" }) {
           </span>
         </CardTitle>
         <div className="flex items-center gap-2">
+          <div className="relative">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Pesquisar..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-8 w-56 pl-8 text-xs"
+            />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Limpar pesquisa"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
           {activeFilterCount > 0 && (
             <Button variant="ghost" size="sm" onClick={clearFilters} className="h-8 text-xs gap-1">
               <X className="h-3 w-3" /> Limpar filtros
@@ -476,6 +510,49 @@ export default function GestaoFaturas() {
     setTimeout(() => window.print(), 400);
   };
 
+  const handleDownloadPDF = async () => {
+    setPdfOpen(true);
+    // Wait for dialog content to render
+    await new Promise((r) => setTimeout(r, 500));
+    const node = printRef.current;
+    if (!node) {
+      toast.error("Não foi possível gerar o PDF");
+      return;
+    }
+    try {
+      toast.loading("Gerando PDF...", { id: "pdf-gen" });
+      const canvas = await html2canvas(node, {
+        scale: 2,
+        backgroundColor: "#ffffff",
+        useCORS: true,
+        logging: false,
+      });
+      const imgData = canvas.toDataURL("image/png");
+      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pageWidth = pdf.internal.pageSize.getWidth();
+      const pageHeight = pdf.internal.pageSize.getHeight();
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+      pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, "PNG", 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+      const filename = `rateio_${generatedOp}_${generatedMesAno.replace(/ /g, "_")}.pdf`;
+      pdf.save(filename);
+      toast.success("PDF baixado com sucesso", { id: "pdf-gen" });
+    } catch (err) {
+      console.error(err);
+      toast.error("Erro ao gerar PDF", { id: "pdf-gen" });
+    }
+  };
+
   const today = new Date().toLocaleDateString("pt-BR");
 
   return (
@@ -559,7 +636,11 @@ export default function GestaoFaturas() {
                     </div>
                     <Button variant="outline" size="sm" onClick={handlePrint} disabled={!adjustedRows.length}>
                       <Printer className="h-4 w-4 mr-1" />
-                      Gerar PDF
+                      Imprimir
+                    </Button>
+                    <Button size="sm" onClick={handleDownloadPDF} disabled={!adjustedRows.length}>
+                      <Download className="h-4 w-4 mr-1" />
+                      Baixar PDF
                     </Button>
                     <Button variant="outline" size="sm" onClick={handleExportCSV} disabled={!adjustedRows.length}>
                       <FileDown className="h-4 w-4 mr-1" />
