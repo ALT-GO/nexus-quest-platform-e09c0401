@@ -156,6 +156,11 @@ export function useInventoryStatuses() {
 
   const updateStatus = useCallback(
     async (id: string, updates: Partial<Pick<InventoryStatus, "name" | "color" | "isActive" | "orderIndex">>) => {
+      // Optimistic update for instant UI feedback
+      const previous = store.data;
+      store.data = store.data.map((s) => (s.id === id ? { ...s, ...updates } : s));
+      emit();
+
       const dbUpdates: any = {};
       if (updates.name !== undefined) dbUpdates.name = updates.name;
       if (updates.color !== undefined) dbUpdates.color = updates.color;
@@ -164,6 +169,9 @@ export function useInventoryStatuses() {
 
       const { error } = await supabase.from("inventory_status_config").update(dbUpdates).eq("id", id as any);
       if (error) {
+        // Rollback
+        store.data = previous;
+        emit();
         toast.error("Erro ao atualizar");
         return;
       }
@@ -173,8 +181,15 @@ export function useInventoryStatuses() {
 
   const deleteStatus = useCallback(
     async (id: string) => {
+      // Optimistic delete
+      const previous = store.data;
+      store.data = store.data.filter((s) => s.id !== id);
+      emit();
+
       const { error } = await supabase.from("inventory_status_config").delete().eq("id", id as any);
       if (error) {
+        store.data = previous;
+        emit();
         toast.error("Erro ao remover");
         return;
       }
