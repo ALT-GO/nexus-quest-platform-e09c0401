@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useCallback, useMemo, useSyncExternalStore } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -25,11 +25,27 @@ export function resolveStatusGroup(category: string, field: "condition" | "statu
   return "condition_hardware";
 }
 
-export function useInventoryStatuses() {
-  const [statuses, setStatuses] = useState<InventoryStatus[]>([]);
-  const [loading, setLoading] = useState(true);
+/* ─────────────────────────────────────────────────────────────
+ * Singleton store: ONE fetch + ONE realtime channel for the
+ * whole app. Components subscribe via useSyncExternalStore so
+ * we avoid N fetches / N channels when dozens of cells mount.
+ * ──────────────────────────────────────────────────────────── */
+let cache: InventoryStatus[] = [];
+let loaded = false;
+let loadingPromise: Promise<void> | null = null;
+let channelRef: ReturnType<typeof supabase.channel> | null = null;
+let refCount = 0;
+const listeners = new Set<() => void>();
 
-  const fetchStatuses = useCallback(async () => {
+function emit() {
+  for (const l of listeners) l();
+}
+
+async function fetchOnce(force = false): Promise<void> {
+  if (loaded && !force) return;
+  if (loadingPromise) return loadingPromise;
+
+  loadingPromise = (async () => {
     const { data, error } = await supabase
       .from("inventory_status_config")
       .select("*")
@@ -37,36 +53,84 @@ export function useInventoryStatuses() {
 
     if (error) {
       console.error("Error fetching inventory statuses:", error);
+      loadingPromise = null;
       return;
     }
     if (data) {
-      setStatuses(
-        data.map((s: any) => ({
-          id: s.id,
-          categoryGroup: s.category_group,
-          name: s.name,
-          color: s.color,
-          orderIndex: s.order_index,
-          isActive: s.is_active,
-        }))
-      );
+      cache = data.map((s: any) => ({
+        id: s.id,
+        categoryGroup: s.category_group,
+        name: s.name,
+        color: s.color,
+        orderIndex: s.order_index,
+        isActive: s.is_active,
+      }));
+      loaded = true;
+      emit();
     }
-    setLoading(false);
+    loadingPromise = null;
+  })();
+
+  return loadingPromise;
+}
+
+function subscribeToRealtime() {
+  if (channelRef) return;
+  channelRef = supabase
+    .channel("inventory-status-config-realtime")
+    .on(
+      "postgres_changes",
+      { event: "*", schema: "public", table: "inventory_status_config" },
+      () => {
+        fetchOnce(true);
+      }
+    )
+    .subscribe();
+}
+
+function unsubscribeFromRealtime() {
+  if (channelRef) {
+    supabase.removeChannel(channelRef);
+    channelRef = null;
+  }
+}
+
+function subscribe(listener: () => void): () => void {
+  listeners.add(listener);
+  refCount += 1;
+  // Lazy init on first subscriber
+  if (refCount === 1) {
+    subscribeToRealtime();
+  }
+  // Trigger initial fetch (no-op if already loaded)
+  fetchOnce();
+  return () => {
+    listeners.delete(listener);
+    refCount -= 1;
+    if (refCount === 0) {
+      unsubscribeFromRealtime();
+    }
+  };
+}
+
+const getSnapshot = () => cache;
+const getServerSnapshot = () => cache;
+
+export function useInventoryStatuses() {
+  const statuses = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
+  const [loadingState, setLoadingState] = useState(!loaded);
+
+  useEffect(() => {
+    if (loaded) {
+      setLoadingState(false);
+      return;
+    }
+    let cancelled = false;
+    fetchOnce().then(() => {
+      if (!cancelled) setLoadingState(false);
+    });
+    return () => { cancelled = true; };
   }, []);
-
-  useEffect(() => {
-    fetchStatuses();
-  }, [fetchStatuses]);
-
-  useEffect(() => {
-    const channel = supabase
-      .channel("inventory-status-config-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "inventory_status_config" }, () => {
-        fetchStatuses();
-      })
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
-  }, [fetchStatuses]);
 
   const getStatusesByGroup = useCallback(
     (group: string) =>
@@ -155,7 +219,7 @@ export function useInventoryStatuses() {
 
   return {
     statuses,
-    loading,
+    loading: loadingState,
     conditionOptions,
     getStatusesByGroup,
     getStatusesForCategory,
