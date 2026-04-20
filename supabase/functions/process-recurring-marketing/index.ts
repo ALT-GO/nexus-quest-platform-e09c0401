@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
 
       const newNextDate = addInterval(new Date(next_recurrence_date), task.recurrence_rule);
 
-      const { error: insertErr } = await supabase
+      const { data: insertedTask, error: insertErr } = await supabase
         .from('marketing_tasks')
         .insert({
           ...taskData,
@@ -73,7 +73,9 @@ Deno.serve(async (req) => {
           is_recurring: true,
           recurrence_rule: task.recurrence_rule,
           next_recurrence_date: newNextDate.toISOString(),
-        });
+        })
+        .select('id')
+        .single();
 
       if (insertErr) {
         console.error('Error creating recurring task:', insertErr);
@@ -90,12 +92,13 @@ Deno.serve(async (req) => {
 
       // Notify assignee
       if (task.assignee_id) {
+        const newTaskId = (insertedTask as any)?.id;
         await supabase.from('notifications').insert({
           user_id: task.assignee_id,
           title: 'Tarefa recorrente criada',
           message: `Nova instância da tarefa "${task.title}" foi criada automaticamente.`,
           type: 'info',
-          link: '/marketing/solicitacoes',
+          link: newTaskId ? `/marketing/solicitacoes?task=${newTaskId}` : '/marketing/solicitacoes',
         });
       }
     }
