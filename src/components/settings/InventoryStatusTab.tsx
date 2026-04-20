@@ -24,6 +24,36 @@ const presetColors = [
   "180 70% 40%",   // teal
 ];
 
+const groupConfig: Array<{
+  key: string;
+  label: string;
+  fieldName: string;
+  description: string;
+  appliesTo: string;
+}> = [
+  {
+    key: "condition_hardware",
+    label: "Condição (Hardware)",
+    fieldName: "Condição",
+    description: "Usado pelo campo Condição em Notebooks, Celulares, Tablets e Periféricos.",
+    appliesTo: "Notebooks, Celulares, Tablets, Periféricos",
+  },
+  {
+    key: "status_linhas",
+    label: "Status (Linhas)",
+    fieldName: "Status",
+    description: "Usado pelo campo Status nas Linhas Telefônicas.",
+    appliesTo: "Linhas",
+  },
+  {
+    key: "status_licencas",
+    label: "Status (Licenças)",
+    fieldName: "Status",
+    description: "Usado pelo campo Status nas Licenças.",
+    appliesTo: "Licenças",
+  },
+];
+
 function ColorDot({ color, selected, onClick }: { color: string; selected: boolean; onClick: () => void }) {
   return (
     <button
@@ -109,10 +139,12 @@ function StatusRow({ status, onUpdate, onDelete }: {
 
 export function InventoryStatusTab() {
   const { statuses, addStatus, updateStatus, deleteStatus } = useInventoryStatuses();
-  const [tab, setTab] = useState("hardware");
+  const [tab, setTab] = useState(groupConfig[0].key);
   const [newName, setNewName] = useState("");
   const [newColor, setNewColor] = useState(presetColors[0]);
   const [deleteTarget, setDeleteTarget] = useState<string | null>(null);
+
+  const currentGroup = groupConfig.find((g) => g.key === tab) ?? groupConfig[0];
 
   const filtered = statuses
     .filter((s) => s.categoryGroup === tab)
@@ -135,76 +167,86 @@ export function InventoryStatusTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-lg font-semibold">Status de Ativos</h2>
+        <h2 className="text-lg font-semibold">Status & Condição de Ativos</h2>
         <p className="text-sm text-muted-foreground">
-          Personalize os status disponíveis para cada tipo de ativo no inventário.
+          Personalize os valores disponíveis para os campos <strong>Condição</strong> (hardware) e <strong>Status</strong> (linhas e licenças) do inventário.
         </p>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>
         <TabsList>
-          <TabsTrigger value="hardware">Hardware (Notebooks, Celulares, Tablets, Periféricos)</TabsTrigger>
-          <TabsTrigger value="software">Software (Licenças)</TabsTrigger>
+          {groupConfig.map((g) => (
+            <TabsTrigger key={g.key} value={g.key}>{g.label}</TabsTrigger>
+          ))}
         </TabsList>
 
-        <TabsContent value={tab} className="mt-4 space-y-4">
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Status cadastrados</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              {filtered.length === 0 ? (
-                <p className="text-sm text-muted-foreground py-4 text-center">Nenhum status cadastrado</p>
-              ) : (
-                filtered.map((s) => (
-                  <StatusRow
-                    key={s.id}
-                    status={s}
-                    onUpdate={updateStatus}
-                    onDelete={(id) => setDeleteTarget(id)}
-                  />
-                ))
-              )}
-            </CardContent>
-          </Card>
+        {groupConfig.map((g) => (
+          <TabsContent key={g.key} value={g.key} className="mt-4 space-y-4">
+            <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+              <p className="font-medium">Campo: {g.fieldName}</p>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {g.description} <span className="italic">Aplica-se a: {g.appliesTo}.</span>
+              </p>
+            </div>
 
-          <Card>
-            <CardHeader className="pb-3">
-              <CardTitle className="text-sm">Adicionar novo status</CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <div>
-                <Label className="text-xs">Nome</Label>
-                <Input
-                  value={newName}
-                  onChange={(e) => setNewName(e.target.value)}
-                  placeholder="Ex: Em reparo"
-                  className="mt-1"
-                  onKeyDown={(e) => e.key === "Enter" && handleAdd()}
-                />
-              </div>
-              <div>
-                <Label className="text-xs">Cor</Label>
-                <div className="flex gap-2 mt-1 flex-wrap">
-                  {presetColors.map((c) => (
-                    <ColorDot key={c} color={c} selected={newColor === c} onClick={() => setNewColor(c)} />
-                  ))}
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Opções cadastradas</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-2">
+                {filtered.length === 0 ? (
+                  <p className="text-sm text-muted-foreground py-4 text-center">Nenhuma opção cadastrada</p>
+                ) : (
+                  filtered.map((s) => (
+                    <StatusRow
+                      key={s.id}
+                      status={s}
+                      onUpdate={updateStatus}
+                      onDelete={(id) => setDeleteTarget(id)}
+                    />
+                  ))
+                )}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-3">
+                <CardTitle className="text-sm">Adicionar nova opção</CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                <div>
+                  <Label className="text-xs">Nome</Label>
+                  <Input
+                    value={newName}
+                    onChange={(e) => setNewName(e.target.value)}
+                    placeholder="Ex: Em reparo"
+                    className="mt-1"
+                    onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+                  />
                 </div>
-              </div>
-              <Button onClick={handleAdd} disabled={!newName.trim()} size="sm">
-                <Plus className="h-4 w-4 mr-1.5" /> Adicionar
-              </Button>
-            </CardContent>
-          </Card>
-        </TabsContent>
+                <div>
+                  <Label className="text-xs">Cor</Label>
+                  <div className="flex gap-2 mt-1 flex-wrap">
+                    {presetColors.map((c) => (
+                      <ColorDot key={c} color={c} selected={newColor === c} onClick={() => setNewColor(c)} />
+                    ))}
+                  </div>
+                </div>
+                <Button onClick={handleAdd} disabled={!newName.trim()} size="sm">
+                  <Plus className="h-4 w-4 mr-1.5" /> Adicionar em "{currentGroup.label}"
+                </Button>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        ))}
       </Tabs>
 
       <AlertDialog open={!!deleteTarget} onOpenChange={(o) => !o && setDeleteTarget(null)}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Remover status?</AlertDialogTitle>
+            <AlertDialogTitle>Remover opção?</AlertDialogTitle>
             <AlertDialogDescription>
-              Ativos que já utilizam este status não serão alterados, mas ele não estará mais disponível para seleção.
+              Ativos que já utilizam esta opção não serão alterados, mas ela não estará mais disponível para seleção.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

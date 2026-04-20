@@ -35,14 +35,25 @@ interface EditableField {
 }
 
 function getFieldsForCategory(category: string): EditableField[] {
+  const cat = (category || "").toLowerCase();
+  const isHardware = ["notebooks", "celulares", "tablets", "perifericos", "hardware"].includes(cat);
+  const isLinhas = cat === "linhas" || cat === "telecom";
+  const isLicencas = cat === "licencas" || cat === "licenses";
+
   const base: EditableField[] = [
-    
     { label: "Categoria", key: "category", readOnly: true },
-    { label: "Status", key: "status" },
-    { label: "Colaborador", key: "collaborator" },
   ];
 
-  if (category === "notebooks" || category === "hardware") {
+  // Hardware uses "Condição"; Linhas/Licenças use "Status"
+  if (isHardware) {
+    base.push({ label: "Condição", key: "condition" });
+  } else {
+    base.push({ label: "Status", key: "status" });
+  }
+
+  base.push({ label: "Colaborador", key: "collaborator" });
+
+  if (cat === "notebooks") {
     base.push(
       { label: "Marca", key: "marca" },
       { label: "Modelo", key: "model" },
@@ -54,7 +65,7 @@ function getFieldsForCategory(category: string): EditableField[] {
       { label: "Valor Pago (R$)", key: "valor_pago" },
       { label: "Data de Aquisição", key: "data_aquisicao" },
     );
-  } else if (category === "celulares") {
+  } else if (cat === "celulares") {
     base.push(
       { label: "Marca", key: "marca" },
       { label: "Modelo", key: "model" },
@@ -66,7 +77,18 @@ function getFieldsForCategory(category: string): EditableField[] {
       { label: "Valor Pago (R$)", key: "valor_pago" },
       { label: "Data de Aquisição", key: "data_aquisicao" },
     );
-  } else if (category === "linhas" || category === "telecom") {
+  } else if (cat === "tablets" || cat === "perifericos") {
+    base.push(
+      { label: "Marca", key: "marca" },
+      { label: "Modelo", key: "model" },
+      { label: "Service Tag", key: "service_tag" },
+      { label: "Tipo", key: "asset_type" },
+      { label: "Centro de Custo", key: "cost_center" },
+      { label: "Contrato", key: "contrato" },
+      { label: "Valor Pago (R$)", key: "valor_pago" },
+      { label: "Data de Aquisição", key: "data_aquisicao" },
+    );
+  } else if (isLinhas) {
     base.push(
       { label: "Número", key: "numero" },
       { label: "Operadora", key: "operadora" },
@@ -75,7 +97,7 @@ function getFieldsForCategory(category: string): EditableField[] {
       { label: "CC Man", key: "cost_center_man" },
       { label: "Contrato", key: "contrato" },
     );
-  } else if (category === "licencas" || category === "licenses") {
+  } else if (isLicencas) {
     base.push(
       { label: "E-mail", key: "email_address" },
       { label: "Licença", key: "licenca" },
@@ -189,8 +211,9 @@ export function StockDetailDialog({ asset, onUpdated }: Props) {
   const [open, setOpen] = useState(false);
   const [formData, setFormData] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
-  const { getStatusesForCategory } = useInventoryStatuses();
+  const { getStatusesForCategory, conditionOptions } = useInventoryStatuses();
   const statusOptions = getStatusesForCategory(asset.category);
+  const conditionNames = conditionOptions.map((o) => o.name);
 
   useEffect(() => {
     if (open) {
@@ -267,9 +290,11 @@ export function StockDetailDialog({ asset, onUpdated }: Props) {
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
               {asset.model || asset.licenca || asset.numero || asset.category}
-              <span className={cn("rounded-full px-2 py-0.5 text-xs font-medium", condition.color)}>
-                {condition.label}
-              </span>
+              {asset.condition && (
+                <span className="rounded-full px-2 py-0.5 text-xs font-medium bg-secondary text-secondary-foreground">
+                  {condition.label}
+                </span>
+              )}
             </DialogTitle>
           </DialogHeader>
 
@@ -289,16 +314,16 @@ export function StockDetailDialog({ asset, onUpdated }: Props) {
                       value={formData[f.key] || ""}
                       onChange={(v) => handleChange(f.key, v)}
                     />
-                  ) : f.key === "status" ? (
+                  ) : f.key === "status" || f.key === "condition" ? (
                     <Select
                       value={formData[f.key] || ""}
                       onValueChange={(v) => handleChange(f.key, v)}
                     >
                       <SelectTrigger className="h-8 text-sm">
-                        <SelectValue placeholder="Selecione um status" />
+                        <SelectValue placeholder={f.key === "condition" ? "Selecione uma condição" : "Selecione um status"} />
                       </SelectTrigger>
                       <SelectContent>
-                        {statusOptions.map((opt) => (
+                        {(f.key === "condition" ? conditionNames : statusOptions).map((opt) => (
                           <SelectItem key={opt} value={opt}>{opt}</SelectItem>
                         ))}
                       </SelectContent>

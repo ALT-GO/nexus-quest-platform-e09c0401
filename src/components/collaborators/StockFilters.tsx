@@ -48,7 +48,6 @@ const filtersByCategory: Record<string, FilterDef[]> = {
     { id: "contrato", label: "Contrato", type: "text" },
   ],
   licencas: [
-    { id: "status", label: "Status", type: "select", options: ["Ativo", "Inativo", "Desligado"] },
     { id: "cost_center_eng", label: "Centro de custo - Eng", type: "text" },
     { id: "cost_center_man", label: "Centro de custo - Man", type: "text" },
     { id: "contrato", label: "Contrato", type: "text" },
