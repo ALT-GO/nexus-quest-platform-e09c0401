@@ -603,7 +603,7 @@ export function MarketingTaskDetailSheet({
                       <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
                         {task.assignee_name ? (
                           <span className="flex items-center gap-1.5">
-                            <UserAvatar name={task.assignee_name} avatarUrl={teamMembers.find(m => m.id === task.assignee_id)?.avatar_url || undefined} className="h-5 w-5" fallbackClassName="text-[9px]" />
+                            <UserAvatar name={task.assignee_name} avatarUrl={teamMembers.find(m => m.id === task.assignee_id)?.avatar_url || undefined} userId={task.assignee_id} className="h-5 w-5" fallbackClassName="text-[9px]" />
                             {task.assignee_name}
                           </span>
                         ) : (

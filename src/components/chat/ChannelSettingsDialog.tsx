@@ -212,7 +212,7 @@ export function ChannelSettingsDialog({ channel, open, onOpenChange, onDeleted }
                           className="flex items-center justify-between p-2 rounded hover:bg-accent"
                         >
                           <div className="flex items-center gap-2">
-                            <UserAvatar name={u.full_name} avatarUrl={u.avatar_url} className="h-7 w-7" />
+                            <UserAvatar name={u.full_name} avatarUrl={u.avatar_url} userId={u.id} className="h-7 w-7" />
                             <span className="text-sm">{u.full_name || "Sem nome"}</span>
                           </div>
                           <Button
@@ -249,7 +249,7 @@ export function ChannelSettingsDialog({ channel, open, onOpenChange, onDeleted }
                         className="flex items-center justify-between p-2 rounded hover:bg-accent"
                       >
                         <div className="flex items-center gap-2 min-w-0">
-                          <UserAvatar name={m.user!.full_name} avatarUrl={m.user!.avatar_url} className="h-7 w-7" />
+                          <UserAvatar name={m.user!.full_name} avatarUrl={m.user!.avatar_url} userId={m.user_id} className="h-7 w-7" />
                           <div className="min-w-0">
                             <p className="text-sm truncate">{m.user!.full_name || "Sem nome"}</p>
                             {m.role === "admin" && (

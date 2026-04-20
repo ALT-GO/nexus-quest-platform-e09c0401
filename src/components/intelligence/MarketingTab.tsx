@@ -844,6 +844,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
                       <UserAvatar
                         name={a.name}
                         avatarUrl={a.id ? avatars?.byId[a.id] : null}
+                        userId={a.id}
                         className="h-7 w-7 shrink-0"
                         fallbackClassName="text-[10px]"
                       />

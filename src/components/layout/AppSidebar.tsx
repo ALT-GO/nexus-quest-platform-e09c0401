@@ -242,6 +242,7 @@ export function AppSidebar() {
           <UserAvatar
             name={userName}
             avatarUrl={avatarUrl}
+            userId={user?.id}
             className="h-7 w-7"
             fallbackClassName="bg-primary/10 text-primary text-xs"
           />
