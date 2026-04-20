@@ -253,7 +253,7 @@ Deno.serve(async (req) => {
           title: titleKey,
           message: msgKey,
           type: 'warning',
-          link: '/marketing/eventos',
+          link: `/marketing/eventos?event=${evt.id}`,
           scope: 'marketing',
         });
       }
