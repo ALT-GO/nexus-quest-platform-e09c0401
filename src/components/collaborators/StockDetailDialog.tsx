@@ -35,14 +35,25 @@ interface EditableField {
 }
 
 function getFieldsForCategory(category: string): EditableField[] {
+  const cat = (category || "").toLowerCase();
+  const isHardware = ["notebooks", "celulares", "tablets", "perifericos", "hardware"].includes(cat);
+  const isLinhas = cat === "linhas" || cat === "telecom";
+  const isLicencas = cat === "licencas" || cat === "licenses";
+
   const base: EditableField[] = [
-    
     { label: "Categoria", key: "category", readOnly: true },
-    { label: "Status", key: "status" },
-    { label: "Colaborador", key: "collaborator" },
   ];
 
-  if (category === "notebooks" || category === "hardware") {
+  // Hardware uses "Condição"; Linhas/Licenças use "Status"
+  if (isHardware) {
+    base.push({ label: "Condição", key: "condition" });
+  } else {
+    base.push({ label: "Status", key: "status" });
+  }
+
+  base.push({ label: "Colaborador", key: "collaborator" });
+
+  if (cat === "notebooks") {
     base.push(
       { label: "Marca", key: "marca" },
       { label: "Modelo", key: "model" },
@@ -54,7 +65,7 @@ function getFieldsForCategory(category: string): EditableField[] {
       { label: "Valor Pago (R$)", key: "valor_pago" },
       { label: "Data de Aquisição", key: "data_aquisicao" },
     );
-  } else if (category === "celulares") {
+  } else if (cat === "celulares") {
     base.push(
       { label: "Marca", key: "marca" },
       { label: "Modelo", key: "model" },
@@ -66,7 +77,18 @@ function getFieldsForCategory(category: string): EditableField[] {
       { label: "Valor Pago (R$)", key: "valor_pago" },
       { label: "Data de Aquisição", key: "data_aquisicao" },
     );
-  } else if (category === "linhas" || category === "telecom") {
+  } else if (cat === "tablets" || cat === "perifericos") {
+    base.push(
+      { label: "Marca", key: "marca" },
+      { label: "Modelo", key: "model" },
+      { label: "Service Tag", key: "service_tag" },
+      { label: "Tipo", key: "asset_type" },
+      { label: "Centro de Custo", key: "cost_center" },
+      { label: "Contrato", key: "contrato" },
+      { label: "Valor Pago (R$)", key: "valor_pago" },
+      { label: "Data de Aquisição", key: "data_aquisicao" },
+    );
+  } else if (isLinhas) {
     base.push(
       { label: "Número", key: "numero" },
       { label: "Operadora", key: "operadora" },
@@ -75,7 +97,7 @@ function getFieldsForCategory(category: string): EditableField[] {
       { label: "CC Man", key: "cost_center_man" },
       { label: "Contrato", key: "contrato" },
     );
-  } else if (category === "licencas" || category === "licenses") {
+  } else if (isLicencas) {
     base.push(
       { label: "E-mail", key: "email_address" },
       { label: "Licença", key: "licenca" },
