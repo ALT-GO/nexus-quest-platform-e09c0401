@@ -354,7 +354,7 @@ export function TicketDetailSheet({
     await logHistory("field_change", `${label} alterado para "${value}"`, "Admin");
     if (field === "assignee" && value && value !== previousValue) {
       const { sendNotification } = await import("@/lib/notifications");
-      sendNotification({ recipientName: value, title: "Nova Tarefa Atribuída", message: `Você foi atribuído ao chamado "${ticket.title}" (${ticket.ticket_number})`, type: "task_assigned", link: "/ti/servicedesk" });
+      sendNotification({ recipientName: value, title: "Nova Tarefa Atribuída", message: `Você foi atribuído ao chamado "${ticket.title}" (${ticket.ticket_number})`, type: "task_assigned", link: `/ti/service-desk?ticket=${ticket.id}` });
     }
   };
 
