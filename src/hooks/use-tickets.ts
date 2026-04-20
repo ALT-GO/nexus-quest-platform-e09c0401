@@ -327,7 +327,7 @@ export async function runTicketCreatedAutomations(
             title: "Nova Tarefa Atribuída",
             message: `Você foi atribuído automaticamente a um chamado na categoria "${category}".`,
             type: "task_assigned",
-            link: "/ti/service-desk",
+            link: `/ti/service-desk?ticket=${ticketId}`,
           });
         }
         break;
