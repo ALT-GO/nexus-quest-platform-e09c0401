@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { supabase } from "@/integrations/supabase/client";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Button } from "@/components/ui/button";
@@ -25,13 +27,22 @@ import { cn } from "@/lib/utils";
 
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "🎉", "🚀", "👀", "✅", "🙏"];
 
+// Email to ignore from read receipts (test account)
+const IGNORED_EMAILS_USER_IDS = new Set<string>();
+
+interface MemberProfile {
+  id: string;
+  full_name: string;
+}
+
 interface Props {
   channelId: string;
   memberNames: string[];
   members: ChannelMember[];
+  memberProfiles: MemberProfile[];
 }
 
-export function MessageList({ channelId, memberNames, members }: Props) {
+export function MessageList({ channelId, memberNames, members, memberProfiles }: Props) {
   const { user } = useAuth();
   const { data: messages = [] } = useChannelMessages(channelId);
   const { data: reactions = [] } = useChannelReactions(channelId);
@@ -69,11 +80,38 @@ export function MessageList({ channelId, memberNames, members }: Props) {
     return map;
   }, [reactions, user]);
 
-  // Compute read status for own messages
+  // Fetch ignored user id for test account
+  const { data: ignoredUserIds } = useQuery({
+    queryKey: ["chat-ignored-test-users"],
+    queryFn: async () => {
+      const { data } = await supabase.rpc("get_user_emails");
+      const ignored = (data || [])
+        .filter((u: any) => u.email === "adm.tisp@grupoorion.com.br")
+        .map((u: any) => u.user_id);
+      return new Set<string>(ignored);
+    },
+    staleTime: 300_000,
+  });
+
+  // Compute read status for own messages — exclude self and test account
   const otherMembers = useMemo(
-    () => (user ? members.filter((m) => m.user_id !== user.id) : []),
-    [members, user]
+    () => {
+      if (!user) return [];
+      return members.filter((m) => {
+        if (m.user_id === user.id) return false;
+        if (ignoredUserIds?.has(m.user_id)) return false;
+        return true;
+      });
+    },
+    [members, user, ignoredUserIds]
   );
+
+  // Build a map userId -> name for tooltips
+  const profileNameMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    memberProfiles.forEach((p) => { map[p.id] = p.full_name; });
+    return map;
+  }, [memberProfiles]);
 
   const pinned = messages.filter((m) => m.pinned);
 
@@ -111,6 +149,7 @@ export function MessageList({ channelId, memberNames, members }: Props) {
                   memberNames={memberNames}
                   reactions={reactionsByMsg[m.id] || {}}
                   otherMembers={otherMembers}
+                  profileNameMap={profileNameMap}
                   editingId={editingId}
                   editValue={editValue}
                   onStartEdit={(msg) => {
@@ -148,7 +187,7 @@ function DateDivider({ date }: { date: string }) {
   );
 }
 
-function ReadReceipt({ message, otherMembers }: { message: ChatMessage; otherMembers: ChannelMember[] }) {
+function ReadReceipt({ message, otherMembers, profileNameMap }: { message: ChatMessage; otherMembers: ChannelMember[]; profileNameMap: Record<string, string> }) {
   if (otherMembers.length === 0) {
     return <Check className="h-3.5 w-3.5 text-muted-foreground/50" />;
   }
@@ -157,8 +196,24 @@ function ReadReceipt({ message, otherMembers }: { message: ChatMessage; otherMem
   const readBy = otherMembers.filter(
     (m) => new Date(m.last_read_at).getTime() >= msgTime
   );
+  const readNames = readBy.map((m) => profileNameMap[m.user_id] || "Usuário").sort();
+  const unreadMembers = otherMembers.filter(
+    (m) => new Date(m.last_read_at).getTime() < msgTime
+  );
+  const unreadNames = unreadMembers.map((m) => profileNameMap[m.user_id] || "Usuário").sort();
   const allRead = readBy.length === otherMembers.length;
   const someRead = readBy.length > 0;
+
+  const buildTooltip = () => {
+    const lines: string[] = [];
+    if (readNames.length > 0) {
+      lines.push(`✓ Lida por: ${readNames.join(", ")}`);
+    }
+    if (unreadNames.length > 0) {
+      lines.push(`○ Não lida: ${unreadNames.join(", ")}`);
+    }
+    return lines;
+  };
 
   if (allRead) {
     return (
@@ -166,8 +221,12 @@ function ReadReceipt({ message, otherMembers }: { message: ChatMessage; otherMem
         <TooltipTrigger asChild>
           <CheckCheck className="h-3.5 w-3.5 text-primary" />
         </TooltipTrigger>
-        <TooltipContent side="left" className="text-xs">
-          Lida por todos
+        <TooltipContent side="left" className="text-xs max-w-[250px]">
+          <div className="space-y-0.5">
+            {buildTooltip().map((line, i) => (
+              <p key={i}>{line}</p>
+            ))}
+          </div>
         </TooltipContent>
       </Tooltip>
     );
@@ -179,8 +238,12 @@ function ReadReceipt({ message, otherMembers }: { message: ChatMessage; otherMem
         <TooltipTrigger asChild>
           <CheckCheck className="h-3.5 w-3.5 text-muted-foreground/60" />
         </TooltipTrigger>
-        <TooltipContent side="left" className="text-xs">
-          Lida por {readBy.length} de {otherMembers.length}
+        <TooltipContent side="left" className="text-xs max-w-[250px]">
+          <div className="space-y-0.5">
+            {buildTooltip().map((line, i) => (
+              <p key={i}>{line}</p>
+            ))}
+          </div>
         </TooltipContent>
       </Tooltip>
     );
@@ -191,8 +254,12 @@ function ReadReceipt({ message, otherMembers }: { message: ChatMessage; otherMem
       <TooltipTrigger asChild>
         <CheckCheck className="h-3.5 w-3.5 text-muted-foreground/40" />
       </TooltipTrigger>
-      <TooltipContent side="left" className="text-xs">
-        Enviada
+      <TooltipContent side="left" className="text-xs max-w-[250px]">
+        <div className="space-y-0.5">
+          {buildTooltip().map((line, i) => (
+            <p key={i}>{line}</p>
+          ))}
+        </div>
       </TooltipContent>
     </Tooltip>
   );
@@ -205,6 +272,7 @@ function MessageRow({
   memberNames,
   reactions,
   otherMembers,
+  profileNameMap,
   editingId,
   editValue,
   onStartEdit,
@@ -221,6 +289,7 @@ function MessageRow({
   memberNames: string[];
   reactions: Record<string, { count: number; me: boolean; users: string[] }>;
   otherMembers: ChannelMember[];
+  profileNameMap: Record<string, string>;
   editingId: string | null;
   editValue: string;
   onStartEdit: (m: ChatMessage) => void;
@@ -279,7 +348,7 @@ function MessageRow({
             </div>
             {isOwn && (
               <span className="shrink-0 mb-0.5">
-                <ReadReceipt message={message} otherMembers={otherMembers} />
+                <ReadReceipt message={message} otherMembers={otherMembers} profileNameMap={profileNameMap} />
               </span>
             )}
           </div>
