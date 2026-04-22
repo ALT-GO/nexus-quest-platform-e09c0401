@@ -75,6 +75,12 @@ export function LinkExistingAssetDialog({ collaboratorName, category, onLinked }
     if (error) {
       toast.error("Erro ao vincular ativo");
     } else {
+      // Remove placeholder rows for this collaborator now that they have a real asset
+      await supabase
+        .from("inventory")
+        .delete()
+        .eq("collaborator", collaboratorName)
+        .eq("category", "colaborador");
       toast.success("Ativo vinculado com sucesso");
       setOpen(false);
       onLinked();

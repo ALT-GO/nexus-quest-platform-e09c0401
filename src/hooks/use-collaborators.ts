@@ -64,8 +64,11 @@ export function useCollaborators() {
           map.set(name, { cats: new Set(), count: 0, cargo: "", sector: "", cost_center: "", email_address: "" });
         }
         const entry = map.get(name)!;
-        entry.cats.add(row.category);
-        entry.count += 1;
+        // Skip neutral placeholder category from category/asset counts
+        if (row.category !== "colaborador") {
+          entry.cats.add(row.category);
+          entry.count += 1;
+        }
         // Keep first non-empty value found
         if (!entry.cargo && row.cargo) entry.cargo = row.cargo;
         if (!entry.sector && row.sector) entry.sector = row.sector;
@@ -112,6 +115,7 @@ export function useCollaboratorDetail(name: string) {
       .from("inventory")
       .select("*")
       .eq("collaborator", name)
+      .neq("category", "colaborador")
       .order("category")
       .order("created_at", { ascending: false });
 
@@ -198,6 +202,12 @@ export function useAvailableStock() {
       status: "Em uso",
       updated_at: new Date().toISOString(),
     }).eq("id", assetId);
+    // Remove neutral placeholder rows for this collaborator now that they have a real asset
+    await supabase
+      .from("inventory")
+      .delete()
+      .eq("collaborator", collaboratorName)
+      .eq("category", "colaborador");
     await fetchStock();
   }, [fetchStock]);
 
