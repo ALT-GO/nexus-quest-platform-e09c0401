@@ -19,6 +19,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useAddTaskLink } from "@/hooks/use-task-links";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { RecurrenceSelector } from "@/components/marketing/RecurrenceSelector";
+import { computeNextDate } from "@/lib/recurrence";
 
 interface Props {
   open: boolean;
