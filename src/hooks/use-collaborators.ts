@@ -115,6 +115,7 @@ export function useCollaboratorDetail(name: string) {
       .from("inventory")
       .select("*")
       .eq("collaborator", name)
+      .neq("category", "colaborador")
       .order("category")
       .order("created_at", { ascending: false });
 
