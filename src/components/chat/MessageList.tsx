@@ -25,13 +25,22 @@ import { cn } from "@/lib/utils";
 
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "🎉", "🚀", "👀", "✅", "🙏"];
 
+// Email to ignore from read receipts (test account)
+const IGNORED_EMAILS_USER_IDS = new Set<string>();
+
+interface MemberProfile {
+  id: string;
+  full_name: string;
+}
+
 interface Props {
   channelId: string;
   memberNames: string[];
   members: ChannelMember[];
+  memberProfiles: MemberProfile[];
 }
 
-export function MessageList({ channelId, memberNames, members }: Props) {
+export function MessageList({ channelId, memberNames, members, memberProfiles }: Props) {
   const { user } = useAuth();
   const { data: messages = [] } = useChannelMessages(channelId);
   const { data: reactions = [] } = useChannelReactions(channelId);
