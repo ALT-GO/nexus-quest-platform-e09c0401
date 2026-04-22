@@ -202,6 +202,12 @@ export function useAvailableStock() {
       status: "Em uso",
       updated_at: new Date().toISOString(),
     }).eq("id", assetId);
+    // Remove neutral placeholder rows for this collaborator now that they have a real asset
+    await supabase
+      .from("inventory")
+      .delete()
+      .eq("collaborator", collaboratorName)
+      .eq("category", "colaborador");
     await fetchStock();
   }, [fetchStock]);
 
