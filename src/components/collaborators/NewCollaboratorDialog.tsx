@@ -118,12 +118,13 @@ export function NewCollaboratorDialog({ onCreated }: Props) {
     try {
       const assetIds = Object.values(selectedAssets).filter(Boolean);
       if (assetIds.length === 0) {
-        // Create a placeholder entry so the collaborator appears in the list
+        // Create a neutral placeholder entry so the collaborator appears in the list
+        // without simulating a real IT asset (notebook, phone, etc.)
         const { error } = await supabase.from("inventory").insert({
-          asset_code: `TEMP-${Date.now()}`,
-          category: "notebooks",
+          asset_code: `COLAB-${Date.now()}`,
+          category: "colaborador",
           collaborator: nome.trim(),
-          status: "Em uso",
+          status: "Cadastro",
           condition: "ready",
           cargo: cargo.trim() || null,
           gestor: gestor.trim() || null,
