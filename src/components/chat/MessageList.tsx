@@ -348,7 +348,7 @@ function MessageRow({
             </div>
             {isOwn && (
               <span className="shrink-0 mb-0.5">
-                <ReadReceipt message={message} otherMembers={otherMembers} />
+                <ReadReceipt message={message} otherMembers={otherMembers} profileNameMap={profileNameMap} />
               </span>
             )}
           </div>
