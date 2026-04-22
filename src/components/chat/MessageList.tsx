@@ -28,6 +28,7 @@ import { cn } from "@/lib/utils";
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "🎉", "🚀", "👀", "✅", "🙏"];
 
 // Email to ignore from read receipts (test account)
+const BOT_USER_ID = "00000000-0000-0000-0000-000000000b07";
 const IGNORED_EMAILS_USER_IDS = new Set<string>();
 
 interface MemberProfile {
