@@ -173,12 +173,7 @@ export default function ServiceDesk() {
           description: `O prazo de ${ticket.sla_hours}h foi ultrapassado.`,
           duration: 8000,
         });
-        ChatSuporteTI.slaExpired({
-          ticket_number: ticket.ticket_number,
-          title: ticket.title,
-          sla_hours: ticket.sla_hours,
-          assignee: ticket.assignee,
-        });
+        // Bot alert for SLA expired removed — too noisy
       }
     });
   }, [tick, tickets, getSlaInfo, isFinalStatus, updateTicket]);
