@@ -64,11 +64,7 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
     let nextRecurrenceDate: string | null = null;
     if (isRecurring) {
       const base = dueDate || startDate || new Date();
-      const next = new Date(base);
-      if (recurrenceRule === 'daily') next.setDate(next.getDate() + 1);
-      else if (recurrenceRule === 'weekly') next.setDate(next.getDate() + 7);
-      else if (recurrenceRule === 'monthly') next.setMonth(next.getMonth() + 1);
-      nextRecurrenceDate = next.toISOString();
+      nextRecurrenceDate = computeNextDate(base, recurrenceRule).toISOString();
     }
 
     createTask.mutate({
