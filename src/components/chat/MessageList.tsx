@@ -78,11 +78,38 @@ export function MessageList({ channelId, memberNames, members, memberProfiles }:
     return map;
   }, [reactions, user]);
 
-  // Compute read status for own messages
+  // Fetch ignored user id for test account
+  const { data: ignoredUserIds } = useQuery({
+    queryKey: ["chat-ignored-test-users"],
+    queryFn: async () => {
+      const { data } = await supabase.rpc("get_user_emails");
+      const ignored = (data || [])
+        .filter((u: any) => u.email === "adm.tisp@grupoorion.com.br")
+        .map((u: any) => u.user_id);
+      return new Set<string>(ignored);
+    },
+    staleTime: 300_000,
+  });
+
+  // Compute read status for own messages — exclude self and test account
   const otherMembers = useMemo(
-    () => (user ? members.filter((m) => m.user_id !== user.id) : []),
-    [members, user]
+    () => {
+      if (!user) return [];
+      return members.filter((m) => {
+        if (m.user_id === user.id) return false;
+        if (ignoredUserIds?.has(m.user_id)) return false;
+        return true;
+      });
+    },
+    [members, user, ignoredUserIds]
   );
+
+  // Build a map userId -> name for tooltips
+  const profileNameMap = useMemo(() => {
+    const map: Record<string, string> = {};
+    memberProfiles.forEach((p) => { map[p.id] = p.full_name; });
+    return map;
+  }, [memberProfiles]);
 
   const pinned = messages.filter((m) => m.pinned);
 
