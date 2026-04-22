@@ -347,7 +347,7 @@ function MessageRow({
               <MentionText text={message.content} memberNames={memberNames} />
               {message.edited_at && <span className="text-[10px] text-muted-foreground ml-1">(editada)</span>}
             </div>
-            {isOwn && (
+            {(isOwn || message.author_id === BOT_USER_ID) && (
               <span className="shrink-0 mb-0.5">
                 <ReadReceipt message={message} otherMembers={otherMembers} profileNameMap={profileNameMap} />
               </span>
