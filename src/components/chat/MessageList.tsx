@@ -187,7 +187,7 @@ function DateDivider({ date }: { date: string }) {
   );
 }
 
-function ReadReceipt({ message, otherMembers }: { message: ChatMessage; otherMembers: ChannelMember[] }) {
+function ReadReceipt({ message, otherMembers, profileNameMap }: { message: ChatMessage; otherMembers: ChannelMember[]; profileNameMap: Record<string, string> }) {
   if (otherMembers.length === 0) {
     return <Check className="h-3.5 w-3.5 text-muted-foreground/50" />;
   }
@@ -196,8 +196,24 @@ function ReadReceipt({ message, otherMembers }: { message: ChatMessage; otherMem
   const readBy = otherMembers.filter(
     (m) => new Date(m.last_read_at).getTime() >= msgTime
   );
+  const readNames = readBy.map((m) => profileNameMap[m.user_id] || "Usuário").sort();
+  const unreadMembers = otherMembers.filter(
+    (m) => new Date(m.last_read_at).getTime() < msgTime
+  );
+  const unreadNames = unreadMembers.map((m) => profileNameMap[m.user_id] || "Usuário").sort();
   const allRead = readBy.length === otherMembers.length;
   const someRead = readBy.length > 0;
+
+  const buildTooltip = () => {
+    const lines: string[] = [];
+    if (readNames.length > 0) {
+      lines.push(`✓ Lida por: ${readNames.join(", ")}`);
+    }
+    if (unreadNames.length > 0) {
+      lines.push(`○ Não lida: ${unreadNames.join(", ")}`);
+    }
+    return lines;
+  };
 
   if (allRead) {
     return (
@@ -205,8 +221,12 @@ function ReadReceipt({ message, otherMembers }: { message: ChatMessage; otherMem
         <TooltipTrigger asChild>
           <CheckCheck className="h-3.5 w-3.5 text-primary" />
         </TooltipTrigger>
-        <TooltipContent side="left" className="text-xs">
-          Lida por todos
+        <TooltipContent side="left" className="text-xs max-w-[250px]">
+          <div className="space-y-0.5">
+            {buildTooltip().map((line, i) => (
+              <p key={i}>{line}</p>
+            ))}
+          </div>
         </TooltipContent>
       </Tooltip>
     );
@@ -218,8 +238,12 @@ function ReadReceipt({ message, otherMembers }: { message: ChatMessage; otherMem
         <TooltipTrigger asChild>
           <CheckCheck className="h-3.5 w-3.5 text-muted-foreground/60" />
         </TooltipTrigger>
-        <TooltipContent side="left" className="text-xs">
-          Lida por {readBy.length} de {otherMembers.length}
+        <TooltipContent side="left" className="text-xs max-w-[250px]">
+          <div className="space-y-0.5">
+            {buildTooltip().map((line, i) => (
+              <p key={i}>{line}</p>
+            ))}
+          </div>
         </TooltipContent>
       </Tooltip>
     );
@@ -230,8 +254,12 @@ function ReadReceipt({ message, otherMembers }: { message: ChatMessage; otherMem
       <TooltipTrigger asChild>
         <CheckCheck className="h-3.5 w-3.5 text-muted-foreground/40" />
       </TooltipTrigger>
-      <TooltipContent side="left" className="text-xs">
-        Enviada
+      <TooltipContent side="left" className="text-xs max-w-[250px]">
+        <div className="space-y-0.5">
+          {buildTooltip().map((line, i) => (
+            <p key={i}>{line}</p>
+          ))}
+        </div>
       </TooltipContent>
     </Tooltip>
   );
