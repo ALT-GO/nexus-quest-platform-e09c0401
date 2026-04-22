@@ -163,7 +163,7 @@ export function ChatPanel({ open, onOpenChange }: ChatPanelProps) {
               {active ? (
                 <>
                   <div className="flex-1 min-h-0 flex flex-col">
-                    <MessageList channelId={active.id} memberNames={memberNames} />
+                    <MessageList channelId={active.id} memberNames={memberNames} members={members} />
                   </div>
                   <MessageComposer
                     channelId={active.id}
