@@ -2,12 +2,13 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { UserAvatar } from "@/components/ui/user-avatar";
 import { Button } from "@/components/ui/button";
-import { Pin, Pencil, Trash2, Smile, Reply } from "lucide-react";
+import { Pin, Pencil, Trash2, Smile, Check, CheckCheck } from "lucide-react";
 import { format, isToday, isYesterday } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { MentionText } from "@/components/shared/MentionText";
 import {
   ChatMessage,
+  ChannelMember,
   useChannelMessages,
   useChannelReactions,
   useDeleteMessage,
@@ -19,6 +20,7 @@ import {
 import { useAuth } from "@/hooks/use-auth";
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 const QUICK_EMOJIS = ["👍", "❤️", "😂", "🎉", "🚀", "👀", "✅", "🙏"];
@@ -26,9 +28,10 @@ const QUICK_EMOJIS = ["👍", "❤️", "😂", "🎉", "🚀", "👀", "✅", "
 interface Props {
   channelId: string;
   memberNames: string[];
+  members: ChannelMember[];
 }
 
-export function MessageList({ channelId, memberNames }: Props) {
+export function MessageList({ channelId, memberNames, members }: Props) {
   const { user } = useAuth();
   const { data: messages = [] } = useChannelMessages(channelId);
   const { data: reactions = [] } = useChannelReactions(channelId);
@@ -66,6 +69,12 @@ export function MessageList({ channelId, memberNames }: Props) {
     return map;
   }, [reactions, user]);
 
+  // Compute read status for own messages
+  const otherMembers = useMemo(
+    () => (user ? members.filter((m) => m.user_id !== user.id) : []),
+    [members, user]
+  );
+
   const pinned = messages.filter((m) => m.pinned);
 
   return (
@@ -101,6 +110,7 @@ export function MessageList({ channelId, memberNames }: Props) {
                   isOwn={m.author_id === user?.id}
                   memberNames={memberNames}
                   reactions={reactionsByMsg[m.id] || {}}
+                  otherMembers={otherMembers}
                   editingId={editingId}
                   editValue={editValue}
                   onStartEdit={(msg) => {
@@ -138,12 +148,63 @@ function DateDivider({ date }: { date: string }) {
   );
 }
 
+function ReadReceipt({ message, otherMembers }: { message: ChatMessage; otherMembers: ChannelMember[] }) {
+  if (otherMembers.length === 0) {
+    return <Check className="h-3.5 w-3.5 text-muted-foreground/50" />;
+  }
+
+  const msgTime = new Date(message.created_at).getTime();
+  const readBy = otherMembers.filter(
+    (m) => new Date(m.last_read_at).getTime() >= msgTime
+  );
+  const allRead = readBy.length === otherMembers.length;
+  const someRead = readBy.length > 0;
+
+  if (allRead) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <CheckCheck className="h-3.5 w-3.5 text-primary" />
+        </TooltipTrigger>
+        <TooltipContent side="left" className="text-xs">
+          Lida por todos
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  if (someRead) {
+    return (
+      <Tooltip>
+        <TooltipTrigger asChild>
+          <CheckCheck className="h-3.5 w-3.5 text-muted-foreground/60" />
+        </TooltipTrigger>
+        <TooltipContent side="left" className="text-xs">
+          Lida por {readBy.length} de {otherMembers.length}
+        </TooltipContent>
+      </Tooltip>
+    );
+  }
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        <CheckCheck className="h-3.5 w-3.5 text-muted-foreground/40" />
+      </TooltipTrigger>
+      <TooltipContent side="left" className="text-xs">
+        Enviada
+      </TooltipContent>
+    </Tooltip>
+  );
+}
+
 function MessageRow({
   message,
   compact,
   isOwn,
   memberNames,
   reactions,
+  otherMembers,
   editingId,
   editValue,
   onStartEdit,
@@ -159,6 +220,7 @@ function MessageRow({
   isOwn: boolean;
   memberNames: string[];
   reactions: Record<string, { count: number; me: boolean; users: string[] }>;
+  otherMembers: ChannelMember[];
   editingId: string | null;
   editValue: string;
   onStartEdit: (m: ChatMessage) => void;
@@ -210,9 +272,16 @@ function MessageRow({
             </Button>
           </div>
         ) : (
-          <div className="text-sm whitespace-pre-wrap break-words leading-relaxed">
-            <MentionText text={message.content} memberNames={memberNames} />
-            {message.edited_at && <span className="text-[10px] text-muted-foreground ml-1">(editada)</span>}
+          <div className="flex items-end gap-1.5">
+            <div className="text-sm whitespace-pre-wrap break-words leading-relaxed">
+              <MentionText text={message.content} memberNames={memberNames} />
+              {message.edited_at && <span className="text-[10px] text-muted-foreground ml-1">(editada)</span>}
+            </div>
+            {isOwn && (
+              <span className="shrink-0 mb-0.5">
+                <ReadReceipt message={message} otherMembers={otherMembers} />
+              </span>
+            )}
           </div>
         )}
         {Object.keys(reactions).length > 0 && (
