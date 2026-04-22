@@ -156,6 +156,12 @@ function AssignDialog({ asset, onAssigned }: { asset: CollaboratorAsset; onAssig
       status: asset.category === "licencas" ? "Ativo" : "Em uso",
       updated_at: new Date().toISOString(),
     }).eq("id", asset.id);
+    // Remove placeholder rows for this collaborator now that they have a real asset
+    await supabase
+      .from("inventory")
+      .delete()
+      .eq("collaborator", name.trim())
+      .eq("category", "colaborador");
     toast.success(`Ativo vinculado a ${name.trim()}`);
     setSaving(false);
     setName("");
