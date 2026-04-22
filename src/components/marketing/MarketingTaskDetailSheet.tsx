@@ -87,6 +87,8 @@ import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
 import { useTaskLinks, useAddTaskLink, useRemoveTaskLink } from "@/hooks/use-task-links";
 import { useMarketingEvents } from "@/hooks/use-events";
 import { CalendarIcon as CalendarEventIcon } from "lucide-react";
+import { RecurrenceSelector } from "./RecurrenceSelector";
+import { computeNextDate, describeRule } from "@/lib/recurrence";
 
 interface Props {
   task: MarketingTask | null;
