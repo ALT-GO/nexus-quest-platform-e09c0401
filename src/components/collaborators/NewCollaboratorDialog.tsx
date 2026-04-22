@@ -148,6 +148,13 @@ export function NewCollaboratorDialog({ onCreated }: Props) {
         const results = await Promise.all(updates);
         const hasError = results.some((r) => r.error);
         if (hasError) throw new Error("Erro ao vincular ativos");
+
+        // Remove neutral placeholder rows for this collaborator (if any exist)
+        await supabase
+          .from("inventory")
+          .delete()
+          .eq("collaborator", nome.trim())
+          .eq("category", "colaborador");
       }
 
       toast.success(`Colaborador "${nome.trim()}" cadastrado com sucesso`);
