@@ -149,6 +149,7 @@ export function MessageList({ channelId, memberNames, members, memberProfiles }:
                   memberNames={memberNames}
                   reactions={reactionsByMsg[m.id] || {}}
                   otherMembers={otherMembers}
+                  profileNameMap={profileNameMap}
                   editingId={editingId}
                   editValue={editValue}
                   onStartEdit={(msg) => {
