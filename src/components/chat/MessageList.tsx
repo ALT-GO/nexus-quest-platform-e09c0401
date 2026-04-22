@@ -272,6 +272,7 @@ function MessageRow({
   memberNames,
   reactions,
   otherMembers,
+  profileNameMap,
   editingId,
   editValue,
   onStartEdit,
@@ -288,6 +289,7 @@ function MessageRow({
   memberNames: string[];
   reactions: Record<string, { count: number; me: boolean; users: string[] }>;
   otherMembers: ChannelMember[];
+  profileNameMap: Record<string, string>;
   editingId: string | null;
   editValue: string;
   onStartEdit: (m: ChatMessage) => void;
