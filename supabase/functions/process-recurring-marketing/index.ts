@@ -5,20 +5,89 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+interface CustomRecurrence {
+  interval: number;
+  unit: "day" | "week" | "month" | "year";
+  weekdays?: number[];
+  monthDay?: number;
+  yearMonth?: number;
+}
+
+function parseRule(rule: string): { kind: "preset"; preset: string } | { kind: "custom"; config: CustomRecurrence } {
+  if (rule === "daily" || rule === "weekly" || rule === "monthly" || rule === "yearly" || rule === "weekdays") {
+    return { kind: "preset", preset: rule };
+  }
+  if (rule.startsWith("custom:")) {
+    try {
+      const cfg = JSON.parse(rule.slice(7));
+      return {
+        kind: "custom",
+        config: {
+          interval: Math.max(1, Number(cfg.interval) || 1),
+          unit: cfg.unit || "week",
+          weekdays: Array.isArray(cfg.weekdays) ? cfg.weekdays.map(Number) : undefined,
+          monthDay: cfg.monthDay ? Number(cfg.monthDay) : undefined,
+          yearMonth: cfg.yearMonth ? Number(cfg.yearMonth) : undefined,
+        },
+      };
+    } catch {
+      return { kind: "preset", preset: "weekly" };
+    }
+  }
+  return { kind: "preset", preset: "weekly" };
+}
+
 function addInterval(date: Date, rule: string): Date {
+  const parsed = parseRule(rule);
   const next = new Date(date);
-  switch (rule) {
-    case 'daily':
-      next.setDate(next.getDate() + 1);
-      break;
-    case 'weekly':
-      next.setDate(next.getDate() + 7);
-      break;
-    case 'monthly':
-      next.setMonth(next.getMonth() + 1);
-      break;
-    default:
-      next.setDate(next.getDate() + 7);
+
+  if (parsed.kind === "preset") {
+    switch (parsed.preset) {
+      case "daily": next.setDate(next.getDate() + 1); return next;
+      case "weekly": next.setDate(next.getDate() + 7); return next;
+      case "monthly": next.setMonth(next.getMonth() + 1); return next;
+      case "yearly": next.setFullYear(next.getFullYear() + 1); return next;
+      case "weekdays": {
+        do { next.setDate(next.getDate() + 1); } while (next.getDay() === 0 || next.getDay() === 6);
+        return next;
+      }
+      default: next.setDate(next.getDate() + 7); return next;
+    }
+  }
+
+  const cfg = parsed.config;
+  switch (cfg.unit) {
+    case "day":
+      next.setDate(next.getDate() + cfg.interval);
+      return next;
+    case "week": {
+      const wd = cfg.weekdays?.length ? [...cfg.weekdays].sort() : [date.getDay()];
+      const startDay = date.getDay();
+      const sameWeekFuture = wd.find((d) => d > startDay);
+      if (sameWeekFuture !== undefined) {
+        next.setDate(next.getDate() + (sameWeekFuture - startDay));
+        return next;
+      }
+      const daysToSunday = 7 - startDay;
+      next.setDate(next.getDate() + daysToSunday + (cfg.interval - 1) * 7 + wd[0]);
+      return next;
+    }
+    case "month": {
+      const day = cfg.monthDay || date.getDate();
+      next.setMonth(next.getMonth() + cfg.interval);
+      const target = new Date(next.getFullYear(), next.getMonth() + 1, 0).getDate();
+      next.setDate(Math.min(day, target));
+      return next;
+    }
+    case "year": {
+      const month = cfg.yearMonth ? cfg.yearMonth - 1 : date.getMonth();
+      const day = cfg.monthDay || date.getDate();
+      next.setFullYear(next.getFullYear() + cfg.interval);
+      next.setMonth(month);
+      const target = new Date(next.getFullYear(), month + 1, 0).getDate();
+      next.setDate(Math.min(day, target));
+      return next;
+    }
   }
   return next;
 }

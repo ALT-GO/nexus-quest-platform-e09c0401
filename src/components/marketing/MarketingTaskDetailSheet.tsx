@@ -87,6 +87,8 @@ import { DynamicLucideIcon } from "@/components/ui/dynamic-icon";
 import { useTaskLinks, useAddTaskLink, useRemoveTaskLink } from "@/hooks/use-task-links";
 import { useMarketingEvents } from "@/hooks/use-events";
 import { CalendarIcon as CalendarEventIcon } from "lucide-react";
+import { RecurrenceSelector } from "./RecurrenceSelector";
+import { computeNextDate, describeRule } from "@/lib/recurrence";
 
 interface Props {
   task: MarketingTask | null;
@@ -818,47 +820,38 @@ export function MarketingTaskDetailSheet({
                 </PropRow>
 
                 {/* Recurrence */}
-                <PropRow icon={Repeat} label="Recorrência" tooltip="Ative para que esta tarefa se repita automaticamente (diária, semanal ou mensal)">
-                  <div className="flex items-center gap-2">
-                    <Switch
-                      checked={task.is_recurring}
-                      onCheckedChange={(checked) => {
-                        const rule = task.recurrence_rule || 'weekly';
-                        let nextDate: string | null = null;
-                        if (checked) {
-                          const base = task.due_date ? new Date(task.due_date) : new Date();
-                          const next = new Date(base);
-                          if (rule === 'daily') next.setDate(next.getDate() + 1);
-                          else if (rule === 'weekly') next.setDate(next.getDate() + 7);
-                          else next.setMonth(next.getMonth() + 1);
-                          nextDate = next.toISOString();
-                        }
-                        updateTask.mutate({ id: task.id, is_recurring: checked, recurrence_rule: checked ? rule : null, next_recurrence_date: nextDate } as any);
-                        logHistory("Recorrência", checked ? "Ativada" : "Desativada");
-                      }}
-                    />
-                    {task.is_recurring && (
-                      <Select
-                        value={task.recurrence_rule || "weekly"}
-                        onValueChange={(val) => {
-                          const base = task.due_date ? new Date(task.due_date) : new Date();
-                          const next = new Date(base);
-                          if (val === 'daily') next.setDate(next.getDate() + 1);
-                          else if (val === 'weekly') next.setDate(next.getDate() + 7);
-                          else next.setMonth(next.getMonth() + 1);
-                          updateTask.mutate({ id: task.id, recurrence_rule: val, next_recurrence_date: next.toISOString() } as any);
-                          logHistory("Frequência", `→ ${val === 'daily' ? 'Diária' : val === 'weekly' ? 'Semanal' : 'Mensal'}`);
+                <PropRow icon={Repeat} label="Recorrência" tooltip="Ative para que esta tarefa se repita automaticamente. Suporta presets ou regras personalizadas (estilo Teams)">
+                  <div className="flex flex-col gap-2 w-full">
+                    <div className="flex items-center gap-2">
+                      <Switch
+                        checked={task.is_recurring}
+                        onCheckedChange={(checked) => {
+                          const rule = task.recurrence_rule || 'weekly';
+                          let nextDate: string | null = null;
+                          if (checked) {
+                            const base = task.due_date ? new Date(task.due_date) : new Date();
+                            nextDate = computeNextDate(base, rule).toISOString();
+                          }
+                          updateTask.mutate({ id: task.id, is_recurring: checked, recurrence_rule: checked ? rule : null, next_recurrence_date: nextDate } as any);
+                          logHistory("Recorrência", checked ? "Ativada" : "Desativada");
                         }}
-                      >
-                        <SelectTrigger className="w-auto h-7 border-none shadow-none px-0 text-sm">
-                          <SelectValue />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="daily">Diária</SelectItem>
-                          <SelectItem value="weekly">Semanal</SelectItem>
-                          <SelectItem value="monthly">Mensal</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      />
+                      {task.is_recurring && (
+                        <span className="text-xs text-muted-foreground">{describeRule(task.recurrence_rule)}</span>
+                      )}
+                    </div>
+                    {task.is_recurring && (
+                      <div className="rounded-md border bg-muted/20 p-2">
+                        <RecurrenceSelector
+                          value={task.recurrence_rule || "weekly"}
+                          onChange={(val) => {
+                            const base = task.due_date ? new Date(task.due_date) : new Date();
+                            const next = computeNextDate(base, val);
+                            updateTask.mutate({ id: task.id, recurrence_rule: val, next_recurrence_date: next.toISOString() } as any);
+                            logHistory("Frequência", `→ ${describeRule(val)}`);
+                          }}
+                        />
+                      </div>
                     )}
                   </div>
                 </PropRow>

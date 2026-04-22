@@ -19,6 +19,8 @@ import { useAuth } from "@/hooks/use-auth";
 import { useAddTaskLink } from "@/hooks/use-task-links";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { RecurrenceSelector } from "@/components/marketing/RecurrenceSelector";
+import { computeNextDate } from "@/lib/recurrence";
 
 interface Props {
   open: boolean;
@@ -62,11 +64,7 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
     let nextRecurrenceDate: string | null = null;
     if (isRecurring) {
       const base = dueDate || startDate || new Date();
-      const next = new Date(base);
-      if (recurrenceRule === 'daily') next.setDate(next.getDate() + 1);
-      else if (recurrenceRule === 'weekly') next.setDate(next.getDate() + 7);
-      else if (recurrenceRule === 'monthly') next.setMonth(next.getMonth() + 1);
-      nextRecurrenceDate = next.toISOString();
+      nextRecurrenceDate = computeNextDate(base, recurrenceRule).toISOString();
     }
 
     createTask.mutate({
@@ -239,17 +237,7 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
             <Switch checked={isRecurring} onCheckedChange={setIsRecurring} />
           </div>
           {isRecurring && (
-            <div>
-              <Label>Frequência</Label>
-              <Select value={recurrenceRule} onValueChange={setRecurrenceRule}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="daily">Diária</SelectItem>
-                  <SelectItem value="weekly">Semanal</SelectItem>
-                  <SelectItem value="monthly">Mensal</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
+            <RecurrenceSelector value={recurrenceRule} onChange={setRecurrenceRule} />
           )}
         </div>
         <DialogFooter>
