@@ -64,8 +64,11 @@ export function useCollaborators() {
           map.set(name, { cats: new Set(), count: 0, cargo: "", sector: "", cost_center: "", email_address: "" });
         }
         const entry = map.get(name)!;
-        entry.cats.add(row.category);
-        entry.count += 1;
+        // Skip neutral placeholder category from category/asset counts
+        if (row.category !== "colaborador") {
+          entry.cats.add(row.category);
+          entry.count += 1;
+        }
         // Keep first non-empty value found
         if (!entry.cargo && row.cargo) entry.cargo = row.cargo;
         if (!entry.sector && row.sector) entry.sector = row.sector;
