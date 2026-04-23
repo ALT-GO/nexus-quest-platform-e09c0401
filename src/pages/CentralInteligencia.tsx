@@ -18,13 +18,17 @@ import { cn } from "@/lib/utils";
 import { OperacionalTITab } from "@/components/intelligence/OperacionalTITab";
 import { MarketingTab } from "@/components/intelligence/MarketingTab";
 
-type PeriodFilter = "this_week" | "last_week" | "this_month" | "last_month" | "custom";
+type PeriodFilter = "this_week" | "last_week" | "this_month" | "last_month" | "last_30_days" | "last_90_days" | "this_year" | "last_year" | "custom";
 
 const periodOptions: { value: PeriodFilter; label: string }[] = [
   { value: "this_week", label: "Essa semana" },
   { value: "last_week", label: "Semana anterior" },
   { value: "this_month", label: "Esse mês" },
   { value: "last_month", label: "Mês anterior" },
+  { value: "last_30_days", label: "Últimos 30 dias" },
+  { value: "last_90_days", label: "Últimos 90 dias" },
+  { value: "this_year", label: "Esse ano" },
+  { value: "last_year", label: "Ano anterior" },
   { value: "custom", label: "Personalizado" },
 ];
 
