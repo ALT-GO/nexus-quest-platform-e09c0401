@@ -26,6 +26,7 @@ import { cn } from "@/lib/utils";
 import { format, differenceInDays, isSameDay, isWithinInterval } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
+import { TrendChart } from "./TrendChart";
 
 interface MarketingTabProps {
   dateRange: { start: Date; end: Date };
