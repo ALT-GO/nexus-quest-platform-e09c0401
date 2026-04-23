@@ -26,6 +26,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { TicketDrilldownDialog } from "./TicketDrilldownDialog";
+import { TrendChart } from "./TrendChart";
 
 import type { CostCenterFilter } from "@/pages/CentralInteligencia";
 
