@@ -11,20 +11,24 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, Monitor, Megaphone, Building2 } from "lucide-react";
-import { format, startOfWeek, startOfMonth, endOfWeek, endOfMonth, subWeeks, subMonths } from "date-fns";
+import { format, startOfWeek, startOfMonth, endOfWeek, endOfMonth, startOfYear, endOfYear, subWeeks, subMonths, subDays, subYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
 import { OperacionalTITab } from "@/components/intelligence/OperacionalTITab";
 import { MarketingTab } from "@/components/intelligence/MarketingTab";
 
-type PeriodFilter = "this_week" | "last_week" | "this_month" | "last_month" | "custom";
+type PeriodFilter = "this_week" | "last_week" | "this_month" | "last_month" | "last_30_days" | "last_90_days" | "this_year" | "last_year" | "custom";
 
 const periodOptions: { value: PeriodFilter; label: string }[] = [
   { value: "this_week", label: "Essa semana" },
   { value: "last_week", label: "Semana anterior" },
   { value: "this_month", label: "Esse mês" },
   { value: "last_month", label: "Mês anterior" },
+  { value: "last_30_days", label: "Últimos 30 dias" },
+  { value: "last_90_days", label: "Últimos 90 dias" },
+  { value: "this_year", label: "Esse ano" },
+  { value: "last_year", label: "Ano anterior" },
   { value: "custom", label: "Personalizado" },
 ];
 
@@ -61,6 +65,24 @@ export default function CentralInteligencia() {
         const lastM = subMonths(now, 1);
         start = startOfMonth(lastM);
         end = endOfMonth(lastM);
+        break;
+      }
+      case "last_30_days":
+        start = subDays(now, 29);
+        end = now;
+        break;
+      case "last_90_days":
+        start = subDays(now, 89);
+        end = now;
+        break;
+      case "this_year":
+        start = startOfYear(now);
+        end = now;
+        break;
+      case "last_year": {
+        const lastY = subYears(now, 1);
+        start = startOfYear(lastY);
+        end = endOfYear(lastY);
         break;
       }
       case "custom":

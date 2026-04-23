@@ -26,6 +26,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { TicketDrilldownDialog } from "./TicketDrilldownDialog";
+import { TrendChart } from "./TrendChart";
 
 import type { CostCenterFilter } from "@/pages/CentralInteligencia";
 
@@ -419,6 +420,30 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
         />
         <StatCard title="Chamados Abertos" value={allOpenTickets.length} icon={AlertTriangle} description="Atualmente sem conclusão" onClick={() => navigate("/ti/service-desk")} />
       </div>
+
+      {/* Trend Chart - Evolução temporal */}
+      <TrendChart
+        title="Evolução de Chamados ao Longo do Tempo"
+        dateRange={dateRange}
+        series={[
+          {
+            key: "criados",
+            label: "Criados",
+            color: "hsl(var(--info))",
+            type: "bar",
+            getDate: (t) => t.created_at ? new Date(t.created_at) : null,
+            items: filtered,
+          },
+          {
+            key: "concluidos",
+            label: "Concluídos",
+            color: "hsl(var(--success))",
+            type: "line",
+            getDate: (t) => t.completed_at ? new Date(t.completed_at) : null,
+            items: completedTickets,
+          },
+        ]}
+      />
 
       {/* Charts Row 1 */}
       <div className="grid gap-6 lg:grid-cols-2">
