@@ -11,7 +11,7 @@ import {
 import { Calendar } from "@/components/ui/calendar";
 import { Button } from "@/components/ui/button";
 import { CalendarIcon, Monitor, Megaphone, Building2 } from "lucide-react";
-import { format, startOfWeek, startOfMonth, endOfWeek, endOfMonth, subWeeks, subMonths } from "date-fns";
+import { format, startOfWeek, startOfMonth, endOfWeek, endOfMonth, startOfYear, endOfYear, subWeeks, subMonths, subDays, subYears } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { cn } from "@/lib/utils";
 
