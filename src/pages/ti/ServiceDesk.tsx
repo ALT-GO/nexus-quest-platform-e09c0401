@@ -619,6 +619,7 @@ export default function ServiceDesk() {
         onLinkAsset={handleLinkAsset}
         onStatusChange={handleStatusChange}
         onUpdateTicket={async (id, updates) => updateTicket(id, updates as any)}
+        onDelete={async (id) => { await deleteTicket(id); }}
       />
     </AppLayout>
   );
