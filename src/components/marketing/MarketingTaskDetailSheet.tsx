@@ -59,7 +59,9 @@ import {
   MarketingTask,
   ChecklistItem,
   useUpdateMarketingTask,
+  useDeleteMarketingTask,
 } from "@/hooks/use-marketing";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { MarketingTimerButton } from "./MarketingTimerButton";
 import { TimerReminderBanner } from "@/components/shared/TimerReminderBanner";
 import { useMarketingTimesheet } from "@/hooks/use-timesheet";
@@ -218,6 +220,7 @@ export function MarketingTaskDetailSheet({
   onOpenChange,
 }: Props) {
   const updateTask = useUpdateMarketingTask();
+  const deleteTask = useDeleteMarketingTask();
   const { user, isAdmin } = useAuth();
   const qc = useQueryClient();
   const [rejectDialogOpen, setRejectDialogOpen] = useState(false);
@@ -520,6 +523,15 @@ export function MarketingTaskDetailSheet({
                 <span className="text-xs text-muted-foreground">
                   Criada em {format(new Date(task.created_at), "d MMM", { locale: ptBR })}
                 </span>
+
+                <ConfirmDeleteDialog
+                  title="Excluir tarefa permanentemente"
+                  description={`Tem certeza que deseja excluir a tarefa "${task.title}"? Comentários, histórico, anexos e dependências também serão removidos. Esta ação não pode ser desfeita.`}
+                  onConfirm={async () => {
+                    await deleteTask.mutateAsync(task.id);
+                    onOpenChange(false);
+                  }}
+                />
               </div>
 
               {/* Title — large, editable */}
