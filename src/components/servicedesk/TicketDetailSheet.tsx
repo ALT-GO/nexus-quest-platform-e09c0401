@@ -64,6 +64,7 @@ import { cn } from "@/lib/utils";
 import { format, formatDistanceToNow } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { toast } from "sonner";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 
 /* ─── Checklist Section (unchanged logic) ─── */
 function ChecklistSection({
@@ -167,6 +168,7 @@ interface TicketDetailSheetProps {
   onLinkAsset: (ticketId: string, assetId: string) => void;
   onStatusChange: (ticketId: string, newStatusId: string) => void;
   onUpdateTicket: (id: string, updates: Partial<Pick<Ticket, "title" | "description" | "assignee" | "priority" | "category" | "sla_deadline">>) => Promise<boolean>;
+  onDelete?: (ticketId: string) => void | Promise<void>;
 }
 
 const progressConfig = [
@@ -178,6 +180,7 @@ const progressConfig = [
 export function TicketDetailSheet({
   ticket, subtasks = [], open, onOpenChange, statuses, isFinalStatus,
   getSlaInfo, getAvailableForCategory, getAsset, onLinkAsset, onStatusChange, onUpdateTicket,
+  onDelete,
 }: TicketDetailSheetProps) {
   const [editingTitle, setEditingTitle] = useState(false);
   const [editingDesc, setEditingDesc] = useState(false);
@@ -477,6 +480,17 @@ export function TicketDetailSheet({
               <span className="text-xs text-muted-foreground">
                 Criado em {format(new Date(ticket.created_at), "d MMM", { locale: ptBR })}
               </span>
+
+              {onDelete && (
+                <ConfirmDeleteDialog
+                  title="Excluir chamado permanentemente"
+                  description={`Tem certeza que deseja excluir o chamado "${ticket.title}"? Comentários, histórico e anexos também serão removidos. Esta ação não pode ser desfeita.`}
+                  onConfirm={async () => {
+                    await onDelete(ticket.id);
+                    onOpenChange(false);
+                  }}
+                />
+              )}
             </div>
 
             {/* Title */}
