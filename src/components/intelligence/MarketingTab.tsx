@@ -728,6 +728,30 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
           />
         </div>
 
+        {/* Trend Chart - Evolução temporal */}
+        <TrendChart
+          title="Evolução de Tarefas ao Longo do Tempo"
+          dateRange={dateRange}
+          series={[
+            {
+              key: "criadas",
+              label: "Criadas",
+              color: "hsl(var(--primary))",
+              type: "bar",
+              getDate: (t) => t.created_at ? new Date(t.created_at) : null,
+              items: tasks,
+            },
+            {
+              key: "concluidas",
+              label: "Concluídas",
+              color: "hsl(var(--success))",
+              type: "line",
+              getDate: (t) => t.completed_at ? new Date(t.completed_at) : null,
+              items: tasks.filter((t) => t.completed_at),
+            },
+          ]}
+        />
+
         {/* Concluídas vs Pendentes + Tarefas por Etapa */}
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
