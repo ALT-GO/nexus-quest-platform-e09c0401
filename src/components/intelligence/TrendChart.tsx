@@ -3,7 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
 import {
   ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
-  ResponsiveContainer, Legend,
+  ResponsiveContainer, Legend, LabelList,
 } from "recharts";
 import {
   format, startOfDay, startOfWeek, startOfMonth,
@@ -48,7 +48,6 @@ interface TrendChartProps {
 function pickBucket(start: Date, end: Date): TrendBucket {
   const days = Math.max(1, differenceInDays(end, start) + 1);
   if (days <= 31) return "day";
-  if (days <= 120) return "week";
   return "month";
 }
 
@@ -134,7 +133,7 @@ export function TrendChart({
         ) : (
           <div style={{ height }}>
             <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={data} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+              <ComposedChart data={data} margin={{ top: 24, right: 10, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
                 <XAxis
                   dataKey="name"
@@ -159,7 +158,15 @@ export function TrendChart({
                       strokeWidth={2}
                       dot={{ r: 3 }}
                       activeDot={{ r: 5 }}
-                    />
+                    >
+                      <LabelList
+                        dataKey={s.key}
+                        position="top"
+                        offset={8}
+                        style={{ fill: "hsl(var(--foreground))", fontSize: 11, fontWeight: 500 }}
+                        formatter={(v: number) => (v > 0 ? v : "")}
+                      />
+                    </Line>
                   ) : (
                     <Bar
                       key={s.key}
@@ -167,7 +174,14 @@ export function TrendChart({
                       name={s.label}
                       fill={s.color}
                       radius={[4, 4, 0, 0]}
-                    />
+                    >
+                      <LabelList
+                        dataKey={s.key}
+                        position="top"
+                        style={{ fill: "hsl(var(--foreground))", fontSize: 11, fontWeight: 500 }}
+                        formatter={(v: number) => (v > 0 ? v : "")}
+                      />
+                    </Bar>
                   )
                 )}
               </ComposedChart>
