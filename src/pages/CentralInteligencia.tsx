@@ -67,6 +67,24 @@ export default function CentralInteligencia() {
         end = endOfMonth(lastM);
         break;
       }
+      case "last_30_days":
+        start = subDays(now, 29);
+        end = now;
+        break;
+      case "last_90_days":
+        start = subDays(now, 89);
+        end = now;
+        break;
+      case "this_year":
+        start = startOfYear(now);
+        end = now;
+        break;
+      case "last_year": {
+        const lastY = subYears(now, 1);
+        start = startOfYear(lastY);
+        end = endOfYear(lastY);
+        break;
+      }
       case "custom":
         start = customFrom || now;
         if (customTo) {
