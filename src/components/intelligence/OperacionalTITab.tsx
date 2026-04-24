@@ -27,6 +27,7 @@ import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { TicketDrilldownDialog } from "./TicketDrilldownDialog";
 import { TrendChart } from "./TrendChart";
+import { BacklogChart } from "./BacklogChart";
 
 import type { CostCenterFilter } from "@/pages/CentralInteligencia";
 
@@ -443,6 +444,16 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
             items: completedTickets,
           },
         ]}
+      />
+
+      {/* Backlog: Criados vs Concluídos no mesmo período + Saldo */}
+      <BacklogChart
+        title="Backlog de Chamados (Criados vs Concluídos)"
+        dateRange={dateRange}
+        createdItems={filtered}
+        completedItems={completedTickets}
+        getCreatedDate={(t) => (t.created_at ? new Date(t.created_at) : null)}
+        getCompletedDate={(t) => (t.completed_at ? new Date(t.completed_at) : null)}
       />
 
       {/* Charts Row 1 */}
