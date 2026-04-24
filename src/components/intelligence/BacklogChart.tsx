@@ -20,6 +20,53 @@ const tooltipStyle = {
 
 type Bucket = "day" | "month";
 
+interface BadgeOpts {
+  bg: string;
+  fg: string;
+  format?: (v: number) => string;
+}
+
+function renderBadgeLabel({ bg, fg, format }: BadgeOpts) {
+  return (props: any) => {
+    const { x, y, width = 0, value, position } = props;
+    if (value === null || value === undefined || value === 0) return null;
+    const text = format ? format(Number(value)) : String(value);
+    const charW = 6.6;
+    const padX = 6;
+    const w = Math.max(20, text.length * charW + padX * 2);
+    const h = 18;
+    const cx = x + width / 2;
+    const isBottom = position === "bottom";
+    const ry = isBottom ? y + 2 : y - h - 2;
+    return (
+      <g pointerEvents="none">
+        <rect
+          x={cx - w / 2}
+          y={ry}
+          width={w}
+          height={h}
+          rx={4}
+          ry={4}
+          fill={bg}
+          stroke="hsl(var(--background))"
+          strokeWidth={1}
+        />
+        <text
+          x={cx}
+          y={ry + h / 2 + 1}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={11}
+          fontWeight={600}
+          fill={fg}
+        >
+          {text}
+        </text>
+      </g>
+    );
+  };
+}
+
 interface BacklogChartProps {
   title: string;
   dateRange: { start: Date; end: Date };
@@ -174,16 +221,14 @@ export function BacklogChart({
                   <LabelList
                     dataKey="criados"
                     position="top"
-                    style={{ fill: "hsl(var(--foreground))", fontSize: 11, fontWeight: 500 }}
-                    formatter={(v: number) => (v > 0 ? v : "")}
+                    content={renderBadgeLabel({ bg: "hsl(var(--info))", fg: "hsl(var(--info-foreground, 0 0% 100%))" })}
                   />
                 </Bar>
                 <Bar dataKey="concluidos" name="Concluídos" fill="hsl(var(--success))" radius={[4, 4, 0, 0]}>
                   <LabelList
                     dataKey="concluidos"
                     position="top"
-                    style={{ fill: "hsl(var(--foreground))", fontSize: 11, fontWeight: 500 }}
-                    formatter={(v: number) => (v > 0 ? v : "")}
+                    content={renderBadgeLabel({ bg: "hsl(var(--success))", fg: "hsl(var(--success-foreground, 0 0% 100%))" })}
                   />
                 </Bar>
                 <Line
@@ -198,9 +243,12 @@ export function BacklogChart({
                   <LabelList
                     dataKey="saldo"
                     position="top"
-                    offset={8}
-                    style={{ fill: "hsl(var(--destructive))", fontSize: 11, fontWeight: 600 }}
-                    formatter={(v: number) => (v !== 0 ? (v > 0 ? `+${v}` : v) : "")}
+                    offset={10}
+                    content={renderBadgeLabel({
+                      bg: "hsl(var(--destructive))",
+                      fg: "hsl(var(--destructive-foreground, 0 0% 100%))",
+                      format: (v) => (v > 0 ? `+${v}` : `${v}`),
+                    })}
                   />
                 </Line>
                 <Line
@@ -216,9 +264,11 @@ export function BacklogChart({
                   <LabelList
                     dataKey="acumulado"
                     position="bottom"
-                    offset={8}
-                    style={{ fill: "hsl(var(--warning))", fontSize: 11, fontWeight: 600 }}
-                    formatter={(v: number) => (v !== 0 ? v : "")}
+                    offset={10}
+                    content={renderBadgeLabel({
+                      bg: "hsl(var(--warning))",
+                      fg: "hsl(var(--warning-foreground, 0 0% 100%))",
+                    })}
                   />
                 </Line>
               </ComposedChart>
