@@ -174,16 +174,14 @@ export function BacklogChart({
                   <LabelList
                     dataKey="criados"
                     position="top"
-                    style={{ fill: "hsl(var(--foreground))", fontSize: 11, fontWeight: 500 }}
-                    formatter={(v: number) => (v > 0 ? v : "")}
+                    content={renderBadgeLabel({ bg: "hsl(var(--info))", fg: "hsl(var(--info-foreground, 0 0% 100%))" })}
                   />
                 </Bar>
                 <Bar dataKey="concluidos" name="Concluídos" fill="hsl(var(--success))" radius={[4, 4, 0, 0]}>
                   <LabelList
                     dataKey="concluidos"
                     position="top"
-                    style={{ fill: "hsl(var(--foreground))", fontSize: 11, fontWeight: 500 }}
-                    formatter={(v: number) => (v > 0 ? v : "")}
+                    content={renderBadgeLabel({ bg: "hsl(var(--success))", fg: "hsl(var(--success-foreground, 0 0% 100%))" })}
                   />
                 </Bar>
                 <Line
@@ -198,9 +196,12 @@ export function BacklogChart({
                   <LabelList
                     dataKey="saldo"
                     position="top"
-                    offset={8}
-                    style={{ fill: "hsl(var(--destructive))", fontSize: 11, fontWeight: 600 }}
-                    formatter={(v: number) => (v !== 0 ? (v > 0 ? `+${v}` : v) : "")}
+                    offset={10}
+                    content={renderBadgeLabel({
+                      bg: "hsl(var(--destructive))",
+                      fg: "hsl(var(--destructive-foreground, 0 0% 100%))",
+                      format: (v) => (v > 0 ? `+${v}` : `${v}`),
+                    })}
                   />
                 </Line>
                 <Line
@@ -216,9 +217,11 @@ export function BacklogChart({
                   <LabelList
                     dataKey="acumulado"
                     position="bottom"
-                    offset={8}
-                    style={{ fill: "hsl(var(--warning))", fontSize: 11, fontWeight: 600 }}
-                    formatter={(v: number) => (v !== 0 ? v : "")}
+                    offset={10}
+                    content={renderBadgeLabel({
+                      bg: "hsl(var(--warning))",
+                      fg: "hsl(var(--warning-foreground, 0 0% 100%))",
+                    })}
                   />
                 </Line>
               </ComposedChart>
