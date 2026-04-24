@@ -62,6 +62,7 @@ export function BacklogChart({
       criados: 0,
       concluidos: 0,
       saldo: 0,
+      acumulado: 0,
     }));
     const idx = new Map<number, typeof rows[number]>();
     rows.forEach((r) => idx.set(r._bucket, r));
@@ -84,7 +85,12 @@ export function BacklogChart({
       if (row) row.concluidos += 1;
     });
 
-    rows.forEach((r) => { r.saldo = r.criados - r.concluidos; });
+    let running = 0;
+    rows.forEach((r) => {
+      r.saldo = r.criados - r.concluidos;
+      running += r.saldo;
+      r.acumulado = running;
+    });
 
     const totals = rows.reduce(
       (acc, r) => {
@@ -195,6 +201,24 @@ export function BacklogChart({
                     offset={8}
                     style={{ fill: "hsl(var(--destructive))", fontSize: 11, fontWeight: 600 }}
                     formatter={(v: number) => (v !== 0 ? (v > 0 ? `+${v}` : v) : "")}
+                  />
+                </Line>
+                <Line
+                  type="monotone"
+                  dataKey="acumulado"
+                  name="Backlog acumulado"
+                  stroke="hsl(var(--warning))"
+                  strokeWidth={2}
+                  strokeDasharray="5 4"
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
+                >
+                  <LabelList
+                    dataKey="acumulado"
+                    position="bottom"
+                    offset={8}
+                    style={{ fill: "hsl(var(--warning))", fontSize: 11, fontWeight: 600 }}
+                    formatter={(v: number) => (v !== 0 ? v : "")}
                   />
                 </Line>
               </ComposedChart>
