@@ -62,6 +62,7 @@ export function BacklogChart({
       criados: 0,
       concluidos: 0,
       saldo: 0,
+      acumulado: 0,
     }));
     const idx = new Map<number, typeof rows[number]>();
     rows.forEach((r) => idx.set(r._bucket, r));
@@ -84,7 +85,12 @@ export function BacklogChart({
       if (row) row.concluidos += 1;
     });
 
-    rows.forEach((r) => { r.saldo = r.criados - r.concluidos; });
+    let running = 0;
+    rows.forEach((r) => {
+      r.saldo = r.criados - r.concluidos;
+      running += r.saldo;
+      r.acumulado = running;
+    });
 
     const totals = rows.reduce(
       (acc, r) => {
