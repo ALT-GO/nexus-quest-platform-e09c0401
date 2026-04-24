@@ -251,26 +251,6 @@ export function BacklogChart({
                     })}
                   />
                 </Line>
-                <Line
-                  type="monotone"
-                  dataKey="acumulado"
-                  name="Backlog acumulado"
-                  stroke="hsl(var(--warning))"
-                  strokeWidth={2}
-                  strokeDasharray="5 4"
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
-                >
-                  <LabelList
-                    dataKey="acumulado"
-                    position="bottom"
-                    offset={10}
-                    content={renderBadgeLabel({
-                      bg: "hsl(var(--warning))",
-                      fg: "hsl(var(--warning-foreground, 0 0% 100%))",
-                    })}
-                  />
-                </Line>
               </ComposedChart>
             </ResponsiveContainer>
           </div>
