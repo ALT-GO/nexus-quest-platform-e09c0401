@@ -735,7 +735,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
           series={[
             {
               key: "criadas",
-              label: "Criadas",
+              label: "Criadas no mês",
               color: "hsl(var(--primary))",
               type: "bar",
               getDate: (t) => t.created_at ? new Date(t.created_at) : null,
@@ -743,7 +743,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             },
             {
               key: "concluidas",
-              label: "Concluídas",
+              label: "Concluídas no mês",
               color: "hsl(var(--success))",
               type: "line",
               getDate: (t) => t.completed_at ? new Date(t.completed_at) : null,
