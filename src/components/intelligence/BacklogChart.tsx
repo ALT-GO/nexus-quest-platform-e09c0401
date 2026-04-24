@@ -168,7 +168,7 @@ export function BacklogChart({
             {title}
           </div>
           <span className="text-xs font-normal text-muted-foreground">
-            Saldo = Criados − Concluídos por {bucket === "day" ? "dia" : "mês"}
+            Backlog acumulado (criados − concluídos) por {bucket === "day" ? "dia" : "mês"}
           </span>
         </CardTitle>
       </CardHeader>
@@ -231,26 +231,6 @@ export function BacklogChart({
                     content={renderBadgeLabel({ bg: "hsl(var(--success))", fg: "hsl(var(--success-foreground, 0 0% 100%))" })}
                   />
                 </Bar>
-                <Line
-                  type="monotone"
-                  dataKey="saldo"
-                  name="Saldo (backlog)"
-                  stroke="hsl(var(--destructive))"
-                  strokeWidth={2}
-                  dot={{ r: 3 }}
-                  activeDot={{ r: 5 }}
-                >
-                  <LabelList
-                    dataKey="saldo"
-                    position="top"
-                    offset={10}
-                    content={renderBadgeLabel({
-                      bg: "hsl(var(--destructive))",
-                      fg: "hsl(var(--destructive-foreground, 0 0% 100%))",
-                      format: (v) => (v > 0 ? `+${v}` : `${v}`),
-                    })}
-                  />
-                </Line>
                 <Line
                   type="monotone"
                   dataKey="acumulado"
