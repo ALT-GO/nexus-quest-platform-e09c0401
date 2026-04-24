@@ -203,6 +203,24 @@ export function BacklogChart({
                     formatter={(v: number) => (v !== 0 ? (v > 0 ? `+${v}` : v) : "")}
                   />
                 </Line>
+                <Line
+                  type="monotone"
+                  dataKey="acumulado"
+                  name="Backlog acumulado"
+                  stroke="hsl(var(--warning))"
+                  strokeWidth={2}
+                  strokeDasharray="5 4"
+                  dot={{ r: 3 }}
+                  activeDot={{ r: 5 }}
+                >
+                  <LabelList
+                    dataKey="acumulado"
+                    position="bottom"
+                    offset={8}
+                    style={{ fill: "hsl(var(--warning))", fontSize: 11, fontWeight: 600 }}
+                    formatter={(v: number) => (v !== 0 ? v : "")}
+                  />
+                </Line>
               </ComposedChart>
             </ResponsiveContainer>
           </div>
