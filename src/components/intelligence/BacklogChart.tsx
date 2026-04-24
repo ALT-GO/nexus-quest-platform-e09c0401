@@ -168,7 +168,7 @@ export function BacklogChart({
             {title}
           </div>
           <span className="text-xs font-normal text-muted-foreground">
-            Saldo = Criados − Concluídos por {bucket === "day" ? "dia" : "mês"}
+            Backlog acumulado (criados − concluídos) por {bucket === "day" ? "dia" : "mês"}
           </span>
         </CardTitle>
       </CardHeader>
