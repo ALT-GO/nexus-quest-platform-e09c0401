@@ -20,6 +20,53 @@ const tooltipStyle = {
 
 type Bucket = "day" | "month";
 
+interface BadgeOpts {
+  bg: string;
+  fg: string;
+  format?: (v: number) => string;
+}
+
+function renderBadgeLabel({ bg, fg, format }: BadgeOpts) {
+  return (props: any) => {
+    const { x, y, width = 0, value, position } = props;
+    if (value === null || value === undefined || value === 0) return null;
+    const text = format ? format(Number(value)) : String(value);
+    const charW = 6.6;
+    const padX = 6;
+    const w = Math.max(20, text.length * charW + padX * 2);
+    const h = 18;
+    const cx = x + width / 2;
+    const isBottom = position === "bottom";
+    const ry = isBottom ? y + 2 : y - h - 2;
+    return (
+      <g pointerEvents="none">
+        <rect
+          x={cx - w / 2}
+          y={ry}
+          width={w}
+          height={h}
+          rx={4}
+          ry={4}
+          fill={bg}
+          stroke="hsl(var(--background))"
+          strokeWidth={1}
+        />
+        <text
+          x={cx}
+          y={ry + h / 2 + 1}
+          textAnchor="middle"
+          dominantBaseline="middle"
+          fontSize={11}
+          fontWeight={600}
+          fill={fg}
+        >
+          {text}
+        </text>
+      </g>
+    );
+  };
+}
+
 interface BacklogChartProps {
   title: string;
   dateRange: { start: Date; end: Date };
