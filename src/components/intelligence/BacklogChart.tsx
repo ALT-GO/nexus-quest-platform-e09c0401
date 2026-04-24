@@ -233,21 +233,21 @@ export function BacklogChart({
                 </Bar>
                 <Line
                   type="monotone"
-                  dataKey="saldo"
-                  name="Saldo (backlog)"
-                  stroke="hsl(var(--destructive))"
+                  dataKey="acumulado"
+                  name="Backlog acumulado"
+                  stroke="hsl(var(--warning))"
                   strokeWidth={2}
+                  strokeDasharray="5 4"
                   dot={{ r: 3 }}
                   activeDot={{ r: 5 }}
                 >
                   <LabelList
-                    dataKey="saldo"
-                    position="top"
+                    dataKey="acumulado"
+                    position="bottom"
                     offset={10}
                     content={renderBadgeLabel({
-                      bg: "hsl(var(--destructive))",
-                      fg: "hsl(var(--destructive-foreground, 0 0% 100%))",
-                      format: (v) => (v > 0 ? `+${v}` : `${v}`),
+                      bg: "hsl(var(--warning))",
+                      fg: "hsl(var(--warning-foreground, 0 0% 100%))",
                     })}
                   />
                 </Line>
