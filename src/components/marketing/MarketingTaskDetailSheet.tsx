@@ -524,6 +524,27 @@ export function MarketingTaskDetailSheet({
                   Criada em {format(new Date(task.created_at), "d MMM", { locale: ptBR })}
                 </span>
 
+                {task.progress === "Concluído" ? (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-7 gap-1.5 text-xs"
+                    onClick={() => handleProgressChange("Não iniciado")}
+                  >
+                    <X className="h-3.5 w-3.5" />
+                    Reabrir
+                  </Button>
+                ) : (
+                  <Button
+                    size="sm"
+                    className="h-7 gap-1.5 text-xs bg-success hover:bg-success/90 text-white"
+                    onClick={() => handleProgressChange("Concluído")}
+                  >
+                    <Check className="h-3.5 w-3.5" />
+                    Concluir
+                  </Button>
+                )}
+
                 <ConfirmDeleteDialog
                   title="Excluir tarefa permanentemente"
                   description={`Tem certeza que deseja excluir a tarefa "${task.title}"? Comentários, histórico, anexos e dependências também serão removidos. Esta ação não pode ser desfeita.`}
