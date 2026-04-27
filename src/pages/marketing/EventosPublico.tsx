@@ -406,7 +406,7 @@ export default function EventosPublico() {
                     )}
                     <span className="flex items-center gap-1">
                       <CalendarIcon className="h-3 w-3" />
-                      {format(new Date(selectedEvent.start_date), "dd MMM", { locale: ptBR })} — {format(new Date(selectedEvent.end_date), "dd MMM yyyy", { locale: ptBR })}
+                      {format(new Date(selectedEvent.start_date), "dd MMM yyyy", { locale: ptBR })} — {format(new Date(selectedEvent.end_date), "dd MMM yyyy", { locale: ptBR })}
                     </span>
                   </div>
                 </div>
