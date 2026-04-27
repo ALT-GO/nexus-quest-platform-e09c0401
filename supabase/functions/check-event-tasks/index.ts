@@ -65,7 +65,8 @@ Deno.serve(async (req) => {
       const { data: task, error: taskError } = await supabase
         .from("marketing_tasks")
         .insert({
-          title: `${event.name} atualizar gastos`,
+          title: `${event.name} — Preencher leads gerados e valor total gasto`,
+          description: `Pós-evento: atualize no card do evento "${event.name}" os campos de leads gerados e valor total gasto (custo real).`,
           assignee_id: TATIANA_ID,
           assignee_name: TATIANA_NAME,
           requester_name: "Sistema",
