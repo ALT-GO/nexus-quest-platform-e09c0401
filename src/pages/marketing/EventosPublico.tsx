@@ -509,9 +509,20 @@ export default function EventosPublico() {
 
         {/* All events grid (not in current month) */}
         <div>
-          <h3 className="text-sm font-semibold mb-3">Todos os Eventos</h3>
+          <div className="flex items-center justify-between mb-3 gap-2 flex-wrap">
+            <h3 className="text-sm font-semibold">Todos os Eventos</h3>
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as "start_date" | "name")}>
+              <SelectTrigger className="h-8 w-[180px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="start_date">Data de início</SelectItem>
+                <SelectItem value="name">Nome</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-            {events.map(event => {
+            {sortedEvents.map(event => {
               const st = statusLabels[event.status] || statusLabels.planning;
               const pri = priorityConfig[event.priority] || priorityConfig.medium;
               const eventTaskCount = tasks.filter(t => t.event_id === event.id).length;
