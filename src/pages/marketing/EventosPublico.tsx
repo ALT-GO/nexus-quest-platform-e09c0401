@@ -108,16 +108,20 @@ export default function EventosPublico() {
     },
   };
 
-  const monthEvents = useMemo(() => {
+  const { monthEvents, monthCampaigns } = useMemo(() => {
     const ms = startOfMonth(selectedDate);
     const me = endOfMonth(selectedDate);
-    return events
+    const inMonth = events
       .filter((e) => {
         const s = new Date(e.start_date);
         const en = new Date(e.end_date);
         return s <= me && en >= ms;
       })
       .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+    return {
+      monthEvents: inMonth.filter(e => e.event_type !== "campanha"),
+      monthCampaigns: inMonth.filter(e => e.event_type === "campanha"),
+    };
   }, [events, selectedDate]);
 
   // Tasks for selected event
