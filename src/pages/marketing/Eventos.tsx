@@ -152,7 +152,10 @@ export default function Eventos() {
   // Calendar dates
   const eventDates = useMemo(() => {
     if (!events) return [];
-    return events.map(e => parseISO(e.start_date));
+    // Campanhas não devem destacar dias no calendário (ex: campanha anual cobriria todo mês)
+    return events
+      .filter(e => (e as any).event_type !== "campanha")
+      .map(e => parseISO(e.start_date));
   }, [events]);
 
   const eventBudgetInfo = useMemo(() => {
@@ -319,7 +322,9 @@ export default function Eventos() {
                     modifiers={{ hasEvent: eventDates }}
                     modifiersClassNames={{ hasEvent: "bg-primary/20 text-primary font-bold" }}
                     onDayClick={(day) => {
+                      // Campanhas não contam para o click do dia (não devem aparecer como evento do dia)
                       const eventsOnDay = (events ?? []).filter(e => {
+                        if ((e as any).event_type === "campanha") return false;
                         const start = parseISO(e.start_date);
                         const end = parseISO(e.end_date);
                         return day >= new Date(start.getFullYear(), start.getMonth(), start.getDate()) &&
@@ -335,33 +340,66 @@ export default function Eventos() {
                   Eventos em {format(calendarMonth, "MMMM yyyy", { locale: ptBR })}
                 </h3>
                 {(() => {
-                  const monthEvents = filteredEvents.filter(e => {
+                  const inMonth = filteredEvents.filter(e => {
                     const start = parseISO(e.start_date);
                     const end = parseISO(e.end_date);
                     return isSameMonth(start, calendarMonth) || isSameMonth(end, calendarMonth);
                   });
-                  if (monthEvents.length === 0) return (
+                  const monthEvents = inMonth.filter(e => e.event_type !== "campanha");
+                  const monthCampaigns = inMonth.filter(e => e.event_type === "campanha");
+
+                  if (monthEvents.length === 0 && monthCampaigns.length === 0) return (
                     <p className="text-sm text-muted-foreground py-8 text-center">Nenhum evento neste mês</p>
                   );
-                  return monthEvents.map(event => {
-                    const st = statusLabels[event.status] || statusLabels.planning;
-                    return (
-                      <Card key={event.id} className="cursor-pointer hover:shadow-md transition-all" onClick={() => handleOpenEventDetail(event)}>
-                        <CardContent className="p-3 flex items-center gap-3">
-                          <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
-                            <CalendarIcon className="h-5 w-5 text-primary" />
-                          </div>
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-sm truncate">{event.name}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {format(parseISO(event.start_date), "dd MMM", { locale: ptBR })} — {format(parseISO(event.end_date), "dd MMM", { locale: ptBR })}
-                            </p>
-                          </div>
-                          <Badge variant="outline" className={cn("text-[10px] shrink-0", st.color)}>{st.label}</Badge>
-                        </CardContent>
-                      </Card>
-                    );
-                  });
+
+                  return (
+                    <>
+                      {monthEvents.length === 0 ? (
+                        <p className="text-sm text-muted-foreground py-4 text-center">Nenhum evento neste mês</p>
+                      ) : monthEvents.map(event => {
+                        const st = statusLabels[event.status] || statusLabels.planning;
+                        return (
+                          <Card key={event.id} className="cursor-pointer hover:shadow-md transition-all" onClick={() => handleOpenEventDetail(event)}>
+                            <CardContent className="p-3 flex items-center gap-3">
+                              <div className="h-10 w-10 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                                <CalendarIcon className="h-5 w-5 text-primary" />
+                              </div>
+                              <div className="flex-1 min-w-0">
+                                <p className="font-medium text-sm truncate">{event.name}</p>
+                                <p className="text-xs text-muted-foreground">
+                                  {format(parseISO(event.start_date), "dd MMM yyyy", { locale: ptBR })} — {format(parseISO(event.end_date), "dd MMM yyyy", { locale: ptBR })}
+                                </p>
+                              </div>
+                              <Badge variant="outline" className={cn("text-[10px] shrink-0", st.color)}>{st.label}</Badge>
+                            </CardContent>
+                          </Card>
+                        );
+                      })}
+
+                      {monthCampaigns.length > 0 && (
+                        <div className="mt-4 pt-3 border-t">
+                          <h4 className="text-[11px] font-medium text-muted-foreground/80 uppercase tracking-wide mb-1.5">
+                            Campanhas ativas no mês
+                          </h4>
+                          <ul className="space-y-0.5">
+                            {monthCampaigns.map((c) => (
+                              <li
+                                key={c.id}
+                                onClick={() => handleOpenEventDetail(c)}
+                                className="text-xs text-muted-foreground hover:text-foreground cursor-pointer flex items-center gap-2 py-0.5"
+                              >
+                                <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
+                                <span className="truncate">{c.name}</span>
+                                <span className="text-muted-foreground/60 shrink-0">
+                                  · {format(parseISO(c.start_date), "dd MMM", { locale: ptBR })} — {format(parseISO(c.end_date), "dd MMM yyyy", { locale: ptBR })}
+                                </span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </>
+                  );
                 })()}
               </div>
             </div>

@@ -108,16 +108,20 @@ export default function EventosPublico() {
     },
   };
 
-  const monthEvents = useMemo(() => {
+  const { monthEvents, monthCampaigns } = useMemo(() => {
     const ms = startOfMonth(selectedDate);
     const me = endOfMonth(selectedDate);
-    return events
+    const inMonth = events
       .filter((e) => {
         const s = new Date(e.start_date);
         const en = new Date(e.end_date);
         return s <= me && en >= ms;
       })
       .sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+    return {
+      monthEvents: inMonth.filter(e => e.event_type !== "campanha"),
+      monthCampaigns: inMonth.filter(e => e.event_type === "campanha"),
+    };
   }, [events, selectedDate]);
 
   // Tasks for selected event
@@ -386,6 +390,29 @@ export default function EventosPublico() {
                         </div>
                       );
                     })}
+                  </div>
+                )}
+
+                {monthCampaigns.length > 0 && (
+                  <div className="mt-4 pt-3 border-t">
+                    <h5 className="text-[11px] font-medium text-muted-foreground/80 uppercase tracking-wide mb-1.5">
+                      Campanhas ativas no mês
+                    </h5>
+                    <ul className="space-y-0.5">
+                      {monthCampaigns.map((c) => (
+                        <li
+                          key={c.id}
+                          onClick={() => setSelectedEvent(selectedEvent?.id === c.id ? null : c)}
+                          className="text-xs text-muted-foreground hover:text-foreground cursor-pointer flex items-center gap-2 py-0.5"
+                        >
+                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/40 shrink-0" />
+                          <span className="truncate">{c.name}</span>
+                          <span className="text-muted-foreground/60 shrink-0">
+                            · {format(new Date(c.start_date), "dd MMM", { locale: ptBR })} — {format(new Date(c.end_date), "dd MMM yyyy", { locale: ptBR })}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
                 )}
               </div>
