@@ -356,7 +356,7 @@ export default function EventosPublico() {
                           <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
-                              {format(startD, "dd MMM", { locale: ptBR })} — {format(endD, "dd MMM", { locale: ptBR })}
+                              {format(startD, "dd MMM yyyy", { locale: ptBR })} — {format(endD, "dd MMM yyyy", { locale: ptBR })}
                             </span>
                             {event.location && (
                               <span className="flex items-center gap-1">
@@ -406,7 +406,7 @@ export default function EventosPublico() {
                     )}
                     <span className="flex items-center gap-1">
                       <CalendarIcon className="h-3 w-3" />
-                      {format(new Date(selectedEvent.start_date), "dd MMM", { locale: ptBR })} — {format(new Date(selectedEvent.end_date), "dd MMM yyyy", { locale: ptBR })}
+                      {format(new Date(selectedEvent.start_date), "dd MMM yyyy", { locale: ptBR })} — {format(new Date(selectedEvent.end_date), "dd MMM yyyy", { locale: ptBR })}
                     </span>
                   </div>
                 </div>
@@ -553,7 +553,7 @@ export default function EventosPublico() {
                     )}
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <CalendarIcon className="h-3 w-3" />
-                      {format(new Date(event.start_date), "dd MMM", { locale: ptBR })} — {format(new Date(event.end_date), "dd MMM yyyy", { locale: ptBR })}
+                      {format(new Date(event.start_date), "dd MMM yyyy", { locale: ptBR })} — {format(new Date(event.end_date), "dd MMM yyyy", { locale: ptBR })}
                     </div>
                     <div className="flex items-center gap-2">
                       <Flag className={cn("h-3 w-3", pri.color)} />
