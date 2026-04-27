@@ -152,7 +152,10 @@ export default function Eventos() {
   // Calendar dates
   const eventDates = useMemo(() => {
     if (!events) return [];
-    return events.map(e => parseISO(e.start_date));
+    // Campanhas não devem destacar dias no calendário (ex: campanha anual cobriria todo mês)
+    return events
+      .filter(e => (e as any).event_type !== "campanha")
+      .map(e => parseISO(e.start_date));
   }, [events]);
 
   const eventBudgetInfo = useMemo(() => {
