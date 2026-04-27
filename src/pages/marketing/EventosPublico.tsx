@@ -553,7 +553,7 @@ export default function EventosPublico() {
                     )}
                     <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                       <CalendarIcon className="h-3 w-3" />
-                      {format(new Date(event.start_date), "dd MMM", { locale: ptBR })} — {format(new Date(event.end_date), "dd MMM yyyy", { locale: ptBR })}
+                      {format(new Date(event.start_date), "dd MMM yyyy", { locale: ptBR })} — {format(new Date(event.end_date), "dd MMM yyyy", { locale: ptBR })}
                     </div>
                     <div className="flex items-center gap-2">
                       <Flag className={cn("h-3 w-3", pri.color)} />
