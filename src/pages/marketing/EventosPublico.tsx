@@ -32,6 +32,17 @@ export default function EventosPublico() {
   const [stages, setStages] = useState<any[]>([]);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [sortBy, setSortBy] = useState<"start_date" | "name">("start_date");
+
+  const sortedEvents = useMemo(() => {
+    const arr = [...events];
+    if (sortBy === "name") {
+      arr.sort((a, b) => (a.name || "").localeCompare(b.name || "", "pt-BR"));
+    } else {
+      arr.sort((a, b) => new Date(a.start_date).getTime() - new Date(b.start_date).getTime());
+    }
+    return arr;
+  }, [events, sortBy]);
 
   useEffect(() => {
     const fetchData = async () => {
