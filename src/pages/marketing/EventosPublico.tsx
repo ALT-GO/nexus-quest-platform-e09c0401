@@ -356,7 +356,7 @@ export default function EventosPublico() {
                           <div className="flex items-center gap-3 text-xs text-muted-foreground flex-wrap">
                             <span className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
-                              {format(startD, "dd MMM", { locale: ptBR })} — {format(endD, "dd MMM", { locale: ptBR })}
+                              {format(startD, "dd MMM yyyy", { locale: ptBR })} — {format(endD, "dd MMM yyyy", { locale: ptBR })}
                             </span>
                             {event.location && (
                               <span className="flex items-center gap-1">
