@@ -60,7 +60,9 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   const { data: allAllocations } = useMaterialAllocations();
   const { data: sprints } = useMarketingSprints();
   const { data: avatars } = useProfileAvatars();
+  const { data: taskTypes } = useMarketingTaskTypes();
   const [mktTimesheetTotals, setMktTimesheetTotals] = useState<Record<string, number>>({});
+  const [mktTimesheetLogsRange, setMktTimesheetLogsRange] = useState<{ marketing_task_id: string | null; start_time: string; end_time: string | null; duration_seconds: number }[]>([]);
   const [goals, setGoals] = useState<any[]>([]);
 
   // Fetch goals
@@ -87,7 +89,22 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
     }
   }, [allTasks]);
 
-  // ── 1. Total de Tarefas ──
+  // Fetch timesheet logs filtered by date range (for "Tempo por categoria")
+  useEffect(() => {
+    fetchMarketingTimesheetByDateRange(dateRange).then(setMktTimesheetLogsRange);
+  }, [dateRange]);
+
+  // Map marketing_task_id -> task type name
+  const taskTypeMap = useMemo(() => {
+    const typeNameById = new Map((taskTypes || []).map((tt: any) => [tt.id, tt.name]));
+    const map: Record<string, string> = {};
+    (allTasks || []).forEach((t: any) => {
+      const typeName = t.task_type_id ? (typeNameById.get(t.task_type_id) as string | undefined) : undefined;
+      map[t.id] = typeName || "Sem tipo";
+    });
+    return map;
+  }, [allTasks, taskTypes]);
+
   const totalTasks = tasks.length;
 
   // ── 2. Concluídas vs Pendentes ──
