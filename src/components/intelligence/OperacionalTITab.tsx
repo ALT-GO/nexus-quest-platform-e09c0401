@@ -3,9 +3,7 @@ import { ActiveTimersCard } from "@/components/dashboard/ActiveTimersCard";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchTimesheetByDateRange, formatDuration } from "@/hooks/use-timesheet";
 import { calcDepreciation, formatBRL } from "@/lib/depreciation";
-import { StatCard } from "@/components/ui/stat-card";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Separator } from "@/components/ui/separator";
 import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from "@/components/ui/select";
@@ -13,23 +11,34 @@ import {
   Table, TableBody, TableCell, TableHead, TableHeader, TableRow,
 } from "@/components/ui/table";
 import {
-  Clock, CheckCircle2, AlertTriangle, Monitor, Wrench, Users, BarChart3, Ticket, Loader2,
-  Laptop, Smartphone, Phone, KeyRound, Timer, CalendarDays, DollarSign, TrendingDown, Wifi, Wallet,
+  Clock, CheckCircle2, AlertTriangle, Monitor, Wrench, Ticket, Loader2,
+  Laptop, Smartphone, Phone, KeyRound, DollarSign, TrendingDown, Wifi,
+  PieChart as PieIcon, ExternalLink,
 } from "lucide-react";
 import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  PieChart, Pie, Cell,
+  PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { useTickets } from "@/hooks/use-tickets";
-import { format } from "date-fns";
 import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ExternalLink } from "lucide-react";
 import { TicketDrilldownDialog } from "./TicketDrilldownDialog";
 import { EntityDrilldownDialog, type DrilldownEntity } from "./EntityDrilldownDialog";
 import { TrendChart } from "./TrendChart";
 import { BacklogChart } from "./BacklogChart";
 import { TimeByCategoryChart } from "./TimeByCategoryChart";
+import { useProfileAvatars } from "@/hooks/use-profile-avatars";
+
+import { BIModuleShell, type BISubTabKey } from "./bi/BIModuleShell";
+import { BIStatCard } from "./bi/BIStatCard";
+import { BIChartCard } from "./bi/BIChartCard";
+import { BIInsightsBar, type BIInsight } from "./bi/BIInsightsBar";
+import { BIPeopleRanking } from "./bi/BIPeopleRanking";
+import { BIStatusDonut } from "./bi/BIStatusDonut";
+import { BIBacklogAging } from "./bi/BIBacklogAging";
+import { BIDemandHeatmap } from "./bi/BIDemandHeatmap";
+import { BIWorkloadChart } from "./bi/BIWorkloadChart";
+import { BI_TOOLTIP_STYLE, BI_COLORS } from "./bi/bi-theme";
+import { comparePeriod, previousPeriod } from "./bi/period-compare";
 
 import type { CostCenterFilter } from "@/pages/CentralInteligencia";
 
@@ -37,17 +46,6 @@ interface OperacionalTITabProps {
   dateRange: { start: Date; end: Date };
   costCenter: CostCenterFilter;
 }
-
-const chartColors = [
-  "hsl(var(--primary))", "hsl(var(--success))", "hsl(var(--warning))",
-  "hsl(var(--info))", "hsl(var(--chart-4))", "hsl(var(--destructive))",
-];
-
-const tooltipStyle = {
-  backgroundColor: "hsl(var(--card))",
-  border: "1px solid hsl(var(--border))",
-  borderRadius: "8px",
-};
 
 interface InventoryItem {
   id: string;
@@ -63,50 +61,38 @@ interface InventoryItem {
 }
 
 const categoryLabels: Record<string, string> = {
-  notebooks: "Notebooks",
-  celulares: "Celulares",
-  tablets: "Tablets",
-  perifericos: "Periféricos",
-  linhas: "Linhas",
-  licencas: "Licenças",
+  notebooks: "Notebooks", celulares: "Celulares", tablets: "Tablets",
+  perifericos: "Periféricos", linhas: "Linhas", licencas: "Licenças",
 };
 
 const categoryIcons: Record<string, React.ElementType> = {
-  notebooks: Laptop,
-  celulares: Smartphone,
-  tablets: Monitor,
-  perifericos: Wrench,
-  linhas: Phone,
-  licencas: KeyRound,
+  notebooks: Laptop, celulares: Smartphone, tablets: Monitor,
+  perifericos: Wrench, linhas: Phone, licencas: KeyRound,
 };
 
 const categoryColorClasses: Record<string, string> = {
-  notebooks: "text-primary",
-  celulares: "text-info",
-  tablets: "text-success",
-  perifericos: "text-warning",
-  linhas: "text-chart-4",
-  licencas: "text-destructive",
+  notebooks: "text-primary", celulares: "text-info", tablets: "text-success",
+  perifericos: "text-warning", linhas: "text-chart-4", licencas: "text-destructive",
 };
-
-const dayLabels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
 
 export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProps) {
   const navigate = useNavigate();
   const { tickets: allTickets, loading } = useTickets();
+  const { data: avatars } = useProfileAvatars();
   const [techFilter, setTechFilter] = useState("all");
   const [categoryFilter, setCategoryFilter] = useState("all");
+  const [subTab, setSubTab] = useState<BISubTabKey>("overview");
 
-  // Drilldown dialog state
+  // Drilldown state
   const [drilldownOpen, setDrilldownOpen] = useState(false);
   const [drilldownTitle, setDrilldownTitle] = useState("");
   const [drilldownTickets, setDrilldownTickets] = useState<any[]>([]);
   const [categoryDrilldown, setCategoryDrilldown] = useState<{ open: boolean; title: string; items: DrilldownEntity[] }>({ open: false, title: "", items: [] });
-  
+
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [allTimesheetData, setAllTimesheetData] = useState<{ ticket_id: string | null; start_time: string; end_time: string | null; duration_seconds: number }[]>([]);
 
-  // Fetch inventory from Supabase
+  // Inventory fetch
   useEffect(() => {
     const fields = "id, category, status, cost_center_eng, cost_center_man, operadora, valor_mensal, valor_pago, data_aquisicao, created_at";
     supabase.from("inventory").select(fields).then(({ data }) => {
@@ -123,12 +109,11 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  // Fetch timesheet data filtered by date range
   useEffect(() => {
     fetchTimesheetByDateRange(dateRange).then(setAllTimesheetData);
   }, [dateRange]);
 
-  // Exclude subtasks from all dashboard calculations
+  // Exclude subtasks
   const mainTickets = useMemo(() => allTickets.filter((t) => !t.parent_ticket_id), [allTickets]);
 
   const filtered = useMemo(() => {
@@ -143,7 +128,6 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
 
   const completedTickets = filtered.filter((t) => t.completed_at);
 
-  // All currently open tickets (regardless of date range) for "Chamados Abertos"
   const allOpenTickets = useMemo(() => {
     return mainTickets.filter((t) => {
       if (t.completed_at) return false;
@@ -153,14 +137,22 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     });
   }, [mainTickets, techFilter, categoryFilter]);
 
+  // Period comparisons
+  const createdCompare = useMemo(
+    () => comparePeriod(mainTickets, (t) => t.created_at ? new Date(t.created_at) : null, dateRange),
+    [mainTickets, dateRange]
+  );
+  const completedCompare = useMemo(
+    () => comparePeriod(mainTickets, (t) => t.completed_at ? new Date(t.completed_at) : null, dateRange),
+    [mainTickets, dateRange]
+  );
+
   const avgResolutionHours = useMemo(() => {
     if (completedTickets.length === 0) return 0;
     const totalSeconds = completedTickets.reduce((sum, t) => {
-      // Check date-range-filtered timesheet data first
       const ticketLogs = allTimesheetData.filter((l) => l.ticket_id === t.id && l.end_time);
       const timesheetSecs = ticketLogs.reduce((s, l) => s + l.duration_seconds, 0);
       if (timesheetSecs > 0) return sum + timesheetSecs;
-      // Fallback to wall-clock time
       return sum + (new Date(t.completed_at!).getTime() - new Date(t.created_at).getTime()) / 1000;
     }, 0);
     return Math.round((totalSeconds / completedTickets.length / 3600) * 10) / 10;
@@ -172,6 +164,19 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     return Math.round((withinSla.length / completedTickets.length) * 100);
   }, [completedTickets]);
 
+  // SLA previous period
+  const prevSlaCumprido = useMemo(() => {
+    const prev = previousPeriod(dateRange);
+    const prevCompleted = mainTickets.filter((t) => {
+      if (!t.completed_at) return false;
+      const d = new Date(t.completed_at);
+      return d >= prev.start && d <= prev.end;
+    });
+    if (prevCompleted.length === 0) return 100;
+    const within = prevCompleted.filter((t) => new Date(t.completed_at!).getTime() <= new Date(t.sla_deadline).getTime());
+    return Math.round((within.length / prevCompleted.length) * 100);
+  }, [mainTickets, dateRange]);
+
   const technicians = useMemo(() => {
     const set = new Set<string>();
     mainTickets.forEach((t) => { if (t.assignee) set.add(t.assignee); });
@@ -179,98 +184,100 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
   }, [mainTickets]);
 
   const ticketsByTech = useMemo(() => {
-    const map: Record<string, { total: number; completed: number }> = {};
+    const map: Record<string, { total: number; completed: number; userId?: string }> = {};
     filtered.forEach((t) => {
       const name = t.assignee || "Sem atribuição";
-      if (!map[name]) map[name] = { total: 0, completed: 0 };
+      if (!map[name]) map[name] = { total: 0, completed: 0, userId: (t as any).assignee_id };
       map[name].total++;
       if (t.completed_at) map[name].completed++;
     });
-    return Object.entries(map).map(([name, data]) => ({
-      name, total: data.total, completed: data.completed, pending: data.total - data.completed,
-    }));
+    return Object.entries(map).map(([name, v]) => ({ name, ...v }));
   }, [filtered]);
 
-  const ticketsByCategory = useMemo(() => {
+  const ticketsByCategoryDonut = useMemo(() => {
     const map: Record<string, number> = {};
     filtered.forEach((t) => { map[t.category] = (map[t.category] || 0) + 1; });
     return Object.entries(map)
-      .map(([name, value], i) => ({
-        name: name.length > 25 ? name.slice(0, 22) + "…" : name,
-        fullName: name, value, color: chartColors[i % chartColors.length],
-      }))
+      .map(([name, value]) => ({ name, value }))
       .sort((a, b) => b.value - a.value);
   }, [filtered]);
 
-  // ---- Top 5 Tarefas Demoradas (using date-range-filtered timesheet) ----
-  const top5SlowTasks = useMemo(() => {
-    // Build set of existing ticket IDs to exclude orphaned timesheet logs
-    const existingTicketIds = new Set(mainTickets.map((t) => t.id));
+  const statusDonutData = useMemo(() => {
+    const open = filtered.filter((t) => !t.completed_at).length;
+    const done = filtered.filter((t) => t.completed_at).length;
+    return [
+      { name: "Concluídos", value: done, color: "hsl(var(--success))" },
+      { name: "Abertos", value: open, color: "hsl(var(--warning))" },
+    ].filter((s) => s.value > 0);
+  }, [filtered]);
 
-    // Aggregate timesheet seconds per ticket from date-range data
+  // Top 5 slowest
+  const top5SlowTasks = useMemo(() => {
+    const existingTicketIds = new Set(mainTickets.map((t) => t.id));
     const timesheetByTicket: Record<string, number> = {};
     allTimesheetData.forEach((log) => {
-      if (!existingTicketIds.has(log.ticket_id)) return; // skip deleted tickets
+      if (!existingTicketIds.has(log.ticket_id)) return;
       const secs = log.end_time ? log.duration_seconds : Math.floor((Date.now() - new Date(log.start_time).getTime()) / 1000);
       if (secs > 0) timesheetByTicket[log.ticket_id] = (timesheetByTicket[log.ticket_id] || 0) + secs;
     });
-
     return filtered
       .filter((t) => timesheetByTicket[t.id] && timesheetByTicket[t.id] > 0)
       .map((t) => ({
-        id: t.id,
-        ticketNumber: t.ticket_number,
-        title: t.title,
-        assignee: t.assignee || "—",
-        totalSeconds: timesheetByTicket[t.id],
+        id: t.id, ticketNumber: t.ticket_number, title: t.title,
+        assignee: t.assignee || "—", totalSeconds: timesheetByTicket[t.id],
       }))
-      .sort((a, b) => b.totalSeconds - a.totalSeconds)
-      .slice(0, 5);
+      .sort((a, b) => b.totalSeconds - a.totalSeconds).slice(0, 5);
   }, [filtered, allTimesheetData, mainTickets]);
 
-  // ---- Horas Trabalhadas por Colaborador (date-range filtered) ----
-  const hoursByAssignee = useMemo(() => {
-    // Build a map only from the same filtered tickets used by the drilldown
-    const ticketAssigneeMap = new Map<string, string>();
-    filtered.forEach((t) => {
-      ticketAssigneeMap.set(t.id, t.assignee || "Sem atribuição");
+  // Workload data: per-person worked seconds + active + completed
+  const workloadData = useMemo(() => {
+    const ticketAssigneeMap = new Map<string, { name: string; userId?: string }>();
+    mainTickets.forEach((t) => {
+      ticketAssigneeMap.set(t.id, { name: t.assignee || "Sem atribuição", userId: (t as any).assignee_id });
     });
 
-    const map: Record<string, number> = {};
+    const workedByPerson: Record<string, number> = {};
     allTimesheetData.forEach((log) => {
       if (!log.ticket_id) return;
-
-      const assignee = ticketAssigneeMap.get(log.ticket_id);
-      if (!assignee) return;
-
-      let secs = 0;
-      if (log.end_time) {
-        secs = log.duration_seconds;
-      } else {
-        // Running timer — calculate elapsed live
-        secs = Math.floor((Date.now() - new Date(log.start_time).getTime()) / 1000);
-      }
-      if (secs > 0) {
-        map[assignee] = (map[assignee] || 0) + secs;
-      }
+      const meta = ticketAssigneeMap.get(log.ticket_id);
+      if (!meta) return;
+      const secs = log.end_time ? log.duration_seconds : Math.floor((Date.now() - new Date(log.start_time).getTime()) / 1000);
+      if (secs > 0) workedByPerson[meta.name] = (workedByPerson[meta.name] || 0) + secs;
     });
 
-    return Object.entries(map)
-      .map(([name, seconds]) => ({ name, hours: Math.round((seconds / 3600) * 10) / 10 }))
-      .sort((a, b) => b.hours - a.hours);
-  }, [allTimesheetData, filtered]);
-
-  // ---- NEW: Volume de Chamados por Dia da Semana ----
-  const ticketsByDayOfWeek = useMemo(() => {
-    const counts = [0, 0, 0, 0, 0, 0, 0]; // Sun-Sat
-    filtered.forEach((t) => {
-      const day = new Date(t.created_at).getDay();
-      counts[day]++;
+    const activeByPerson: Record<string, number> = {};
+    allOpenTickets.forEach((t) => {
+      const name = t.assignee || "Sem atribuição";
+      activeByPerson[name] = (activeByPerson[name] || 0) + 1;
     });
-    return dayLabels.map((label, i) => ({ name: label, chamados: counts[i] }));
-  }, [filtered]);
 
-  // Filter inventory by cost center only (inventory = current state, not period-bound)
+    const completedByPerson: Record<string, number> = {};
+    completedTickets.forEach((t) => {
+      const name = t.assignee || "Sem atribuição";
+      completedByPerson[name] = (completedByPerson[name] || 0) + 1;
+    });
+
+    const names = new Set<string>([
+      ...Object.keys(workedByPerson),
+      ...Object.keys(activeByPerson),
+      ...Object.keys(completedByPerson),
+    ]);
+    return [...names].map((name) => {
+      // find a userId from a matching ticket
+      const sample = mainTickets.find((t) => (t.assignee || "Sem atribuição") === name);
+      const userId = (sample as any)?.assignee_id || null;
+      return {
+        name,
+        userId,
+        avatarUrl: userId ? avatars?.byId[userId] : null,
+        workedSeconds: workedByPerson[name] || 0,
+        activeCount: activeByPerson[name] || 0,
+        completedCount: completedByPerson[name] || 0,
+      };
+    });
+  }, [mainTickets, allTimesheetData, allOpenTickets, completedTickets, avatars]);
+
+  // Inventory
   const filteredInv = useMemo(() => {
     let items = inventoryItems;
     if (costCenter === "eng") items = items.filter((i) => i.cost_center_eng && i.cost_center_eng.trim() !== "");
@@ -278,11 +285,9 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     return items;
   }, [inventoryItems, costCenter]);
 
-  // Collect all unique statuses from inventory
   const allStatuses = useMemo(() => {
     const set = new Set<string>();
     filteredInv.forEach((i) => set.add(i.status));
-    // Fixed order: Em uso first, then alphabetical for the rest
     const ordered = ["Em uso"];
     const rest = [...set].filter((s) => s !== "Em uso").sort();
     return [...ordered.filter((s) => set.has(s)), ...rest];
@@ -299,7 +304,6 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     });
   }, [filteredInv, allStatuses]);
 
-  // ---- Financial: Custo por Operadora ----
   const costByOperadora = useMemo(() => {
     const linhas = filteredInv.filter((a) => a.category === "linhas" && a.operadora && a.operadora.trim() !== "");
     const map: Record<string, number> = {};
@@ -313,33 +317,25 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
       else if (lower.includes("tim")) normalized = "TIM";
       else if (lower.includes("oi")) normalized = "Oi";
       const value = a.valor_mensal || 0;
-      if (value > 0) {
-        map[normalized] = (map[normalized] || 0) + value;
-      }
+      if (value > 0) map[normalized] = (map[normalized] || 0) + value;
     });
     return Object.entries(map)
-      .map(([name, value], i) => ({ name, value: Math.round(value * 100) / 100, color: chartColors[i % chartColors.length] }))
+      .map(([name, value], i) => ({ name, value: Math.round(value * 100) / 100, color: BI_COLORS[i % BI_COLORS.length] }))
       .sort((a, b) => b.value - a.value);
   }, [filteredInv]);
 
-  // ---- Financial: Depreciação Acumulada ----
   const depreciationTotal = useMemo(() => {
-    const hardwareAssets = filteredInv.filter(
-      (a) => (a.category === "notebooks" || a.category === "celulares") && a.valor_pago && a.valor_pago > 0 && a.data_aquisicao
+    const hardware = filteredInv.filter((a) =>
+      (a.category === "notebooks" || a.category === "celulares") && a.valor_pago && a.valor_pago > 0 && a.data_aquisicao
     );
-    let totalDepreciation = 0;
-    let totalOriginal = 0;
-    hardwareAssets.forEach((a) => {
-      const result = calcDepreciation(a.valor_pago, a.data_aquisicao);
-      if (result) {
-        totalDepreciation += result.depreciacaoAcumulada;
-        totalOriginal += result.valorAquisicao;
-      }
+    let totalDepreciation = 0; let totalOriginal = 0;
+    hardware.forEach((a) => {
+      const r = calcDepreciation(a.valor_pago, a.data_aquisicao);
+      if (r) { totalDepreciation += r.depreciacaoAcumulada; totalOriginal += r.valorAquisicao; }
     });
-    return { totalDepreciation, totalOriginal, assetCount: hardwareAssets.length };
+    return { totalDepreciation, totalOriginal, assetCount: hardware.length };
   }, [filteredInv]);
 
-  // ---- Financial: Total valor mensal linhas ----
   const totalValorMensal = useMemo(() => {
     return filteredInv
       .filter((a) => a.category === "linhas" && a.valor_mensal && a.valor_mensal > 0)
@@ -349,35 +345,84 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
   const categories = useMemo(() => [...new Set(mainTickets.map((t) => t.category))], [mainTickets]);
 
   const openDrilldown = useCallback((title: string, ticketList: any[]) => {
-    setDrilldownTitle(title);
-    setDrilldownTickets(ticketList);
-    setDrilldownOpen(true);
+    setDrilldownTitle(title); setDrilldownTickets(ticketList); setDrilldownOpen(true);
   }, []);
 
-  const handleTechBarClick = useCallback((data: any) => {
-    if (!data?.name) return;
-    const name = data.name;
-    const techTickets = filtered.filter((t) =>
-      name === "Sem atribuição" ? !t.assignee : t.assignee === name
-    );
-    openDrilldown(`Chamados — ${name}`, techTickets);
-  }, [filtered, openDrilldown]);
+  // Insights — automated alerts
+  const insights = useMemo<BIInsight[]>(() => {
+    const out: BIInsight[] = [];
 
-  const handleCategoryClick = useCallback((data: any) => {
-    if (!data?.fullName) return;
-    const catTickets = filtered.filter((t) => t.category === data.fullName);
-    openDrilldown(`Chamados — ${data.fullName}`, catTickets);
-  }, [filtered, openDrilldown]);
+    // SLA breach
+    if (completedTickets.length > 0 && slaCumprido < 80) {
+      out.push({
+        id: "sla-low",
+        tone: "danger",
+        title: `SLA em ${slaCumprido}% — abaixo do esperado`,
+        description: `${completedTickets.filter((t) => new Date(t.completed_at!).getTime() > new Date(t.sla_deadline).getTime()).length} chamados fora do SLA no período.`,
+      });
+    } else if (completedTickets.length > 0 && slaCumprido >= 95) {
+      out.push({ id: "sla-high", tone: "positive", title: `SLA excelente: ${slaCumprido}%`, description: "Equipe entregando dentro do prazo." });
+    }
 
-  const handleHoursBarClick = useCallback((data: any) => {
-    if (!data?.name) return;
-    const name = data.name;
-    const techTickets = filtered.filter((t) =>
-      name === "Sem atribuição" ? !t.assignee : t.assignee === name
-    );
-    openDrilldown(`Horas — ${name}`, techTickets);
-  }, [filtered, openDrilldown]);
+    // Backlog growing
+    if (createdCompare.current > completedCompare.current && createdCompare.current > 5) {
+      out.push({
+        id: "backlog-grow",
+        tone: "warning",
+        title: "Backlog aumentando",
+        description: `Foram criados ${createdCompare.current} chamados e concluídos ${completedCompare.current} no período.`,
+        onClick: () => setSubTab("time"),
+      });
+    }
 
+    // Stale items > 7 days
+    const stale = allOpenTickets.filter((t) => {
+      const ageDays = (Date.now() - new Date(t.created_at).getTime()) / 86400000;
+      return ageDays >= 7;
+    });
+    if (stale.length > 0) {
+      out.push({
+        id: "stale",
+        tone: "warning",
+        title: `${stale.length} chamados abertos há mais de 7 dias`,
+        description: "Considere repriorizar para evitar acúmulo.",
+        onClick: () => setSubTab("time"),
+      });
+    }
+
+    // Overload
+    const overloaded = workloadData.filter((p) => {
+      const businessDays = Math.max(1, Math.round(((dateRange.end.getTime() - dateRange.start.getTime()) / 86400000) * (5/7)));
+      const expected = businessDays * 6 * 3600;
+      return expected > 0 && p.workedSeconds / expected > 1.1;
+    });
+    if (overloaded.length > 0) {
+      out.push({
+        id: "overload",
+        tone: "warning",
+        title: `${overloaded.length} pessoa${overloaded.length > 1 ? "s" : ""} em sobrecarga`,
+        description: overloaded.map((o) => o.name).slice(0, 3).join(", "),
+        onClick: () => setSubTab("productivity"),
+      });
+    }
+
+    // Period comparison — created spike
+    if (createdCompare.previous > 0) {
+      const delta = ((createdCompare.current - createdCompare.previous) / createdCompare.previous) * 100;
+      if (delta >= 30) {
+        out.push({
+          id: "spike",
+          tone: "info",
+          title: `Volume ${Math.round(delta)}% maior que o período anterior`,
+          description: `${createdCompare.current} criados vs ${createdCompare.previous} no período passado.`,
+        });
+      }
+    }
+
+    return out;
+  }, [completedTickets, slaCumprido, createdCompare, completedCompare, allOpenTickets, workloadData, dateRange]);
+
+  // ----------------- UI -----------------
   if (loading) {
     return (
       <div className="flex items-center justify-center py-20">
@@ -386,72 +431,193 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     );
   }
 
-  return (
-    <div className="space-y-6">
-      <ActiveTimersCard />
-      {/* Sub-filters */}
-      <div className="flex flex-wrap items-end gap-3">
-        <div className="space-y-1">
-          <span className="text-xs font-medium text-muted-foreground">Técnico</span>
-          <Select value={techFilter} onValueChange={setTechFilter}>
-            <SelectTrigger className="w-[160px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos</SelectItem>
-              {technicians.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
-        <div className="space-y-1">
-          <span className="text-xs font-medium text-muted-foreground">Categoria</span>
-          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-            <SelectTrigger className="w-[220px]"><SelectValue /></SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todas</SelectItem>
-              {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
-            </SelectContent>
-          </Select>
-        </div>
+  const filtersNode = (
+    <div className="flex flex-wrap items-end gap-3">
+      <div className="space-y-1">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Técnico</span>
+        <Select value={techFilter} onValueChange={setTechFilter}>
+          <SelectTrigger className="w-[180px] h-9"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todos</SelectItem>
+            {technicians.map((t) => <SelectItem key={t} value={t}>{t}</SelectItem>)}
+          </SelectContent>
+        </Select>
       </div>
+      <div className="space-y-1">
+        <span className="text-[11px] font-medium uppercase tracking-wide text-muted-foreground">Categoria</span>
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="w-[220px] h-9"><SelectValue /></SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">Todas</SelectItem>
+            {categories.map((c) => <SelectItem key={c} value={c}>{c}</SelectItem>)}
+          </SelectContent>
+        </Select>
+      </div>
+    </div>
+  );
 
-      {/* Stat Cards */}
+  // ===================== TAB CONTENTS =====================
+
+  const overviewNode = (
+    <>
+      <ActiveTimersCard />
+
+      {/* KPIs — standardized */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        <StatCard title="Chamados no período" value={filtered.length} icon={Ticket} description={`${completedTickets.length} concluídos`} onClick={() => navigate("/ti/service-desk")} />
-        <StatCard title="Tempo Médio Resolução" value={`${avgResolutionHours}h`} icon={Clock} description="Média em horas" />
-        <StatCard
-          title="SLA Cumprido" value={`${slaCumprido}%`} icon={CheckCircle2} description="No período"
-          trend={slaCumprido >= 90 ? { value: slaCumprido - 90, isPositive: true } : { value: 90 - slaCumprido, isPositive: false }}
+        <BIStatCard
+          title="Chamados no período" value={filtered.length} icon={Ticket} tone="info"
+          current={createdCompare.current} previous={createdCompare.previous}
+          higherIsBetter={false}
+          description={`${completedTickets.length} concluídos`}
           onClick={() => navigate("/ti/service-desk")}
         />
-        <StatCard title="Chamados Abertos" value={allOpenTickets.length} icon={AlertTriangle} description="Atualmente sem conclusão" onClick={() => navigate("/ti/service-desk")} />
+        <BIStatCard
+          title="Tempo Médio Resolução" value={`${avgResolutionHours}h`} icon={Clock} tone="primary"
+          description="Horas até concluir"
+        />
+        <BIStatCard
+          title="SLA Cumprido" value={`${slaCumprido}%`} icon={CheckCircle2}
+          tone={slaCumprido >= 90 ? "success" : slaCumprido >= 70 ? "warning" : "destructive"}
+          current={slaCumprido} previous={prevSlaCumprido}
+          higherIsBetter={true}
+          onClick={() => navigate("/ti/service-desk")}
+        />
+        <BIStatCard
+          title="Chamados Abertos" value={allOpenTickets.length} icon={AlertTriangle}
+          tone={allOpenTickets.length > 20 ? "destructive" : "warning"}
+          description="Sem conclusão"
+          onClick={() => navigate("/ti/service-desk")}
+        />
       </div>
 
-      {/* Trend Chart - Evolução temporal */}
+      {/* Trend */}
       <TrendChart
         title="Evolução de Chamados ao Longo do Tempo"
         dateRange={dateRange}
         series={[
-          {
-            key: "criados",
-            label: "Criados no período",
-            gradient: "info",
-            type: "bar",
-            getDate: (t) => t.created_at ? new Date(t.created_at) : null,
-            items: filtered,
-          },
-          {
-            key: "concluidos",
-            label: "Concluídos no período",
-            gradient: "success",
-            type: "line",
-            getDate: (t) => t.completed_at ? new Date(t.completed_at) : null,
-            items: completedTickets,
-          },
+          { key: "criados", label: "Criados", gradient: "info", type: "bar",
+            getDate: (t) => t.created_at ? new Date(t.created_at) : null, items: filtered },
+          { key: "concluidos", label: "Concluídos", gradient: "success", type: "line",
+            getDate: (t) => t.completed_at ? new Date(t.completed_at) : null, items: completedTickets },
         ]}
       />
 
-      {/* Backlog: Criados vs Concluídos no mesmo período + Saldo */}
+      {/* Status donut + Category donut */}
+      <div className="grid gap-5 lg:grid-cols-2">
+        <BIStatusDonut
+          title="Distribuição por Status"
+          data={statusDonutData}
+          centerLabel="chamados"
+          hint={`${filtered.length} no período`}
+          onSliceClick={(s) => {
+            const list = s.name === "Concluídos" ? completedTickets : filtered.filter((t) => !t.completed_at);
+            openDrilldown(s.name, list);
+          }}
+        />
+        <BIStatusDonut
+          title="Distribuição por Categoria"
+          data={ticketsByCategoryDonut}
+          centerLabel="categorias"
+          hint={`${ticketsByCategoryDonut.length} categorias`}
+          onSliceClick={(s) => {
+            openDrilldown(`Chamados — ${s.name}`, filtered.filter((t) => t.category === s.name));
+          }}
+        />
+      </div>
+    </>
+  );
+
+  const productivityNode = (
+    <>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <BIStatCard
+          title="Pessoas ativas" value={workloadData.filter((p) => p.workedSeconds > 0 || p.activeCount > 0).length}
+          icon={CheckCircle2} tone="info" description="com chamados no período"
+        />
+        <BIStatCard
+          title="Concluídos no período" value={completedCompare.current} icon={CheckCircle2} tone="success"
+          current={completedCompare.current} previous={completedCompare.previous} higherIsBetter={true}
+        />
+        <BIStatCard
+          title="Média por pessoa"
+          value={
+            workloadData.length > 0
+              ? Math.round(filtered.length / workloadData.length)
+              : 0
+          }
+          icon={Ticket} tone="primary" description="chamados / pessoa"
+        />
+        <BIStatCard
+          title="Tempo total registrado"
+          value={formatDuration(workloadData.reduce((s, p) => s + p.workedSeconds, 0))}
+          icon={Clock} tone="primary"
+        />
+      </div>
+
+      <BIWorkloadChart
+        people={workloadData}
+        dateRange={dateRange}
+        onPersonClick={(name) => {
+          openDrilldown(`Chamados — ${name}`, filtered.filter((t) => (t.assignee || "Sem atribuição") === name));
+        }}
+      />
+
+      <div className="grid gap-5 lg:grid-cols-2">
+        <BIPeopleRanking
+          title="Ranking por Técnico"
+          entityNoun="chamado"
+          people={ticketsByTech.map((t) => ({
+            name: t.name,
+            userId: t.userId,
+            avatarUrl: t.userId ? avatars?.byId[t.userId] : null,
+            total: t.total,
+            completed: t.completed,
+          }))}
+          onPersonClick={(name) => openDrilldown(`Chamados — ${name}`,
+            filtered.filter((t) => (t.assignee || "Sem atribuição") === name))}
+        />
+
+        <BIDemandHeatmap
+          title="Mapa de Calor de Abertura de Chamados"
+          items={filtered}
+          getDate={(t) => t.created_at ? new Date(t.created_at) : null}
+          entityNoun="chamado"
+        />
+      </div>
+    </>
+  );
+
+  const timeNode = (
+    <>
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <BIStatCard
+          title="Backlog atual" value={allOpenTickets.length} icon={AlertTriangle}
+          tone={allOpenTickets.length > 20 ? "destructive" : "warning"}
+          description="chamados em aberto"
+        />
+        <BIStatCard
+          title="Saldo do período"
+          value={(createdCompare.current - completedCompare.current > 0 ? "+" : "") + (createdCompare.current - completedCompare.current)}
+          icon={TrendingDown}
+          tone={createdCompare.current - completedCompare.current > 0 ? "destructive" : "success"}
+          description="criados − concluídos"
+        />
+        <BIStatCard
+          title="Tempo médio"
+          value={`${avgResolutionHours}h`}
+          icon={Clock} tone="primary"
+        />
+        <BIStatCard
+          title="SLA"
+          value={`${slaCumprido}%`}
+          icon={CheckCircle2}
+          tone={slaCumprido >= 90 ? "success" : slaCumprido >= 70 ? "warning" : "destructive"}
+          current={slaCumprido} previous={prevSlaCumprido} higherIsBetter
+        />
+      </div>
+
       <BacklogChart
-        title="Backlog de Chamados (Criados vs Concluídos)"
+        title="Backlog: Criados vs Concluídos"
         dateRange={dateRange}
         createdItems={filtered}
         completedItems={completedTickets}
@@ -459,429 +625,203 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
         getCompletedDate={(t) => (t.completed_at ? new Date(t.completed_at) : null)}
       />
 
-      {/* Charts Row 1 */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Users className="h-4 w-4 text-muted-foreground" />Chamados por Técnico
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={ticketsByTech} layout="vertical" className="cursor-pointer">
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                  <YAxis dataKey="name" type="category" width={120} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Bar dataKey="completed" name="Concluídos" fill="hsl(var(--success))" radius={[0, 4, 4, 0]} stackId="a" onClick={(_: any, idx: number) => handleTechBarClick(ticketsByTech[idx])} />
-                  <Bar dataKey="pending" name="Pendentes" fill="hsl(var(--warning))" radius={[0, 4, 4, 0]} stackId="a" onClick={(_: any, idx: number) => handleTechBarClick(ticketsByTech[idx])} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
+      <BIBacklogAging
+        title="Aging do Backlog"
+        openItems={allOpenTickets}
+        getCreatedDate={(t) => t.created_at ? new Date(t.created_at) : null}
+        entityNoun="chamado"
+        onBucketClick={(label, items) => openDrilldown(`Backlog · ${label}`, items)}
+      />
 
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <BarChart3 className="h-4 w-4 text-muted-foreground" />Chamados por Tipo
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex h-[300px] items-center justify-center gap-6">
-              <div className="h-[220px] w-[220px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={ticketsByCategory} cx="50%" cy="50%" innerRadius={55} outerRadius={85} paddingAngle={3} dataKey="value" className="cursor-pointer" onClick={(_: any, idx: number) => handleCategoryClick(ticketsByCategory[idx])}>
-                      {ticketsByCategory.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                    </Pie>
-                    <Tooltip contentStyle={tooltipStyle} formatter={(value: number, _: string, props: any) => [value, props.payload.fullName]} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="max-h-[300px] space-y-2 overflow-y-auto pr-2">
-                {ticketsByCategory.map((item) => (
-                  <div
-                    key={item.fullName}
-                    className="flex items-center gap-2 text-sm cursor-pointer hover:bg-accent rounded px-1.5 py-1 transition-colors"
-                    onClick={() => handleCategoryClick(item)}
-                  >
-                    <div className="h-2.5 w-2.5 shrink-0 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-muted-foreground truncate max-w-[140px]" title={item.fullName}>{item.name}</span>
-                    <span className="ml-auto font-medium">{item.value}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* NEW: Volume por Dia da Semana + Horas por Colaborador */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <CalendarDays className="h-4 w-4 text-muted-foreground" />Volume de Chamados por Dia da Semana
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="h-[300px]">
-              <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={ticketsByDayOfWeek}>
-                  <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                  <XAxis dataKey="name" tick={{ fill: "hsl(var(--muted-foreground))" }} />
-                  <YAxis tick={{ fill: "hsl(var(--muted-foreground))" }} allowDecimals={false} />
-                  <Tooltip contentStyle={tooltipStyle} />
-                  <Bar dataKey="chamados" name="Chamados" fill="hsl(var(--info))" radius={[4, 4, 0, 0]} />
-                </BarChart>
-              </ResponsiveContainer>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Timer className="h-4 w-4 text-muted-foreground" />Horas Trabalhadas por Colaborador
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            {hoursByAssignee.length === 0 ? (
-              <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-                Nenhum registro de timesheet no período
-              </div>
-            ) : (
-              <div className="h-[300px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={hoursByAssignee} layout="vertical">
-                    <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                    <XAxis type="number" tick={{ fill: "hsl(var(--muted-foreground))" }} unit="h" />
-                    <YAxis dataKey="name" type="category" width={120} tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 12 }} />
-                    <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => `${value}h`} />
-                    <Bar dataKey="hours" name="Horas" fill="hsl(var(--primary))" radius={[0, 4, 4, 0]} className="cursor-pointer" onClick={(_: any, idx: number) => handleHoursBarClick(hoursByAssignee[idx])} />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* Tempo gasto por Categoria de Chamado */}
       <TimeByCategoryChart
         title="Tempo Gasto por Categoria de Chamado"
         entityNoun="chamado"
-        entityCategoryMap={Object.fromEntries(
-          mainTickets.map((t) => [t.id, t.category || "Sem categoria"])
-        )}
+        entityCategoryMap={Object.fromEntries(mainTickets.map((t) => [t.id, t.category || "Sem categoria"]))}
         logs={allTimesheetData
           .filter((l) => l.ticket_id)
-          .map((l) => ({
-            entityId: l.ticket_id,
-            start_time: l.start_time,
-            end_time: l.end_time,
-            duration_seconds: l.duration_seconds,
-          }))}
+          .map((l) => ({ entityId: l.ticket_id, start_time: l.start_time, end_time: l.end_time, duration_seconds: l.duration_seconds }))}
         onCategoryClick={(catName) => {
-          // sum seconds per ticket in this category
           const now = Date.now();
           const totalsByTicket: Record<string, number> = {};
           allTimesheetData.forEach((l) => {
             if (!l.ticket_id) return;
             const t = mainTickets.find((m) => m.id === l.ticket_id);
             if (!t || (t.category || "Sem categoria") !== catName) return;
-            const secs = l.end_time
-              ? l.duration_seconds
-              : Math.floor((now - new Date(l.start_time).getTime()) / 1000);
+            const secs = l.end_time ? l.duration_seconds : Math.floor((now - new Date(l.start_time).getTime()) / 1000);
             if (secs > 0) totalsByTicket[l.ticket_id] = (totalsByTicket[l.ticket_id] || 0) + secs;
           });
-          const list = Object.entries(totalsByTicket)
-            .map(([id, secs]) => {
-              const t = mainTickets.find((m) => m.id === id)!;
-              return { ticket: t, secs };
-            })
-            .filter((x) => x.ticket)
-            .map(({ ticket, secs }) => ({
-              id: ticket.id,
-              reference: ticket.ticket_number,
-              title: ticket.title,
-              assignee: ticket.assignee,
-              status: ticket.completed_at ? "Concluído" : "Aberto",
-              totalSeconds: secs,
-              onOpen: () => navigate(`/ti/service-desk?ticket=${ticket.id}`),
-            }));
+          const list = Object.entries(totalsByTicket).map(([id, secs]) => {
+            const t = mainTickets.find((m) => m.id === id)!;
+            return {
+              id: t.id, reference: t.ticket_number, title: t.title, assignee: t.assignee,
+              status: t.completed_at ? "Concluído" : "Aberto", totalSeconds: secs,
+              onOpen: () => navigate(`/ti/service-desk?ticket=${t.id}`),
+            };
+          });
           setCategoryDrilldown({ open: true, title: `Tempo em "${catName}"`, items: list });
         }}
       />
 
-      {/* NEW: Top 5 Tarefas Demoradas */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            <Clock className="h-4 w-4 text-muted-foreground" />Top 5 Tarefas Mais Demoradas
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          {top5SlowTasks.length === 0 ? (
-            <div className="flex items-center justify-center py-8 text-sm text-muted-foreground">
-              Nenhum registro de timesheet encontrado no período
-            </div>
-          ) : (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead className="w-[100px]">Chamado</TableHead>
-                  <TableHead>Título</TableHead>
-                  <TableHead>Responsável</TableHead>
-                   <TableHead className="text-right">Tempo Total</TableHead>
-                   <TableHead className="w-[50px]" />
-                 </TableRow>
-               </TableHeader>
-               <TableBody>
-                 {top5SlowTasks.map((task, i) => (
-                   <TableRow key={task.id}>
-                     <TableCell className="font-mono text-xs text-muted-foreground">{task.ticketNumber}</TableCell>
-                     <TableCell className="font-medium max-w-[250px] truncate">{task.title}</TableCell>
-                     <TableCell>{task.assignee}</TableCell>
-                     <TableCell className="text-right font-mono font-semibold">{formatDuration(task.totalSeconds)}</TableCell>
-                     <TableCell className="text-right">
-                       <Button variant="ghost" size="icon" className="h-7 w-7" onClick={() => navigate(`/ti/service-desk?ticket=${task.id}`)}>
-                         <ExternalLink className="h-3.5 w-3.5" />
-                       </Button>
-                     </TableCell>
-                   </TableRow>
-                 ))}
-               </TableBody>
-            </Table>
-          )}
-        </CardContent>
-      </Card>
+      <BIChartCard title="Top 5 Chamados Mais Demorados" icon={Clock} iconColor="text-warning" padded={false}>
+        {top5SlowTasks.length === 0 ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">
+            Nenhum registro de timesheet encontrado no período
+          </p>
+        ) : (
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="w-[100px]">Chamado</TableHead>
+                <TableHead>Título</TableHead>
+                <TableHead>Responsável</TableHead>
+                <TableHead className="text-right">Tempo Total</TableHead>
+                <TableHead className="w-[50px]" />
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {top5SlowTasks.map((task) => (
+                <TableRow key={task.id} className="cursor-pointer hover:bg-muted/40" onClick={() => navigate(`/ti/service-desk?ticket=${task.id}`)}>
+                  <TableCell className="font-mono text-xs text-muted-foreground">{task.ticketNumber}</TableCell>
+                  <TableCell className="font-medium max-w-[280px] truncate">{task.title}</TableCell>
+                  <TableCell>{task.assignee}</TableCell>
+                  <TableCell className="text-right font-mono font-semibold tabular-nums">{formatDuration(task.totalSeconds)}</TableCell>
+                  <TableCell className="text-right">
+                    <Button variant="ghost" size="icon" className="h-7 w-7"><ExternalLink className="h-3.5 w-3.5" /></Button>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        )}
+      </BIChartCard>
+    </>
+  );
 
-      {/* SLA Gauge + Resumo de Ativos */}
-      <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <CheckCircle2 className="h-4 w-4 text-muted-foreground" />Taxa de SLA Cumprido
-            </CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="flex flex-col items-center justify-center gap-4 py-4">
-              <div className="relative flex h-40 w-40 items-center justify-center">
-                <svg className="h-full w-full -rotate-90" viewBox="0 0 100 100">
-                  <circle cx="50" cy="50" r="42" fill="none" stroke="hsl(var(--muted))" strokeWidth="8" />
-                  <circle cx="50" cy="50" r="42" fill="none"
-                    stroke={slaCumprido >= 90 ? "hsl(var(--success))" : slaCumprido >= 70 ? "hsl(var(--warning))" : "hsl(var(--destructive))"}
-                    strokeWidth="8" strokeDasharray={`${(slaCumprido / 100) * 264} 264`} strokeLinecap="round"
-                  />
-                </svg>
-                <span className="absolute text-3xl font-bold">{slaCumprido}%</span>
-              </div>
-              <div className="flex gap-6 text-sm text-muted-foreground">
-                <span
-                  className="cursor-pointer hover:text-success transition-colors"
-                  onClick={() => openDrilldown("Dentro do SLA", completedTickets.filter((t) => new Date(t.completed_at!).getTime() <= new Date(t.sla_deadline).getTime()))}
-                >
-                  Dentro do SLA: <strong className="text-foreground">{completedTickets.filter((t) => new Date(t.completed_at!).getTime() <= new Date(t.sla_deadline).getTime()).length}</strong>
-                </span>
-                <span
-                  className="cursor-pointer hover:text-destructive transition-colors"
-                  onClick={() => openDrilldown("Fora do SLA", completedTickets.filter((t) => new Date(t.completed_at!).getTime() > new Date(t.sla_deadline).getTime()))}
-                >
-                  Fora do SLA: <strong className="text-foreground">{completedTickets.filter((t) => new Date(t.completed_at!).getTime() > new Date(t.sla_deadline).getTime()).length}</strong>
-                </span>
-              </div>
-            </div>
-            {/* Lista resumida dos chamados por SLA */}
-            {completedTickets.length > 0 && (
-              <div className="grid grid-cols-2 gap-4 border-t pt-4">
-                {/* Dentro do SLA */}
-                <div>
-                  <h4 className="text-xs font-semibold text-success mb-2 flex items-center gap-1">
-                    <CheckCircle2 className="h-3.5 w-3.5" /> Dentro do SLA
-                  </h4>
-                  <div className="space-y-1 max-h-[180px] overflow-y-auto pr-1">
-                    {completedTickets.filter((t) => new Date(t.completed_at!).getTime() <= new Date(t.sla_deadline).getTime()).length === 0 ? (
-                      <p className="text-xs text-muted-foreground">Nenhum</p>
-                    ) : (
-                      completedTickets.filter((t) => new Date(t.completed_at!).getTime() <= new Date(t.sla_deadline).getTime()).map((t) => (
-                        <div
-                          key={t.id}
-                          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-accent/50 cursor-pointer transition-colors"
-                          onClick={() => { navigate(`/ti/service-desk?ticket=${t.id}`); }}
-                        >
-                          <span className="font-mono text-muted-foreground shrink-0">{t.ticket_number}</span>
-                          <span className="truncate font-medium">{t.title}</span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-                {/* Fora do SLA */}
-                <div>
-                  <h4 className="text-xs font-semibold text-destructive mb-2 flex items-center gap-1">
-                    <AlertTriangle className="h-3.5 w-3.5" /> Fora do SLA
-                  </h4>
-                  <div className="space-y-1 max-h-[180px] overflow-y-auto pr-1">
-                    {completedTickets.filter((t) => new Date(t.completed_at!).getTime() > new Date(t.sla_deadline).getTime()).length === 0 ? (
-                      <p className="text-xs text-muted-foreground">Nenhum</p>
-                    ) : (
-                      completedTickets.filter((t) => new Date(t.completed_at!).getTime() > new Date(t.sla_deadline).getTime()).map((t) => (
-                        <div
-                          key={t.id}
-                          className="flex items-center gap-2 rounded-md px-2 py-1.5 text-xs hover:bg-accent/50 cursor-pointer transition-colors"
-                          onClick={() => { navigate(`/ti/service-desk?ticket=${t.id}`); }}
-                        >
-                          <span className="font-mono text-muted-foreground shrink-0">{t.ticket_number}</span>
-                          <span className="truncate font-medium">{t.title}</span>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                </div>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base font-semibold">
-              <Monitor className="h-4 w-4 text-muted-foreground" />Resumo de Ativos por Status
-            </CardTitle>
-          </CardHeader>
-          <CardContent className="p-0">
-            <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="sticky left-0 bg-card z-10">Categoria</TableHead>
-                    {allStatuses.map((s) => (
-                      <TableHead key={s} className="text-center text-xs whitespace-nowrap">{s}</TableHead>
-                    ))}
-                    <TableHead className="text-center text-xs font-bold">Total</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {inventoryByCategory.map((item) => {
-                    const Icon = categoryIcons[item.category] || Monitor;
-                    return (
-                      <TableRow key={item.category} className="cursor-pointer hover:bg-accent/50" onClick={() => navigate("/ti/gestao-ativos")}>
-                        <TableCell className="sticky left-0 bg-card z-10 font-medium">
-                          <div className="flex items-center gap-2">
-                            <Icon className={`h-4 w-4 ${categoryColorClasses[item.category] || "text-muted-foreground"}`} />
-                            {categoryLabels[item.category] || item.category}
-                          </div>
-                        </TableCell>
-                        {allStatuses.map((s) => (
-                          <TableCell key={s} className="text-center tabular-nums">
-                            {item.byStatus[s] || 0}
-                          </TableCell>
-                        ))}
-                        <TableCell className="text-center font-bold tabular-nums">{item.total}</TableCell>
-                      </TableRow>
-                    );
-                  })}
-                  {/* Totals row */}
-                  <TableRow className="bg-muted/30 font-semibold">
-                    <TableCell className="sticky left-0 bg-muted/30 z-10">Total</TableCell>
-                    {allStatuses.map((s) => (
-                      <TableCell key={s} className="text-center tabular-nums">
-                        {inventoryByCategory.reduce((sum, item) => sum + (item.byStatus[s] || 0), 0)}
-                      </TableCell>
-                    ))}
-                    <TableCell className="text-center font-bold tabular-nums">
-                      {inventoryByCategory.reduce((sum, item) => sum + item.total, 0)}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      {/* ======== Seção: Ativos & Custos ======== */}
-      <Separator className="my-2" />
-      <h2 className="flex items-center gap-2 text-lg font-semibold">
-        <Wallet className="h-5 w-5 text-muted-foreground" />
-        Ativos & Custos
-      </h2>
-
-      {/* Financial Stat Cards */}
+  const domainNode = (
+    <>
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-        <StatCard
+        <BIStatCard
+          title="Total de Ativos" value={filteredInv.length} icon={Monitor} tone="info"
+          description={`${filteredInv.filter((a) => a.status === "Em uso" || a.status === "Ativo").length} em uso`}
+          onClick={() => navigate("/ti/gestao-ativos")}
+        />
+        <BIStatCard
           title="Custo Mensal Telecom"
           value={`R$ ${totalValorMensal.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`}
-          icon={Phone}
+          icon={Phone} tone="primary"
           description={`${filteredInv.filter((a) => a.category === "linhas" && a.valor_mensal && a.valor_mensal > 0).length} linhas ativas`}
-          className="border-l-4 border-l-primary"
           onClick={() => navigate("/ti/gestao-faturas")}
         />
-        <StatCard
+        <BIStatCard
           title="Depreciação Acumulada"
           value={formatBRL(depreciationTotal.totalDepreciation)}
-          icon={TrendingDown}
+          icon={TrendingDown} tone="destructive"
           description={`${depreciationTotal.assetCount} ativos · Original: ${formatBRL(depreciationTotal.totalOriginal)}`}
-          className="border-l-4 border-l-destructive"
-          onClick={() => navigate("/ti/gestao-ativos")}
-        />
-        <StatCard
-          title="Total de Ativos"
-          value={filteredInv.length}
-          icon={Monitor}
-          description={`${filteredInv.filter((a) => a.status === "Em uso" || a.status === "Ativo").length} ativos · ${filteredInv.filter((a) => a.status === "Inativo").length} inativos`}
-          className="border-l-4 border-l-success"
           onClick={() => navigate("/ti/gestao-ativos")}
         />
       </div>
 
-      {/* Custo por Operadora Donut */}
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2 text-base font-semibold">
-            <Wifi className="h-4 w-4 text-muted-foreground" />Custo Mensal por Operadora
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {costByOperadora.length === 0 ? (
-            <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-              Nenhuma linha com operadora e valor mensal cadastrados
-            </div>
-          ) : (
-            <div className="flex h-[300px] items-center justify-center gap-8">
-              <div className="h-[220px] w-[220px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie data={costByOperadora} cx="50%" cy="50%" innerRadius={60} outerRadius={85} paddingAngle={4} dataKey="value">
-                      {costByOperadora.map((entry, i) => <Cell key={i} fill={entry.color} />)}
-                    </Pie>
-                    <Tooltip contentStyle={tooltipStyle} formatter={(value: number) => `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
-              <div className="space-y-3">
-                {costByOperadora.map((item) => (
-                  <div key={item.name} className="flex items-center gap-2">
-                    <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
-                    <span className="text-sm text-muted-foreground">{item.name}</span>
-                    <span className="ml-auto font-medium">R$ {item.value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</span>
-                  </div>
+      <BIChartCard title="Resumo de Ativos por Status" icon={Monitor} iconColor="text-primary" padded={false}>
+        <div className="overflow-x-auto">
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead className="sticky left-0 bg-card z-10">Categoria</TableHead>
+                {allStatuses.map((s) => (
+                  <TableHead key={s} className="text-center text-xs whitespace-nowrap">{s}</TableHead>
                 ))}
+                <TableHead className="text-center text-xs font-bold">Total</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              {inventoryByCategory.map((item) => {
+                const Icon = categoryIcons[item.category] || Monitor;
+                return (
+                  <TableRow key={item.category} className="cursor-pointer hover:bg-muted/40" onClick={() => navigate("/ti/gestao-ativos")}>
+                    <TableCell className="sticky left-0 bg-card z-10 font-medium">
+                      <div className="flex items-center gap-2">
+                        <Icon className={`h-4 w-4 ${categoryColorClasses[item.category] || "text-muted-foreground"}`} />
+                        {categoryLabels[item.category] || item.category}
+                      </div>
+                    </TableCell>
+                    {allStatuses.map((s) => (
+                      <TableCell key={s} className="text-center tabular-nums">{item.byStatus[s] || 0}</TableCell>
+                    ))}
+                    <TableCell className="text-center font-bold tabular-nums">{item.total}</TableCell>
+                  </TableRow>
+                );
+              })}
+              <TableRow className="bg-muted/30 font-semibold">
+                <TableCell className="sticky left-0 bg-muted/30 z-10">Total</TableCell>
+                {allStatuses.map((s) => (
+                  <TableCell key={s} className="text-center tabular-nums">
+                    {inventoryByCategory.reduce((sum, item) => sum + (item.byStatus[s] || 0), 0)}
+                  </TableCell>
+                ))}
+                <TableCell className="text-center font-bold tabular-nums">
+                  {inventoryByCategory.reduce((sum, item) => sum + item.total, 0)}
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+        </div>
+      </BIChartCard>
+
+      <BIChartCard title="Custo Mensal por Operadora" icon={Wifi} iconColor="text-info">
+        {costByOperadora.length === 0 ? (
+          <p className="py-10 text-center text-sm text-muted-foreground">
+            Nenhuma linha com operadora e valor mensal cadastrados
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 items-center gap-4 sm:grid-cols-[200px_1fr]">
+            <div className="relative mx-auto h-[200px] w-[200px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie data={costByOperadora} cx="50%" cy="50%" innerRadius={60} outerRadius={88} paddingAngle={3} dataKey="value">
+                    {costByOperadora.map((entry, i) => <Cell key={i} fill={entry.color} stroke="hsl(var(--card))" strokeWidth={2} />)}
+                  </Pie>
+                  <Tooltip contentStyle={BI_TOOLTIP_STYLE} formatter={(value: number) => `R$ ${value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}`} />
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                <span className="text-base font-bold tabular-nums">
+                  R$ {costByOperadora.reduce((s, c) => s + c.value, 0).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                </span>
+                <span className="text-[10px] uppercase tracking-wide text-muted-foreground">/mês</span>
               </div>
             </div>
-          )}
-        </CardContent>
-      </Card>
-      <TicketDrilldownDialog
-        open={drilldownOpen}
-        onOpenChange={setDrilldownOpen}
-        title={drilldownTitle}
-        tickets={drilldownTickets}
+            <div className="space-y-1.5">
+              {costByOperadora.map((item) => (
+                <div key={item.name} className="flex items-center gap-2 rounded-md px-2 py-1.5 text-sm">
+                  <div className="h-2.5 w-2.5 shrink-0 rounded-sm" style={{ backgroundColor: item.color }} />
+                  <span className="truncate text-muted-foreground">{item.name}</span>
+                  <span className="ml-auto font-medium tabular-nums">
+                    R$ {item.value.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}
+                  </span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </BIChartCard>
+    </>
+  );
+
+  return (
+    <>
+      <BIModuleShell
+        value={subTab}
+        onChange={setSubTab}
+        domainLabel="Ativos & Custos"
+        insights={<BIInsightsBar insights={insights} />}
+        filters={filtersNode}
+        overview={overviewNode}
+        productivity={productivityNode}
+        time={timeNode}
+        domain={domainNode}
       />
+
+      <TicketDrilldownDialog open={drilldownOpen} onOpenChange={setDrilldownOpen} title={drilldownTitle} tickets={drilldownTickets} />
       <EntityDrilldownDialog
         open={categoryDrilldown.open}
         onOpenChange={(o) => setCategoryDrilldown((s) => ({ ...s, open: o }))}
@@ -889,6 +829,6 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
         items={categoryDrilldown.items}
         entityNoun="chamado"
       />
-    </div>
+    </>
   );
 }
