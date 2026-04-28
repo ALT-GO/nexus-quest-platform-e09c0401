@@ -1095,6 +1095,13 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
           />
         </div>
       </div>
+      <EntityDrilldownDialog
+        open={categoryDrilldown.open}
+        onOpenChange={(o) => setCategoryDrilldown((s) => ({ ...s, open: o }))}
+        title={categoryDrilldown.title}
+        items={categoryDrilldown.items}
+        entityNoun="tarefa"
+      />
     </div>
   );
 }
