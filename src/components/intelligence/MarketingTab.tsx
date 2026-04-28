@@ -771,6 +771,18 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
           ]}
         />
 
+        {/* Tempo gasto por Tipo de Tarefa */}
+        <TimeByCategoryChart
+          title="Tempo Gasto por Tipo de Tarefa"
+          entityCategoryMap={taskTypeMap}
+          logs={mktTimesheetLogsRange.map((l) => ({
+            entityId: l.marketing_task_id,
+            start_time: l.start_time,
+            end_time: l.end_time,
+            duration_seconds: l.duration_seconds,
+          }))}
+        />
+
         {/* Concluídas vs Pendentes + Tarefas por Etapa */}
         <div className="grid gap-6 lg:grid-cols-2">
           <Card>
