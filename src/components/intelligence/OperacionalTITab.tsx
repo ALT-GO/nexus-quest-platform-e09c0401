@@ -26,6 +26,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { TicketDrilldownDialog } from "./TicketDrilldownDialog";
+import { EntityDrilldownDialog, type DrilldownEntity } from "./EntityDrilldownDialog";
 import { TrendChart } from "./TrendChart";
 import { BacklogChart } from "./BacklogChart";
 import { TimeByCategoryChart } from "./TimeByCategoryChart";
@@ -100,6 +101,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
   const [drilldownOpen, setDrilldownOpen] = useState(false);
   const [drilldownTitle, setDrilldownTitle] = useState("");
   const [drilldownTickets, setDrilldownTickets] = useState<any[]>([]);
+  const [categoryDrilldown, setCategoryDrilldown] = useState<{ open: boolean; title: string; items: DrilldownEntity[] }>({ open: false, title: "", items: [] });
   
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [allTimesheetData, setAllTimesheetData] = useState<{ ticket_id: string | null; start_time: string; end_time: string | null; duration_seconds: number }[]>([]);
@@ -583,6 +585,36 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
             end_time: l.end_time,
             duration_seconds: l.duration_seconds,
           }))}
+        onCategoryClick={(catName) => {
+          // sum seconds per ticket in this category
+          const now = Date.now();
+          const totalsByTicket: Record<string, number> = {};
+          allTimesheetData.forEach((l) => {
+            if (!l.ticket_id) return;
+            const t = mainTickets.find((m) => m.id === l.ticket_id);
+            if (!t || (t.category || "Sem categoria") !== catName) return;
+            const secs = l.end_time
+              ? l.duration_seconds
+              : Math.floor((now - new Date(l.start_time).getTime()) / 1000);
+            if (secs > 0) totalsByTicket[l.ticket_id] = (totalsByTicket[l.ticket_id] || 0) + secs;
+          });
+          const list = Object.entries(totalsByTicket)
+            .map(([id, secs]) => {
+              const t = mainTickets.find((m) => m.id === id)!;
+              return { ticket: t, secs };
+            })
+            .filter((x) => x.ticket)
+            .map(({ ticket, secs }) => ({
+              id: ticket.id,
+              reference: ticket.ticket_number,
+              title: ticket.title,
+              assignee: ticket.assignee,
+              status: ticket.completed_at ? "Concluído" : "Aberto",
+              totalSeconds: secs,
+              onOpen: () => navigate(`/ti/service-desk?ticket=${ticket.id}`),
+            }));
+          setCategoryDrilldown({ open: true, title: `Tempo em "${catName}"`, items: list });
+        }}
       />
 
       {/* NEW: Top 5 Tarefas Demoradas */}
@@ -849,6 +881,13 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
         onOpenChange={setDrilldownOpen}
         title={drilldownTitle}
         tickets={drilldownTickets}
+      />
+      <EntityDrilldownDialog
+        open={categoryDrilldown.open}
+        onOpenChange={(o) => setCategoryDrilldown((s) => ({ ...s, open: o }))}
+        title={categoryDrilldown.title}
+        items={categoryDrilldown.items}
+        entityNoun="chamado"
       />
     </div>
   );
