@@ -2,8 +2,9 @@ import { useMemo, useEffect, useState } from "react";
 import { ActiveTimersCard } from "@/components/dashboard/ActiveTimersCard";
 import { EventCalendarCard } from "@/components/dashboard/EventCalendarCard";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchMarketingTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
+import { fetchMarketingTimesheetTotals, fetchMarketingTimesheetByDateRange, formatDuration } from "@/hooks/use-timesheet";
 import { useMarketingTasks, MarketingTask, useMarketingStages } from "@/hooks/use-marketing";
+import { useMarketingTaskTypes } from "@/hooks/use-task-types";
 import { useMarketingEvents } from "@/hooks/use-events";
 import { useMarketingMaterials, useMaterialAllocations } from "@/hooks/use-materials";
 import { useMarketingSprints } from "@/hooks/use-sprints";
@@ -27,6 +28,7 @@ import { format, differenceInDays, isSameDay, isWithinInterval } from "date-fns"
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { TrendChart } from "./TrendChart";
+import { TimeByCategoryChart } from "./TimeByCategoryChart";
 
 interface MarketingTabProps {
   dateRange: { start: Date; end: Date };
