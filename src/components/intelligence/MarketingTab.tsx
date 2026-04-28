@@ -756,16 +756,16 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
           series={[
             {
               key: "criadas",
-              label: "Criadas no mês",
-              color: "hsl(var(--primary))",
+              label: "Criadas no período",
+              gradient: "primary",
               type: "bar",
               getDate: (t) => t.created_at ? new Date(t.created_at) : null,
               items: tasks,
             },
             {
               key: "concluidas",
-              label: "Concluídas no mês",
-              color: "hsl(var(--success))",
+              label: "Concluídas no período",
+              gradient: "success",
               type: "line",
               getDate: (t) => t.completed_at ? new Date(t.completed_at) : null,
               items: tasks.filter((t) => t.completed_at),
