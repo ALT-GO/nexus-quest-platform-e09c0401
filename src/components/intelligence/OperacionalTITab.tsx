@@ -113,13 +113,6 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     fetchTimesheetByDateRange(dateRange).then(setAllTimesheetData);
   }, [dateRange]);
 
-  // Also fetch the previous period for comparisons
-  const [prevTimesheetData, setPrevTimesheetData] = useState<typeof allTimesheetData>([]);
-  useEffect(() => {
-    const prev = previousPeriod(dateRange);
-    fetchTimesheetByDateRange(prev).then(setPrevTimesheetData);
-  }, [dateRange]);
-
   // Exclude subtasks
   const mainTickets = useMemo(() => allTickets.filter((t) => !t.parent_ticket_id), [allTickets]);
 
