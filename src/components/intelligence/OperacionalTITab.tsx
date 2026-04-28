@@ -571,6 +571,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
       {/* Tempo gasto por Categoria de Chamado */}
       <TimeByCategoryChart
         title="Tempo Gasto por Categoria de Chamado"
+        entityNoun="chamado"
         entityCategoryMap={Object.fromEntries(
           mainTickets.map((t) => [t.id, t.category || "Sem categoria"])
         )}
