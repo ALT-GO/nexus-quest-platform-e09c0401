@@ -29,6 +29,7 @@ import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { TrendChart } from "./TrendChart";
 import { TimeByCategoryChart } from "./TimeByCategoryChart";
+import { EntityDrilldownDialog, type DrilldownEntity } from "./EntityDrilldownDialog";
 
 interface MarketingTabProps {
   dateRange: { start: Date; end: Date };
@@ -64,6 +65,7 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   const [mktTimesheetTotals, setMktTimesheetTotals] = useState<Record<string, number>>({});
   const [mktTimesheetLogsRange, setMktTimesheetLogsRange] = useState<{ marketing_task_id: string | null; start_time: string; end_time: string | null; duration_seconds: number }[]>([]);
   const [goals, setGoals] = useState<any[]>([]);
+  const [categoryDrilldown, setCategoryDrilldown] = useState<{ open: boolean; title: string; items: DrilldownEntity[] }>({ open: false, title: "", items: [] });
 
   // Fetch goals
   useEffect(() => {
@@ -782,6 +784,33 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
             end_time: l.end_time,
             duration_seconds: l.duration_seconds,
           }))}
+          onCategoryClick={(catName) => {
+            const now = Date.now();
+            const totalsByTask: Record<string, number> = {};
+            mktTimesheetLogsRange.forEach((l) => {
+              if (!l.marketing_task_id) return;
+              if (taskTypeMap[l.marketing_task_id] !== catName) return;
+              const secs = l.end_time
+                ? l.duration_seconds
+                : Math.floor((now - new Date(l.start_time).getTime()) / 1000);
+              if (secs > 0) totalsByTask[l.marketing_task_id] = (totalsByTask[l.marketing_task_id] || 0) + secs;
+            });
+            const list = Object.entries(totalsByTask)
+              .map(([id, secs]) => {
+                const task = (allTasks || []).find((t) => t.id === id);
+                if (!task) return null;
+                return {
+                  id: task.id,
+                  title: task.title,
+                  assignee: task.assignee_name,
+                  status: task.progress,
+                  totalSeconds: secs,
+                  onOpen: () => navigate(`/marketing/solicitacoes?task=${task.id}`),
+                };
+              })
+              .filter(Boolean) as DrilldownEntity[];
+            setCategoryDrilldown({ open: true, title: `Tempo em "${catName}"`, items: list });
+          }}
         />
 
         {/* Concluídas vs Pendentes + Tarefas por Etapa */}
