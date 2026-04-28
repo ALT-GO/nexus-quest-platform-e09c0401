@@ -26,6 +26,7 @@ import { useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ExternalLink } from "lucide-react";
 import { TicketDrilldownDialog } from "./TicketDrilldownDialog";
+import { EntityDrilldownDialog, type DrilldownEntity } from "./EntityDrilldownDialog";
 import { TrendChart } from "./TrendChart";
 import { BacklogChart } from "./BacklogChart";
 import { TimeByCategoryChart } from "./TimeByCategoryChart";
@@ -100,6 +101,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
   const [drilldownOpen, setDrilldownOpen] = useState(false);
   const [drilldownTitle, setDrilldownTitle] = useState("");
   const [drilldownTickets, setDrilldownTickets] = useState<any[]>([]);
+  const [categoryDrilldown, setCategoryDrilldown] = useState<{ open: boolean; title: string; items: DrilldownEntity[] }>({ open: false, title: "", items: [] });
   
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [allTimesheetData, setAllTimesheetData] = useState<{ ticket_id: string | null; start_time: string; end_time: string | null; duration_seconds: number }[]>([]);
@@ -879,6 +881,13 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
         onOpenChange={setDrilldownOpen}
         title={drilldownTitle}
         tickets={drilldownTickets}
+      />
+      <EntityDrilldownDialog
+        open={categoryDrilldown.open}
+        onOpenChange={(o) => setCategoryDrilldown((s) => ({ ...s, open: o }))}
+        title={categoryDrilldown.title}
+        items={categoryDrilldown.items}
+        entityNoun="chamado"
       />
     </div>
   );
