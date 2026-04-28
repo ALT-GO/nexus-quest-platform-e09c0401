@@ -2,8 +2,9 @@ import { useMemo, useEffect, useState } from "react";
 import { ActiveTimersCard } from "@/components/dashboard/ActiveTimersCard";
 import { EventCalendarCard } from "@/components/dashboard/EventCalendarCard";
 import { supabase } from "@/integrations/supabase/client";
-import { fetchMarketingTimesheetTotals, formatDuration } from "@/hooks/use-timesheet";
+import { fetchMarketingTimesheetTotals, fetchMarketingTimesheetByDateRange, formatDuration } from "@/hooks/use-timesheet";
 import { useMarketingTasks, MarketingTask, useMarketingStages } from "@/hooks/use-marketing";
+import { useMarketingTaskTypes } from "@/hooks/use-task-types";
 import { useMarketingEvents } from "@/hooks/use-events";
 import { useMarketingMaterials, useMaterialAllocations } from "@/hooks/use-materials";
 import { useMarketingSprints } from "@/hooks/use-sprints";
@@ -27,6 +28,7 @@ import { format, differenceInDays, isSameDay, isWithinInterval } from "date-fns"
 import { ptBR } from "date-fns/locale";
 import { useNavigate } from "react-router-dom";
 import { TrendChart } from "./TrendChart";
+import { TimeByCategoryChart } from "./TimeByCategoryChart";
 
 interface MarketingTabProps {
   dateRange: { start: Date; end: Date };
@@ -58,7 +60,9 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
   const { data: allAllocations } = useMaterialAllocations();
   const { data: sprints } = useMarketingSprints();
   const { data: avatars } = useProfileAvatars();
+  const { data: taskTypes } = useMarketingTaskTypes();
   const [mktTimesheetTotals, setMktTimesheetTotals] = useState<Record<string, number>>({});
+  const [mktTimesheetLogsRange, setMktTimesheetLogsRange] = useState<{ marketing_task_id: string | null; start_time: string; end_time: string | null; duration_seconds: number }[]>([]);
   const [goals, setGoals] = useState<any[]>([]);
 
   // Fetch goals
@@ -85,7 +89,22 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
     }
   }, [allTasks]);
 
-  // ── 1. Total de Tarefas ──
+  // Fetch timesheet logs filtered by date range (for "Tempo por categoria")
+  useEffect(() => {
+    fetchMarketingTimesheetByDateRange(dateRange).then(setMktTimesheetLogsRange);
+  }, [dateRange]);
+
+  // Map marketing_task_id -> task type name
+  const taskTypeMap = useMemo(() => {
+    const typeNameById = new Map((taskTypes || []).map((tt: any) => [tt.id, tt.name]));
+    const map: Record<string, string> = {};
+    (allTasks || []).forEach((t: any) => {
+      const typeName = t.task_type_id ? (typeNameById.get(t.task_type_id) as string | undefined) : undefined;
+      map[t.id] = typeName || "Sem tipo";
+    });
+    return map;
+  }, [allTasks, taskTypes]);
+
   const totalTasks = tasks.length;
 
   // ── 2. Concluídas vs Pendentes ──
@@ -750,6 +769,18 @@ export function MarketingTab({ dateRange }: MarketingTabProps) {
               items: tasks.filter((t) => t.completed_at),
             },
           ]}
+        />
+
+        {/* Tempo gasto por Tipo de Tarefa */}
+        <TimeByCategoryChart
+          title="Tempo Gasto por Tipo de Tarefa"
+          entityCategoryMap={taskTypeMap}
+          logs={mktTimesheetLogsRange.map((l) => ({
+            entityId: l.marketing_task_id,
+            start_time: l.start_time,
+            end_time: l.end_time,
+            duration_seconds: l.duration_seconds,
+          }))}
         />
 
         {/* Concluídas vs Pendentes + Tarefas por Etapa */}

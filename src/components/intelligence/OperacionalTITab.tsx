@@ -28,6 +28,7 @@ import { ExternalLink } from "lucide-react";
 import { TicketDrilldownDialog } from "./TicketDrilldownDialog";
 import { TrendChart } from "./TrendChart";
 import { BacklogChart } from "./BacklogChart";
+import { TimeByCategoryChart } from "./TimeByCategoryChart";
 
 import type { CostCenterFilter } from "@/pages/CentralInteligencia";
 
@@ -566,6 +567,22 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           </CardContent>
         </Card>
       </div>
+
+      {/* Tempo gasto por Categoria de Chamado */}
+      <TimeByCategoryChart
+        title="Tempo Gasto por Categoria de Chamado"
+        entityCategoryMap={Object.fromEntries(
+          mainTickets.map((t) => [t.id, t.category || "Sem categoria"])
+        )}
+        logs={allTimesheetData
+          .filter((l) => l.ticket_id)
+          .map((l) => ({
+            entityId: l.ticket_id,
+            start_time: l.start_time,
+            end_time: l.end_time,
+            duration_seconds: l.duration_seconds,
+          }))}
+      />
 
       {/* NEW: Top 5 Tarefas Demoradas */}
       <Card>

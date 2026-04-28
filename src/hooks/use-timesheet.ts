@@ -468,6 +468,20 @@ export async function fetchTimesheetByDateRange(
   return (data as unknown as { ticket_id: string | null; start_time: string; end_time: string | null; duration_seconds: number }[]) || [];
 }
 
+// Fetch marketing timesheet logs filtered by date range (includes running timers)
+export async function fetchMarketingTimesheetByDateRange(
+  dateRange: { start: Date; end: Date }
+): Promise<{ marketing_task_id: string | null; start_time: string; end_time: string | null; duration_seconds: number }[]> {
+  const { data } = await supabase
+    .from("timesheet_logs")
+    .select("marketing_task_id, start_time, end_time, duration_seconds")
+    .not("marketing_task_id", "is", null)
+    .gte("start_time", dateRange.start.toISOString())
+    .lte("start_time", dateRange.end.toISOString());
+
+  return (data as unknown as { marketing_task_id: string | null; start_time: string; end_time: string | null; duration_seconds: number }[]) || [];
+}
+
 /**
  * Hook that returns a Set of entity IDs (ticket or marketing_task) with active timers,
  * plus their elapsed seconds. Subscribes to realtime updates.
