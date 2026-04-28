@@ -432,16 +432,16 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
         series={[
           {
             key: "criados",
-            label: "Criados no mês",
-            color: "hsl(var(--info))",
+            label: "Criados no período",
+            gradient: "info",
             type: "bar",
             getDate: (t) => t.created_at ? new Date(t.created_at) : null,
             items: filtered,
           },
           {
             key: "concluidos",
-            label: "Concluídos no mês",
-            color: "hsl(var(--success))",
+            label: "Concluídos no período",
+            gradient: "success",
             type: "line",
             getDate: (t) => t.completed_at ? new Date(t.completed_at) : null,
             items: completedTickets,

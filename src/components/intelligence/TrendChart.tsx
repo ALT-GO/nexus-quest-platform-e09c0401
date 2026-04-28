@@ -1,8 +1,7 @@
 import { useMemo } from "react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { TrendingUp } from "lucide-react";
 import {
-  ComposedChart, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
+  ComposedChart, Area, Line, Bar, XAxis, YAxis, CartesianGrid, Tooltip,
   ResponsiveContainer, Legend, LabelList,
 } from "recharts";
 import {
@@ -11,27 +10,20 @@ import {
   differenceInDays, isWithinInterval,
 } from "date-fns";
 import { ptBR } from "date-fns/locale";
-
-const tooltipStyle = {
-  backgroundColor: "hsl(var(--card))",
-  border: "1px solid hsl(var(--border))",
-  borderRadius: "8px",
-};
+import { BIChartCard } from "./bi/BIChartCard";
+import { BI_TOOLTIP_STYLE, BI_GRADIENTS, type BIGradientKey } from "./bi/bi-theme";
+import { BIGradientDefs } from "./bi/BIGradientDefs";
 
 export type TrendBucket = "day" | "week" | "month";
 
 export interface TrendSeries {
-  /** unique key for the series */
   key: string;
-  /** label shown in legend / tooltip */
   label: string;
-  /** HSL color string (already wrapped in hsl()) */
-  color: string;
-  /** "bar" or "line" */
-  type?: "bar" | "line";
-  /** date getter for each item; return null to skip */
+  /** A BI gradient key — color is derived from the design system. */
+  gradient: BIGradientKey;
+  /** "bar" (filled with gradient), "line" (thin stroke), or "area" (gradient fill). */
+  type?: "bar" | "line" | "area";
   getDate: (item: any) => Date | null | undefined;
-  /** items to count/aggregate */
   items: any[];
 }
 
@@ -39,9 +31,7 @@ interface TrendChartProps {
   title: string;
   dateRange: { start: Date; end: Date };
   series: TrendSeries[];
-  /** force a specific bucket; otherwise auto */
   bucket?: TrendBucket;
-  /** chart height (px) */
   height?: number;
 }
 
@@ -53,9 +43,9 @@ function pickBucket(start: Date, end: Date): TrendBucket {
 
 function bucketLabel(bucket: TrendBucket) {
   switch (bucket) {
-    case "day": return "Diário";
-    case "week": return "Semanal";
-    case "month": return "Mensal";
+    case "day": return "diária";
+    case "week": return "semanal";
+    case "month": return "mensal";
   }
 }
 
@@ -84,7 +74,6 @@ export function TrendChart({
       labelFmt = (d) => format(d, "MMM/yy", { locale: ptBR });
     }
 
-    // Initialize rows
     const rows = buckets.map((b) => {
       const row: Record<string, any> = { _bucket: b.getTime(), name: labelFmt(b) };
       series.forEach((s) => { row[s.key] = 0; });
@@ -94,7 +83,6 @@ export function TrendChart({
     const indexByTime = new Map<number, Record<string, any>>();
     rows.forEach((r) => indexByTime.set(r._bucket, r));
 
-    // Count items per series
     series.forEach((s) => {
       s.items.forEach((item) => {
         const d = s.getDate(item);
@@ -111,84 +99,105 @@ export function TrendChart({
   }, [dateRange, series, bucket]);
 
   const hasData = data.some((row) => series.some((s) => row[s.key] > 0));
+  const usedGradients = Array.from(new Set(series.map((s) => s.gradient)));
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center justify-between gap-2 text-base font-semibold">
-          <div className="flex items-center gap-2">
-            <TrendingUp className="h-4 w-4 text-muted-foreground" />
-            {title}
-          </div>
-          <span className="text-xs font-normal text-muted-foreground">
-            Visão {bucketLabel(bucket).toLowerCase()}
-          </span>
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
-        {!hasData ? (
-          <div className="flex items-center justify-center py-12 text-sm text-muted-foreground" style={{ height }}>
-            Nenhum dado no período selecionado
-          </div>
-        ) : (
-          <div style={{ height }}>
-            <ResponsiveContainer width="100%" height="100%">
-              <ComposedChart data={data} margin={{ top: 24, right: 10, left: 0, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
-                <XAxis
-                  dataKey="name"
-                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                  interval="preserveStartEnd"
-                  minTickGap={20}
-                />
-                <YAxis
-                  tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
-                  allowDecimals={false}
-                />
-                <Tooltip contentStyle={tooltipStyle} />
-                <Legend wrapperStyle={{ fontSize: 12 }} />
-                {series.map((s) =>
-                  (s.type ?? "bar") === "line" ? (
+    <BIChartCard
+      title={title}
+      icon={TrendingUp}
+      iconColor="text-primary"
+      hint={<span>Visão {bucketLabel(bucket)}</span>}
+    >
+      {!hasData ? (
+        <div className="flex items-center justify-center py-12 text-sm text-muted-foreground" style={{ height }}>
+          Nenhum dado no período selecionado
+        </div>
+      ) : (
+        <div style={{ height }}>
+          <ResponsiveContainer width="100%" height="100%">
+            <ComposedChart data={data} margin={{ top: 24, right: 12, left: 0, bottom: 0 }}>
+              <BIGradientDefs keys={usedGradients} />
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" vertical={false} />
+              <XAxis
+                dataKey="name"
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+                interval="preserveStartEnd"
+                minTickGap={20}
+              />
+              <YAxis
+                tick={{ fill: "hsl(var(--muted-foreground))", fontSize: 11 }}
+                axisLine={false}
+                tickLine={false}
+                allowDecimals={false}
+              />
+              <Tooltip contentStyle={BI_TOOLTIP_STYLE} cursor={{ fill: "hsl(var(--muted) / 0.3)" }} />
+              <Legend wrapperStyle={{ fontSize: 12, paddingTop: 8 }} iconType="circle" />
+              {series.map((s) => {
+                const grad = BI_GRADIENTS[s.gradient];
+                const type = s.type ?? "bar";
+                if (type === "line") {
+                  return (
                     <Line
                       key={s.key}
                       type="monotone"
                       dataKey={s.key}
                       name={s.label}
-                      stroke={s.color}
-                      strokeWidth={2}
-                      dot={{ r: 3 }}
-                      activeDot={{ r: 5 }}
+                      stroke={grad.color}
+                      strokeWidth={2.5}
+                      dot={{ r: 3, fill: grad.color, strokeWidth: 0 }}
+                      activeDot={{ r: 5, strokeWidth: 0 }}
                     >
                       <LabelList
                         dataKey={s.key}
                         position="top"
                         offset={8}
-                        style={{ fill: "hsl(var(--foreground))", fontSize: 11, fontWeight: 500 }}
+                        style={{ fill: "hsl(var(--foreground))", fontSize: 10, fontWeight: 600 }}
                         formatter={(v: number) => (v > 0 ? v : "")}
                       />
                     </Line>
-                  ) : (
-                    <Bar
+                  );
+                }
+                if (type === "area") {
+                  return (
+                    <Area
                       key={s.key}
+                      type="monotone"
                       dataKey={s.key}
                       name={s.label}
-                      fill={s.color}
-                      radius={[4, 4, 0, 0]}
-                    >
-                      <LabelList
-                        dataKey={s.key}
-                        position="top"
-                        style={{ fill: "hsl(var(--foreground))", fontSize: 11, fontWeight: 500 }}
-                        formatter={(v: number) => (v > 0 ? v : "")}
-                      />
-                    </Bar>
-                  )
-                )}
-              </ComposedChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </CardContent>
-    </Card>
+                      stroke={grad.color}
+                      strokeWidth={2}
+                      fill={`url(#${grad.id})`}
+                      dot={{ r: 3, fill: grad.color, strokeWidth: 0 }}
+                      activeDot={{ r: 5 }}
+                    />
+                  );
+                }
+                return (
+                  <Bar
+                    key={s.key}
+                    dataKey={s.key}
+                    name={s.label}
+                    fill={`url(#${grad.id})`}
+                    stroke={grad.color}
+                    strokeWidth={1}
+                    radius={[6, 6, 0, 0]}
+                    maxBarSize={48}
+                  >
+                    <LabelList
+                      dataKey={s.key}
+                      position="top"
+                      style={{ fill: "hsl(var(--foreground))", fontSize: 10, fontWeight: 600 }}
+                      formatter={(v: number) => (v > 0 ? v : "")}
+                    />
+                  </Bar>
+                );
+              })}
+            </ComposedChart>
+          </ResponsiveContainer>
+        </div>
+      )}
+    </BIChartCard>
   );
 }
