@@ -56,6 +56,20 @@ export function useTimesheet(ticketId: string | null) {
 
   useEffect(() => { fetchLogs(); }, [fetchLogs]);
 
+  // Realtime: refetch when this ticket's timesheet changes (e.g. started/paused elsewhere)
+  useEffect(() => {
+    if (!ticketId) return;
+    const channel = supabase
+      .channel(`timesheet_ticket_${ticketId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "timesheet_logs", filter: `ticket_id=eq.${ticketId}` },
+        () => { fetchLogs(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [ticketId, fetchLogs]);
+
   useEffect(() => {
     const calc = () => {
       let total = 0;
