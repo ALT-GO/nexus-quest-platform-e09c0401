@@ -340,11 +340,29 @@ export function NewTicketDialog() {
       return;
     }
 
+    if (isDesligamento && !desligamento.dataDesligamento) {
+      toast.error("Informe a Data do Desligamento.");
+      return;
+    }
+    if (isContratacao && !contratacao.dataContratacao) {
+      toast.error("Informe a Data da Contratação.");
+      return;
+    }
+
     setSubmitting(true);
 
     // Always use the requester/collaborator name as the ticket title
     const collaboratorName = isContratacao ? contratacao.colaborador : isDesligamento ? desligamento.colaborador : "";
     const ticketTitle = collaboratorName || finalRequester;
+
+    // Override SLA deadline with hiring/firing date when applicable
+    let slaDeadlineOverride: string | undefined;
+    const dateStr = isDesligamento ? desligamento.dataDesligamento : isContratacao ? contratacao.dataContratacao : "";
+    if (dateStr) {
+      // End-of-day local time so it covers the entire date
+      const d = new Date(`${dateStr}T23:59:59`);
+      if (!isNaN(d.getTime())) slaDeadlineOverride = d.toISOString();
+    }
 
     const result = await createTicket({
       title: ticketTitle,
@@ -354,6 +372,7 @@ export function NewTicketDialog() {
       email: emailField || "interno@empresa.com",
       department: department || undefined,
       priority,
+      sla_deadline_override: slaDeadlineOverride,
     });
 
     if (result.success) {
