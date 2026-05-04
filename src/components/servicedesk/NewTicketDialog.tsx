@@ -640,6 +640,14 @@ export function NewTicketDialog() {
                     placeholder="Ex: 1001"
                   />
                 </div>
+                <div className="space-y-1">
+                  <Label>Data da Contratação <span className="text-destructive">*</span></Label>
+                  <Input
+                    type="date"
+                    value={contratacao.dataContratacao}
+                    onChange={(e) => setContratacao({ ...contratacao, dataContratacao: e.target.value })}
+                  />
+                </div>
               </div>
               <div className="space-y-2">
                 <Label className="text-sm">Necessidades</Label>
