@@ -534,7 +534,7 @@ export function NewTicketDialog() {
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label>Data do Desligamento</Label>
+                  <Label>Data do Desligamento <span className="text-destructive">*</span></Label>
                   <Input
                     type="date"
                     value={desligamento.dataDesligamento}
