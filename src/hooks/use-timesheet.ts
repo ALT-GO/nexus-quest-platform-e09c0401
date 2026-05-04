@@ -56,6 +56,20 @@ export function useTimesheet(ticketId: string | null) {
 
   useEffect(() => { fetchLogs(); }, [fetchLogs]);
 
+  // Realtime: refetch when this ticket's timesheet changes (e.g. started/paused elsewhere)
+  useEffect(() => {
+    if (!ticketId) return;
+    const channel = supabase
+      .channel(`timesheet_ticket_${ticketId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "timesheet_logs", filter: `ticket_id=eq.${ticketId}` },
+        () => { fetchLogs(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [ticketId, fetchLogs]);
+
   useEffect(() => {
     const calc = () => {
       let total = 0;
@@ -158,6 +172,20 @@ export function useMarketingTimesheet(marketingTaskId: string | null) {
   }, [marketingTaskId]);
 
   useEffect(() => { fetchLogs(); }, [fetchLogs]);
+
+  // Realtime: refetch when this marketing task's timesheet changes
+  useEffect(() => {
+    if (!marketingTaskId) return;
+    const channel = supabase
+      .channel(`timesheet_mkt_${marketingTaskId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "timesheet_logs", filter: `marketing_task_id=eq.${marketingTaskId}` },
+        () => { fetchLogs(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [marketingTaskId, fetchLogs]);
 
   useEffect(() => {
     const calc = () => {
