@@ -217,11 +217,14 @@ export async function createTicket(data: {
   department?: string;
   priority?: "low" | "medium" | "high";
   parent_ticket_id?: string;
+  sla_deadline_override?: string;
 }): Promise<{ success: boolean; ticketNumber?: string; ticketId?: string }> {
   const dynamicMap = await fetchSlaCategoryMap();
   const slaHours = (dynamicMap[data.category] ?? slaByCategory[data.category]) ?? 24;
   const now = new Date();
-  const slaDeadline = new Date(now.getTime() + slaHours * 3600000);
+  const slaDeadline = data.sla_deadline_override
+    ? new Date(data.sla_deadline_override)
+    : new Date(now.getTime() + slaHours * 3600000);
 
   // Resolve the correct Kanban column based on category
   const statusId = await resolveStatusId(data.category);
