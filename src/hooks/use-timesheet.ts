@@ -173,6 +173,20 @@ export function useMarketingTimesheet(marketingTaskId: string | null) {
 
   useEffect(() => { fetchLogs(); }, [fetchLogs]);
 
+  // Realtime: refetch when this marketing task's timesheet changes
+  useEffect(() => {
+    if (!marketingTaskId) return;
+    const channel = supabase
+      .channel(`timesheet_mkt_${marketingTaskId}`)
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "timesheet_logs", filter: `marketing_task_id=eq.${marketingTaskId}` },
+        () => { fetchLogs(); }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [marketingTaskId, fetchLogs]);
+
   useEffect(() => {
     const calc = () => {
       let total = 0;
