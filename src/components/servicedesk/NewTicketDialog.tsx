@@ -308,6 +308,7 @@ export function NewTicketDialog() {
       return [
         `Colaborador: ${contratacao.colaborador}`,
         `Centro de Custo: ${contratacao.centroCusto}`,
+        `Data da Contratação: ${contratacao.dataContratacao}`,
         ...items,
         suggestions.length > 0 ? `\nSugestões de estoque:\n${suggestions.map(s => `  - ${s}`).join("\n")}` : "",
         description && `\nObservações: ${description}`,
