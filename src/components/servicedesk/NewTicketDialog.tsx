@@ -72,6 +72,7 @@ interface ContratacaoFields {
   chip: boolean;
   notebook: boolean;
   email: boolean;
+  dataContratacao: string;
 }
 
 const defaultDesligamento: DesligamentoFields = {
@@ -93,6 +94,7 @@ const defaultContratacao: ContratacaoFields = {
   chip: false,
   notebook: false,
   email: false,
+  dataContratacao: "",
 };
 
 export function NewTicketDialog() {
