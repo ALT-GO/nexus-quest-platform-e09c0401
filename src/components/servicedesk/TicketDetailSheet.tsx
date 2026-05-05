@@ -162,7 +162,7 @@ interface TicketDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   statuses: StatusCustom[];
   isFinalStatus: (statusId: string) => boolean;
-  getSlaInfo: (createdAt: string, category: string, isCompleted: boolean) => SlaInfo;
+  getSlaInfo: (createdAt: string, category: string, isCompleted: boolean, deadlineOverride?: string | null) => SlaInfo;
   getAvailableForCategory: (category: string) => HardwareAsset[];
   getAsset: (id: string) => HardwareAsset | undefined;
   onLinkAsset: (ticketId: string, assetId: string) => void;
