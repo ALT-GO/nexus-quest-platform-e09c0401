@@ -250,7 +250,7 @@ export function TicketDetailSheet({
   if (!ticket) return null;
 
   const isCompleted = !!ticket.completed_at;
-  const sla = getSlaInfo(ticket.created_at, ticket.category, isCompleted);
+  const sla = getSlaInfo(ticket.created_at, ticket.category, isCompleted, ticket.sla_deadline);
   const currentStatus = statuses.find((s) => s.id === ticket.status_id);
   const linkedAsset = ticket.asset_id ? getAsset(ticket.asset_id) : undefined;
   const availableAssets = getAvailableForCategory(ticket.category);
