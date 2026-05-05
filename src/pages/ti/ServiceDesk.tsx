@@ -145,7 +145,7 @@ export default function ServiceDesk() {
     tickets.forEach((ticket) => {
       if (isFinalStatus(ticket.status_id)) return;
 
-      const sla = getSlaInfo(ticket.created_at, ticket.category, false);
+      const sla = getSlaInfo(ticket.created_at, ticket.category, false, ticket.sla_deadline);
 
       // SLA near expiration: fire ONCE per ticket when ≤15 min remain.
       // Persisted in localStorage so reloads don't re-trigger.
