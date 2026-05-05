@@ -164,6 +164,20 @@ export default function ServiceDesk() {
         });
       }
 
+      // If deadline was extended after expiration, allow re-trigger
+      if (!sla.slaVencido && loggedExpired.current.has(ticket.id)) {
+        loggedExpired.current.delete(ticket.id);
+      }
+      if (!ticket.sla_expired && sla.slaVencido === false) {
+        loggedExpired.current.delete(ticket.id);
+      }
+
+      if (ticket.sla_expired && !sla.slaVencido) {
+        // Deadline pushed forward — clear expired flag
+        updateTicket(ticket.id, { sla_expired: false });
+        return;
+      }
+
       if (ticket.sla_expired) return;
 
       if (sla.slaVencido && !loggedExpired.current.has(ticket.id)) {
