@@ -601,6 +601,7 @@ export default function ServiceDesk() {
             createdAt: t.created_at,
             completedAt: t.completed_at ?? undefined,
             slaVencido: t.sla_expired,
+            slaDeadline: t.sla_deadline,
             assignee: t.assignee ?? undefined,
             ativoId: t.asset_id ?? undefined,
             subtaskAssetIds: getSubtasks(t.id).map((s) => s.asset_id).filter(Boolean) as string[],
