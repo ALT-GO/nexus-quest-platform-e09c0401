@@ -162,7 +162,7 @@ interface TicketDetailSheetProps {
   onOpenChange: (open: boolean) => void;
   statuses: StatusCustom[];
   isFinalStatus: (statusId: string) => boolean;
-  getSlaInfo: (createdAt: string, category: string, isCompleted: boolean) => SlaInfo;
+  getSlaInfo: (createdAt: string, category: string, isCompleted: boolean, deadlineOverride?: string | null) => SlaInfo;
   getAvailableForCategory: (category: string) => HardwareAsset[];
   getAsset: (id: string) => HardwareAsset | undefined;
   onLinkAsset: (ticketId: string, assetId: string) => void;
@@ -250,7 +250,7 @@ export function TicketDetailSheet({
   if (!ticket) return null;
 
   const isCompleted = !!ticket.completed_at;
-  const sla = getSlaInfo(ticket.created_at, ticket.category, isCompleted);
+  const sla = getSlaInfo(ticket.created_at, ticket.category, isCompleted, ticket.sla_deadline);
   const currentStatus = statuses.find((s) => s.id === ticket.status_id);
   const linkedAsset = ticket.asset_id ? getAsset(ticket.asset_id) : undefined;
   const availableAssets = getAvailableForCategory(ticket.category);
@@ -637,7 +637,8 @@ export function TicketDetailSheet({
                   onChange={async (e) => {
                     if (!e.target.value) return;
                     const newDeadline = new Date(e.target.value).toISOString();
-                    await onUpdateTicket(ticket.id, { sla_deadline: newDeadline } as any);
+                    const isFuture = new Date(newDeadline).getTime() > Date.now();
+                    await onUpdateTicket(ticket.id, { sla_deadline: newDeadline, ...(isFuture ? { sla_expired: false } : {}) } as any);
                     await logHistory("field_change", `Vencimento SLA alterado para ${format(new Date(e.target.value), "dd/MM/yyyy HH:mm", { locale: ptBR })}`, "Sistema");
                     toast.success("Vencimento SLA atualizado");
                   }}

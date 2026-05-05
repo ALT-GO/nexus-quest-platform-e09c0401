@@ -47,7 +47,7 @@ interface KanbanTicket {
 interface KanbanBoardProps {
   tickets: KanbanTicket[];
   statuses: StatusCustom[];
-  getSlaInfo: (createdAt: string, category: string, isCompleted: boolean) => SlaInfo;
+  getSlaInfo: (createdAt: string, category: string, isCompleted: boolean, deadlineOverride?: string | null) => SlaInfo;
   isFinalStatus: (statusId: string) => boolean;
   onStatusChange: (ticketId: string, newStatusId: string) => void;
   onQuickComplete: (ticketId: string) => void;
@@ -183,7 +183,7 @@ export function KanbanBoard({
                     >
                       {columnTickets.map((ticket, index) => {
                         const isCompleted = !!ticket.completedAt;
-                        const sla = getSlaInfo(ticket.createdAt, ticket.category, isCompleted);
+                        const sla = getSlaInfo(ticket.createdAt, ticket.category, isCompleted, ticket.slaDeadline);
                         const priority = priorityConfig[ticket.priority] || priorityConfig.medium;
                         const linkedAsset = ticket.ativoId ? getAsset(ticket.ativoId) : undefined;
                         const subtaskAssets = (ticket.subtaskAssetIds || []).map(getAsset).filter(Boolean) as HardwareAsset[];

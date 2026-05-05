@@ -557,10 +557,12 @@ export function NewTicketDialog() {
                           !desligamento.dataDesligamento && "text-muted-foreground"
                         )}
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {desligamento.dataDesligamento
-                          ? format(parseStoredDate(desligamento.dataDesligamento)!, "dd/MM/yyyy", { locale: ptBR })
-                          : "Selecionar data do desligamento"}
+                        <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">
+                          {desligamento.dataDesligamento
+                            ? format(parseStoredDate(desligamento.dataDesligamento)!, "dd/MM/yyyy", { locale: ptBR })
+                            : "Selecionar data"}
+                        </span>
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">
@@ -686,10 +688,12 @@ export function NewTicketDialog() {
                           !contratacao.dataContratacao && "text-muted-foreground"
                         )}
                       >
-                        <CalendarIcon className="mr-2 h-4 w-4" />
-                        {contratacao.dataContratacao
-                          ? format(parseStoredDate(contratacao.dataContratacao)!, "dd/MM/yyyy", { locale: ptBR })
-                          : "Selecionar data da contratação"}
+                        <CalendarIcon className="mr-2 h-4 w-4 flex-shrink-0" />
+                        <span className="truncate">
+                          {contratacao.dataContratacao
+                            ? format(parseStoredDate(contratacao.dataContratacao)!, "dd/MM/yyyy", { locale: ptBR })
+                            : "Selecionar data"}
+                        </span>
                       </Button>
                     </PopoverTrigger>
                     <PopoverContent className="w-auto p-0" align="start">

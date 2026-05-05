@@ -145,7 +145,7 @@ export default function ServiceDesk() {
     tickets.forEach((ticket) => {
       if (isFinalStatus(ticket.status_id)) return;
 
-      const sla = getSlaInfo(ticket.created_at, ticket.category, false);
+      const sla = getSlaInfo(ticket.created_at, ticket.category, false, ticket.sla_deadline);
 
       // SLA near expiration: fire ONCE per ticket when ≤15 min remain.
       // Persisted in localStorage so reloads don't re-trigger.
@@ -162,6 +162,20 @@ export default function ServiceDesk() {
           title: ticket.title,
           minutesLeft: Math.round(sla.remainingMs / 60000),
         });
+      }
+
+      // If deadline was extended after expiration, allow re-trigger
+      if (!sla.slaVencido && loggedExpired.current.has(ticket.id)) {
+        loggedExpired.current.delete(ticket.id);
+      }
+      if (!ticket.sla_expired && sla.slaVencido === false) {
+        loggedExpired.current.delete(ticket.id);
+      }
+
+      if (ticket.sla_expired && !sla.slaVencido) {
+        // Deadline pushed forward — clear expired flag
+        updateTicket(ticket.id, { sla_expired: false });
+        return;
       }
 
       if (ticket.sla_expired) return;
@@ -587,6 +601,7 @@ export default function ServiceDesk() {
             createdAt: t.created_at,
             completedAt: t.completed_at ?? undefined,
             slaVencido: t.sla_expired,
+            slaDeadline: t.sla_deadline,
             assignee: t.assignee ?? undefined,
             ativoId: t.asset_id ?? undefined,
             subtaskAssetIds: getSubtasks(t.id).map((s) => s.asset_id).filter(Boolean) as string[],

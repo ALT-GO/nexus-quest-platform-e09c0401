@@ -30,6 +30,7 @@ interface TicketForTable {
   createdAt: string;
   completedAt?: string;
   slaVencido: boolean;
+  slaDeadline?: string;
   assignee?: string;
   ativoId?: string;
   subtaskAssetIds?: string[];
@@ -38,7 +39,7 @@ interface TicketForTable {
 interface TicketTableProps {
   tickets: TicketForTable[];
   statuses: StatusCustom[];
-  getSlaInfo: (createdAt: string, category: string, isCompleted: boolean) => SlaInfo;
+  getSlaInfo: (createdAt: string, category: string, isCompleted: boolean, deadlineOverride?: string | null) => SlaInfo;
   isFinalStatus: (statusId: string) => boolean;
   onQuickComplete: (ticketId: string) => void;
   getAvailableForCategory: (category: string) => HardwareAsset[];
@@ -90,7 +91,7 @@ export function TicketTable({
           <TableBody>
             {tickets.map((ticket) => {
               const isCompleted = !!ticket.completedAt;
-              const sla = getSlaInfo(ticket.createdAt, ticket.category, isCompleted);
+              const sla = getSlaInfo(ticket.createdAt, ticket.category, isCompleted, ticket.slaDeadline);
               const statusDisplay = getStatusDisplay(ticket.statusId);
               const isExpanded = expandedTicket === ticket.id;
               const availableAssets = getAvailableForCategory(ticket.category);

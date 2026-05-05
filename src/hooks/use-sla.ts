@@ -43,19 +43,32 @@ export function calcSlaInfo(
   category: string,
   isCompleted: boolean,
   settings?: SlaSettings,
-  slaMap?: Record<string, number>
+  slaMap?: Record<string, number>,
+  deadlineOverride?: string | null
 ): SlaInfo {
-  const prazoSlaEmHoras = (slaMap?.[category] ?? slaByCategory[category]) ?? 24;
-  const dataLimiteSla = calcSlaDeadline(createdAt, category, settings, slaMap);
-  const totalMs = prazoSlaEmHoras * 60 * 60 * 1000;
+  const created = new Date(createdAt);
   const now = new Date();
 
+  let dataLimiteSla: Date;
+  let prazoSlaEmHoras: number;
   let remainingMs: number;
-  if (settings && settings.businessHoursOnly) {
-    const elapsedMs = calcBusinessHoursMs(new Date(createdAt), now, settings);
-    remainingMs = totalMs - elapsedMs;
-  } else {
+  let totalMs: number;
+
+  if (deadlineOverride) {
+    dataLimiteSla = new Date(deadlineOverride);
+    totalMs = Math.max(1, dataLimiteSla.getTime() - created.getTime());
+    prazoSlaEmHoras = totalMs / (1000 * 60 * 60);
     remainingMs = dataLimiteSla.getTime() - now.getTime();
+  } else {
+    prazoSlaEmHoras = (slaMap?.[category] ?? slaByCategory[category]) ?? 24;
+    dataLimiteSla = calcSlaDeadline(createdAt, category, settings, slaMap);
+    totalMs = prazoSlaEmHoras * 60 * 60 * 1000;
+    if (settings && settings.businessHoursOnly) {
+      const elapsedMs = calcBusinessHoursMs(created, now, settings);
+      remainingMs = totalMs - elapsedMs;
+    } else {
+      remainingMs = dataLimiteSla.getTime() - now.getTime();
+    }
   }
 
   const percentRemaining = Math.max(0, (remainingMs / totalMs) * 100);
@@ -109,8 +122,8 @@ export function useSlaTimer() {
   }, []);
 
   const getSlaInfo = useCallback(
-    (createdAt: string, category: string, isCompleted: boolean) =>
-      calcSlaInfo(createdAt, category, isCompleted, settings, slaMap),
+    (createdAt: string, category: string, isCompleted: boolean, deadlineOverride?: string | null) =>
+      calcSlaInfo(createdAt, category, isCompleted, settings, slaMap, deadlineOverride),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [tick, settings, slaMap]
   );
