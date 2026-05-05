@@ -637,7 +637,8 @@ export function TicketDetailSheet({
                   onChange={async (e) => {
                     if (!e.target.value) return;
                     const newDeadline = new Date(e.target.value).toISOString();
-                    await onUpdateTicket(ticket.id, { sla_deadline: newDeadline } as any);
+                    const isFuture = new Date(newDeadline).getTime() > Date.now();
+                    await onUpdateTicket(ticket.id, { sla_deadline: newDeadline, ...(isFuture ? { sla_expired: false } : {}) } as any);
                     await logHistory("field_change", `Vencimento SLA alterado para ${format(new Date(e.target.value), "dd/MM/yyyy HH:mm", { locale: ptBR })}`, "Sistema");
                     toast.success("Vencimento SLA atualizado");
                   }}
