@@ -122,8 +122,8 @@ export function useSlaTimer() {
   }, []);
 
   const getSlaInfo = useCallback(
-    (createdAt: string, category: string, isCompleted: boolean) =>
-      calcSlaInfo(createdAt, category, isCompleted, settings, slaMap),
+    (createdAt: string, category: string, isCompleted: boolean, deadlineOverride?: string | null) =>
+      calcSlaInfo(createdAt, category, isCompleted, settings, slaMap, deadlineOverride),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [tick, settings, slaMap]
   );
