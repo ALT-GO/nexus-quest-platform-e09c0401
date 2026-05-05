@@ -1,4 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale";
 import {
   Dialog,
   DialogContent,
@@ -20,7 +22,14 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Loader2, Send, Search, Package, CheckCircle2, AlertTriangle } from "lucide-react";
+import { Calendar } from "@/components/ui/calendar";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
+import { Plus, Loader2, Send, Search, Package, CheckCircle2, AlertTriangle, CalendarIcon } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createTicket, runTicketCreatedAutomations } from "@/hooks/use-tickets";
@@ -96,6 +105,9 @@ const defaultContratacao: ContratacaoFields = {
   email: false,
   dataContratacao: "",
 };
+
+const parseStoredDate = (value: string) => (value ? new Date(`${value}T12:00:00`) : undefined);
+const toStoredDate = (value?: Date) => (value ? format(value, "yyyy-MM-dd") : "");
 
 export function NewTicketDialog() {
   const [open, setOpen] = useState(false);
@@ -535,11 +547,33 @@ export function NewTicketDialog() {
                 </div>
                 <div className="space-y-1">
                   <Label>Data do Desligamento <span className="text-destructive">*</span></Label>
-                  <Input
-                    type="date"
-                    value={desligamento.dataDesligamento}
-                    onChange={(e) => setDesligamento({ ...desligamento, dataDesligamento: e.target.value })}
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !desligamento.dataDesligamento && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {desligamento.dataDesligamento
+                          ? format(parseStoredDate(desligamento.dataDesligamento)!, "dd/MM/yyyy", { locale: ptBR })
+                          : "Selecionar data do desligamento"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={parseStoredDate(desligamento.dataDesligamento)}
+                        onSelect={(date) => setDesligamento({ ...desligamento, dataDesligamento: toStoredDate(date) })}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <p className="text-xs text-muted-foreground">Essa data será usada no vencimento do SLA.</p>
                 </div>
               </div>
 
@@ -642,11 +676,33 @@ export function NewTicketDialog() {
                 </div>
                 <div className="space-y-1">
                   <Label>Data da Contratação <span className="text-destructive">*</span></Label>
-                  <Input
-                    type="date"
-                    value={contratacao.dataContratacao}
-                    onChange={(e) => setContratacao({ ...contratacao, dataContratacao: e.target.value })}
-                  />
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button
+                        type="button"
+                        variant="outline"
+                        className={cn(
+                          "w-full justify-start text-left font-normal",
+                          !contratacao.dataContratacao && "text-muted-foreground"
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {contratacao.dataContratacao
+                          ? format(parseStoredDate(contratacao.dataContratacao)!, "dd/MM/yyyy", { locale: ptBR })
+                          : "Selecionar data da contratação"}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-auto p-0" align="start">
+                      <Calendar
+                        mode="single"
+                        selected={parseStoredDate(contratacao.dataContratacao)}
+                        onSelect={(date) => setContratacao({ ...contratacao, dataContratacao: toStoredDate(date) })}
+                        initialFocus
+                        className={cn("p-3 pointer-events-auto")}
+                      />
+                    </PopoverContent>
+                  </Popover>
+                  <p className="text-xs text-muted-foreground">Essa data será usada no vencimento do SLA.</p>
                 </div>
               </div>
               <div className="space-y-2">
