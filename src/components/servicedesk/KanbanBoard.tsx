@@ -47,7 +47,7 @@ interface KanbanTicket {
 interface KanbanBoardProps {
   tickets: KanbanTicket[];
   statuses: StatusCustom[];
-  getSlaInfo: (createdAt: string, category: string, isCompleted: boolean) => SlaInfo;
+  getSlaInfo: (createdAt: string, category: string, isCompleted: boolean, deadlineOverride?: string | null) => SlaInfo;
   isFinalStatus: (statusId: string) => boolean;
   onStatusChange: (ticketId: string, newStatusId: string) => void;
   onQuickComplete: (ticketId: string) => void;
