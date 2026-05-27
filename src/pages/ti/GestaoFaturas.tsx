@@ -401,7 +401,7 @@ export default function GestaoFaturas() {
     const category = operadoraCategories[reportOp];
     let query = supabase.from("inventory").select("*").eq("category", category);
     if (category === "linhas") query = query.eq("operadora", reportOp);
-    if (category === "licencas") query = query.eq("status", "Ativo");
+    // Para licenças, considera qualquer status — apenas o valor_mensal preenchido (>0) é filtrado no rateio.
 
     const { data, error } = await query;
     setReportLoading(false);
