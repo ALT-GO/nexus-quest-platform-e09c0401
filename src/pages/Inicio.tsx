@@ -222,23 +222,42 @@ export default function Inicio() {
     })();
   }, [isAdmin]);
 
-  // -------- Derived data --------
-  const myTickets = useMemo(
-    () =>
-      tickets.filter(
-        (t) => t.assignee === userName || t.email === userEmail || t.requester === userName
-      ),
-    [tickets, userName, userEmail]
-  );
+  // -------- Scoped data (respects admin viewMode) --------
+  const scopedMembers = useMemo(() => {
+    if (!isAdmin || viewMode === "self") {
+      return [{ id: userId, full_name: userName, email: userEmail }];
+    }
+    if (viewMode === "all") {
+      return teamMembers.map((m) => ({ id: m.id, full_name: m.full_name, email: "" }));
+    }
+    const m = teamMembers.find((x) => x.id === viewMode);
+    return m ? [{ id: m.id, full_name: m.full_name, email: "" }] : [];
+  }, [isAdmin, viewMode, userId, userName, userEmail, teamMembers]);
+
+  const myTickets = useMemo(() => {
+    const names = new Set(scopedMembers.map((m) => m.full_name.toLowerCase()).filter(Boolean));
+    const emails = new Set(scopedMembers.map((m) => (m.email || "").toLowerCase()).filter(Boolean));
+    return tickets.filter(
+      (t) =>
+        (t.assignee && names.has(String(t.assignee).toLowerCase())) ||
+        (t.requester && names.has(String(t.requester).toLowerCase())) ||
+        (t.email && emails.has(String(t.email).toLowerCase()))
+    );
+  }, [tickets, scopedMembers]);
+
+  const scopedMarketingSource = isAdmin && viewMode !== "self" ? allMarketingTasks : marketingTasks;
+  const scopedMarketing = useMemo(() => {
+    const ids = new Set(scopedMembers.map((m) => m.id));
+    return scopedMarketingSource.filter((m) => m.assignee_id && ids.has(m.assignee_id));
+  }, [scopedMembers, scopedMarketingSource]);
 
   const myOpenTickets = useMemo(() => myTickets.filter((t) => !t.completed_at), [myTickets]);
   const myOpenMarketing = useMemo(
-    () => marketingTasks.filter((m) => !m.completed_at),
-    [marketingTasks]
+    () => scopedMarketing.filter((m) => !m.completed_at),
+    [scopedMarketing]
   );
 
   const overdueCount = useMemo(() => {
-    const now = new Date();
     const ticketsOverdue = myOpenTickets.filter((t) => isPast(new Date(t.sla_deadline)));
     const mktOverdue = myOpenMarketing.filter(
       (m) => m.due_date && isPast(new Date(m.due_date))
@@ -250,19 +269,13 @@ export default function Inicio() {
     const ws = startOfWeek(new Date(), { weekStartsOn: 1 });
     const we = endOfWeek(new Date(), { weekStartsOn: 1 });
     const t = myTickets.filter(
-      (x) =>
-        x.completed_at &&
-        new Date(x.completed_at) >= ws &&
-        new Date(x.completed_at) <= we
+      (x) => x.completed_at && new Date(x.completed_at) >= ws && new Date(x.completed_at) <= we
     ).length;
-    const m = marketingTasks.filter(
-      (x) =>
-        x.completed_at &&
-        new Date(x.completed_at) >= ws &&
-        new Date(x.completed_at) <= we
+    const m = scopedMarketing.filter(
+      (x) => x.completed_at && new Date(x.completed_at) >= ws && new Date(x.completed_at) <= we
     ).length;
     return t + m;
-  }, [myTickets, marketingTasks]);
+  }, [myTickets, scopedMarketing]);
 
   const unreadNotifications = useMemo(
     () => notifications.filter((n) => !n.read),
