@@ -408,15 +408,54 @@ export default function Inicio() {
                 <p className="mt-1 text-sm text-muted-foreground">
                   {format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                   {" · "}
-                  Você tem{" "}
-                  <span className="font-medium text-foreground">
-                    {myOpenTickets.length + myOpenMarketing.length}
-                  </span>{" "}
-                  tarefas em aberto.
+                  {viewMode === "self" ? (
+                    <>
+                      Você tem{" "}
+                      <span className="font-medium text-foreground">
+                        {myOpenTickets.length + myOpenMarketing.length}
+                      </span>{" "}
+                      tarefas em aberto.
+                    </>
+                  ) : viewMode === "all" ? (
+                    <>
+                      Visão consolidada da equipe ·{" "}
+                      <span className="font-medium text-foreground">
+                        {myOpenTickets.length + myOpenMarketing.length}
+                      </span>{" "}
+                      tarefas em aberto.
+                    </>
+                  ) : (
+                    <>
+                      Visualizando{" "}
+                      <span className="font-medium text-foreground">
+                        {teamMembers.find((m) => m.id === viewMode)?.full_name || "membro"}
+                      </span>{" "}
+                      · {myOpenTickets.length + myOpenMarketing.length} em aberto.
+                    </>
+                  )}
                 </p>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {isAdmin && teamMembers.length > 0 && (
+                <Select value={viewMode} onValueChange={setViewMode}>
+                  <SelectTrigger className="h-9 w-[220px] bg-background">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      <SelectValue placeholder="Filtrar visão" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[320px]">
+                    <SelectItem value="self">Minha visão</SelectItem>
+                    <SelectItem value="all">Equipe consolidada</SelectItem>
+                    {teamMembers.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <Button variant="outline" size="sm" onClick={() => navigate("/ti/service-desk")}>
                 <TicketIcon className="mr-2 h-4 w-4" />
                 Meus chamados
