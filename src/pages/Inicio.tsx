@@ -163,15 +163,22 @@ export default function Inicio() {
     };
   }, [userId]);
 
-  // Today's timesheet
+  // Today's timesheet (respects admin view filter)
   useEffect(() => {
     if (!userId) return;
     (async () => {
       const todayStart = startOfDay(new Date()).toISOString();
+      let targetIds: string[] = [userId];
+      if (isAdmin && viewMode === "all") targetIds = teamMembers.map((m) => m.id);
+      else if (isAdmin && viewMode !== "self") targetIds = [viewMode];
+      if (targetIds.length === 0) {
+        setTimesheetTodaySec(0);
+        return;
+      }
       const { data } = await (supabase as any)
         .from("timesheet_logs")
         .select("start_time,end_time,duration_seconds,user_id")
-        .eq("user_id", userId)
+        .in("user_id", targetIds)
         .gte("start_time", todayStart);
       let total = 0;
       ((data as any[]) || []).forEach((row) => {
@@ -180,7 +187,7 @@ export default function Inicio() {
       });
       setTimesheetTodaySec(total);
     })();
-  }, [userId]);
+  }, [userId, viewMode, isAdmin, teamMembers]);
 
   // Admin: fetch all members + all marketing tasks for team overview
   useEffect(() => {
