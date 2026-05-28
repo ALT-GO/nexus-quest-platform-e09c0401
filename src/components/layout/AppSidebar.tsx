@@ -72,9 +72,14 @@ export function AppSidebar() {
 
   const navigation: NavItem[] = [
     ...(hasPermission("ver_dashboard") ? [{
+      title: "Início",
+      href: "/",
+      icon: LayoutDashboard,
+    } as NavItem] : []),
+    ...(hasPermission("ver_central_inteligencia") ? [{
       title: "Dashboard",
-      href: hasPermission("ver_central_inteligencia") ? "/central-inteligencia" : "/",
-      icon: hasPermission("ver_central_inteligencia") ? Brain : LayoutDashboard,
+      href: "/central-inteligencia",
+      icon: Brain,
     } as NavItem] : []),
     {
       title: "Chat",
