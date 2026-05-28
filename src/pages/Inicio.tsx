@@ -100,6 +100,8 @@ export default function Inicio() {
     { id: string; full_name: string; avatar_url: string | null; role: string | null }[]
   >([]);
   const [allMarketingTasks, setAllMarketingTasks] = useState<MarketingTaskLite[]>([]);
+  // Admin view filter: "self" = own data | "all" = team consolidated | <userId> = specific member
+  const [viewMode, setViewMode] = useState<string>("self");
 
   // Fetch own profile (name + avatar)
   useEffect(() => {
