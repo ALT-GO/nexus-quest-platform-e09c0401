@@ -12,6 +12,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { useTickets } from "@/hooks/use-tickets";
 import { useTotalUnread, useUnreadCounts, useChatChannels } from "@/hooks/use-chat";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Users } from "lucide-react";
 import { formatDuration } from "@/hooks/use-timesheet";
 import {
   CheckCircle2,
