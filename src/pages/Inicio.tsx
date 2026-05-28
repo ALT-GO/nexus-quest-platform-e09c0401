@@ -357,13 +357,13 @@ export default function Inicio() {
   }, [myOpenTickets, myOpenMarketing]);
 
   const completionRate = useMemo(() => {
-    const total = myTickets.length + marketingTasks.length;
+    const total = myTickets.length + scopedMarketing.length;
     if (total === 0) return 0;
     const done =
       myTickets.filter((t) => t.completed_at).length +
-      marketingTasks.filter((m) => m.completed_at).length;
+      scopedMarketing.filter((m) => m.completed_at).length;
     return Math.round((done / total) * 100);
-  }, [myTickets, marketingTasks]);
+  }, [myTickets, scopedMarketing]);
 
   const unreadChannels = useMemo(
     () =>
