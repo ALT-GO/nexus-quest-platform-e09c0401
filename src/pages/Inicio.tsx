@@ -172,6 +172,39 @@ export default function Inicio() {
     })();
   }, [userId]);
 
+  // Admin: fetch all members + all marketing tasks for team overview
+  useEffect(() => {
+    if (!isAdmin) return;
+    (async () => {
+      const [{ data: profs }, { data: roles }, { data: mkt }] = await Promise.all([
+        supabase.from("profiles").select("id, full_name, avatar_url"),
+        (supabase as any).from("user_roles").select("user_id, role"),
+        (supabase as any)
+          .from("marketing_tasks")
+          .select("id,title,assignee_id,assignee_name,progress,due_date,priority,completed_at,updated_at"),
+      ]);
+      const roleMap: Record<string, string> = {};
+      ((roles as any[]) || []).forEach((r) => {
+        // Prefer "admin" > "ti" > "marketing" > "colaborador"
+        const rank = (x: string) => (x === "admin" ? 4 : x === "ti" ? 3 : x === "marketing" ? 2 : 1);
+        if (!roleMap[r.user_id] || rank(r.role) > rank(roleMap[r.user_id])) {
+          roleMap[r.user_id] = r.role;
+        }
+      });
+      setTeamMembers(
+        ((profs as any[]) || [])
+          .filter((p) => (p.full_name || "").trim() !== "")
+          .map((p) => ({
+            id: p.id,
+            full_name: p.full_name,
+            avatar_url: p.avatar_url,
+            role: roleMap[p.id] || "colaborador",
+          }))
+      );
+      setAllMarketingTasks((mkt as MarketingTaskLite[]) || []);
+    })();
+  }, [isAdmin]);
+
   // -------- Derived data --------
   const myTickets = useMemo(
     () =>
