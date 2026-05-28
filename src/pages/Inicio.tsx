@@ -78,7 +78,8 @@ export default function Inicio() {
   const navigate = useNavigate();
   const { tickets, loading: ticketsLoading } = useTickets();
   const totalUnreadChat = useTotalUnread();
-  const { data: channels = [] } = useChannels();
+  const { data: channels = [] } = useChatChannels();
+  const { data: unreadMap = {} } = useUnreadCounts();
 
   const userId = user?.id || "";
   const userEmail = user?.email || "";
@@ -93,13 +94,15 @@ export default function Inicio() {
   // Fetch marketing tasks assigned to me
   useEffect(() => {
     if (!userId) return;
-    supabase
-      .from("marketing_tasks")
-      .select("id,title,assignee_id,assignee_name,progress,due_date,priority,completed_at,updated_at")
-      .eq("assignee_id", userId)
-      .order("updated_at", { ascending: false })
-      .limit(200)
-      .then(({ data }) => setMarketingTasks((data as MarketingTaskLite[]) || []));
+    (async () => {
+      const { data } = await (supabase as any)
+        .from("marketing_tasks")
+        .select("id,title,assignee_id,assignee_name,progress,due_date,priority,completed_at,updated_at")
+        .eq("assignee_id", userId)
+        .order("updated_at", { ascending: false })
+        .limit(200);
+      setMarketingTasks((data as MarketingTaskLite[]) || []);
+    })();
   }, [userId]);
 
   // Fetch notifications
