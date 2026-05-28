@@ -657,27 +657,29 @@ export default function Inicio() {
                     Nenhuma mensagem pendente.
                   </p>
                 ) : (
-                  <div className="space-y-1.5">
-                    {unreadChannels.map((c: any) => (
-                      <button
-                        key={c.id}
-                        onClick={() => window.dispatchEvent(new CustomEvent("open-chat", { detail: { channelId: c.id } }))}
-                        className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors hover:bg-muted/60"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">{c.name || "Canal"}</p>
-                          {c.last_message_preview && (
-                            <p className="truncate text-xs text-muted-foreground">
-                              {c.last_message_preview}
-                            </p>
-                          )}
-                        </div>
-                        <Badge className="ml-2 bg-primary text-primary-foreground">
-                          {c.unread_count}
-                        </Badge>
-                      </button>
-                    ))}
-                  </div>
+                  <ScrollArea className="max-h-[260px] pr-3">
+                    <div className="space-y-1.5">
+                      {unreadChannels.map((c: any) => (
+                        <button
+                          key={c.id}
+                          onClick={() => window.dispatchEvent(new CustomEvent("open-chat", { detail: { channelId: c.id } }))}
+                          className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors hover:bg-muted/60"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">{c.name || "Canal"}</p>
+                            {c.last_message_preview && (
+                              <p className="truncate text-xs text-muted-foreground">
+                                {c.last_message_preview}
+                              </p>
+                            )}
+                          </div>
+                          <Badge className="ml-2 bg-primary text-primary-foreground">
+                            {c.unread_count}
+                          </Badge>
+                        </button>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 )}
               </CardContent>
             </Card>
