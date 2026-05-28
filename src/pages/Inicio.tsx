@@ -305,14 +305,14 @@ export default function Inicio() {
       const day = days.find((d) => isSameDay(d.date, c));
       if (day) day.total++;
     });
-    marketingTasks.forEach((m) => {
+    scopedMarketing.forEach((m) => {
       if (!m.completed_at) return;
       const c = new Date(m.completed_at);
       const day = days.find((d) => isSameDay(d.date, c));
       if (day) day.total++;
     });
     return days;
-  }, [myTickets, marketingTasks]);
+  }, [myTickets, scopedMarketing]);
 
   // Today's & upcoming tasks (combined, sorted by deadline)
   const upcomingTasks = useMemo(() => {
