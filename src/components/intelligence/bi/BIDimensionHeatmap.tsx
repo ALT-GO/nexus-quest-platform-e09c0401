@@ -82,8 +82,13 @@ export function BIDimensionHeatmap({
                     )}
                     style={i > 0 ? { background: `hsl(var(--primary) / ${0.15 + i * 0.75})` } : undefined}
                   >
-                    {v > 0 && i >= 0.4 && (
-                      <div className="flex h-full items-center justify-center text-[11px] font-bold text-primary-foreground">
+                    {v > 0 && (
+                      <div
+                        className={cn(
+                          "flex h-full items-center justify-center text-[11px] font-bold",
+                          i >= 0.4 ? "text-primary-foreground" : "text-foreground",
+                        )}
+                      >
                         {v}
                       </div>
                     )}
