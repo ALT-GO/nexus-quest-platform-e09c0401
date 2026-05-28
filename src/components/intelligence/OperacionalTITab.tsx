@@ -36,6 +36,7 @@ import { BIPeopleRanking } from "./bi/BIPeopleRanking";
 import { BIStatusDonut } from "./bi/BIStatusDonut";
 import { BIBacklogAging } from "./bi/BIBacklogAging";
 import { BIDemandHeatmap } from "./bi/BIDemandHeatmap";
+import { BIDimensionHeatmap } from "./bi/BIDimensionHeatmap";
 import { BIWorkloadChart } from "./bi/BIWorkloadChart";
 import { BI_TOOLTIP_STYLE, BI_COLORS } from "./bi/bi-theme";
 import { comparePeriod, previousPeriod } from "./bi/period-compare";
@@ -577,12 +578,22 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
             filtered.filter((t) => (t.assignee || "Sem atribuição") === name))}
         />
 
-        <BIDemandHeatmap
-          title="Mapa de Calor de Abertura de Chamados"
-          items={filtered}
-          getDate={(t) => t.created_at ? new Date(t.created_at) : null}
-          entityNoun="chamado"
-        />
+        <div className="grid gap-5">
+          <BIDimensionHeatmap
+            title="Mapa de Calor por Dia da Semana"
+            items={filtered}
+            getDate={(t) => t.created_at ? new Date(t.created_at) : null}
+            entityNoun="chamado"
+            mode="weekday"
+          />
+          <BIDimensionHeatmap
+            title="Mapa de Calor por Horário"
+            items={filtered}
+            getDate={(t) => t.created_at ? new Date(t.created_at) : null}
+            entityNoun="chamado"
+            mode="hour"
+          />
+        </div>
       </div>
     </>
   );
