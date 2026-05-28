@@ -83,13 +83,36 @@ export default function Inicio() {
 
   const userId = user?.id || "";
   const userEmail = user?.email || "";
-  const userName = user?.user_metadata?.full_name || userEmail.split("@")[0] || "Usuário";
-  const firstName = userName.split(" ")[0];
-  const avatarUrl = (user?.user_metadata as any)?.avatar_url || null;
 
+  const [profile, setProfile] = useState<{ full_name: string; avatar_url: string | null } | null>(null);
   const [marketingTasks, setMarketingTasks] = useState<MarketingTaskLite[]>([]);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [timesheetTodaySec, setTimesheetTodaySec] = useState(0);
+  const [teamMembers, setTeamMembers] = useState<
+    { id: string; full_name: string; avatar_url: string | null; role: string | null }[]
+  >([]);
+  const [allMarketingTasks, setAllMarketingTasks] = useState<MarketingTaskLite[]>([]);
+
+  // Fetch own profile (name + avatar)
+  useEffect(() => {
+    if (!userId) return;
+    (async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", userId)
+        .maybeSingle();
+      if (data) setProfile(data as any);
+    })();
+  }, [userId]);
+
+  const userName =
+    profile?.full_name?.trim() ||
+    user?.user_metadata?.full_name ||
+    userEmail.split("@")[0] ||
+    "Usuário";
+  const firstName = userName.split(" ")[0];
+  const avatarUrl = profile?.avatar_url || (user?.user_metadata as any)?.avatar_url || null;
 
   // Fetch marketing tasks assigned to me
   useEffect(() => {
