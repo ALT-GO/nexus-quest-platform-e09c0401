@@ -282,9 +282,11 @@ export default function Inicio() {
   const unreadChannels = useMemo(
     () =>
       (channels || [])
-        .filter((c: any) => (c.unread_count || 0) > 0)
+        .map((c: any) => ({ ...c, unread_count: unreadMap[c.id] || 0 }))
+        .filter((c: any) => c.unread_count > 0)
+        .sort((a: any, b: any) => b.unread_count - a.unread_count)
         .slice(0, 6),
-    [channels]
+    [channels, unreadMap]
   );
 
   const greeting = useMemo(() => {
