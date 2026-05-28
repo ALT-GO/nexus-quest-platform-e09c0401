@@ -767,3 +767,187 @@ function PriorityDot({ priority }: { priority: string }) {
       : "bg-emerald-500";
   return <span className={cn("h-2 w-2 rounded-full", color)} />;
 }
+
+function TeamOverview({
+  members,
+  tickets,
+  marketingTasks,
+}: {
+  members: { id: string; full_name: string; avatar_url: string | null; role: string | null }[];
+  tickets: any[];
+  marketingTasks: MarketingTaskLite[];
+}) {
+  const ws = startOfWeek(new Date(), { weekStartsOn: 1 });
+
+  const rows = useMemo(() => {
+    const byName: Record<string, any[]> = {};
+    tickets.forEach((t) => {
+      const k = (t.assignee || "").toLowerCase();
+      if (!k) return;
+      (byName[k] = byName[k] || []).push(t);
+    });
+    const byUserId: Record<string, MarketingTaskLite[]> = {};
+    marketingTasks.forEach((m) => {
+      if (!m.assignee_id) return;
+      (byUserId[m.assignee_id] = byUserId[m.assignee_id] || []).push(m);
+    });
+
+    return members
+      .map((m) => {
+        const ts = byName[m.full_name.toLowerCase()] || [];
+        const ms = byUserId[m.id] || [];
+        const open = ts.filter((t) => !t.completed_at).length + ms.filter((x) => !x.completed_at).length;
+        const overdue =
+          ts.filter((t) => !t.completed_at && isPast(new Date(t.sla_deadline))).length +
+          ms.filter((x) => !x.completed_at && x.due_date && isPast(new Date(x.due_date))).length;
+        const doneWeek =
+          ts.filter((t) => t.completed_at && new Date(t.completed_at) >= ws).length +
+          ms.filter((x) => x.completed_at && new Date(x.completed_at) >= ws).length;
+        const total = ts.length + ms.length;
+        const completionRate = total ? Math.round(((total - open) / total) * 100) : 0;
+        return { ...m, open, overdue, doneWeek, total, completionRate };
+      })
+      .filter((m) => m.total > 0)
+      .sort((a, b) => b.open - a.open);
+  }, [members, tickets, marketingTasks, ws]);
+
+  const totals = useMemo(
+    () => ({
+      members: rows.length,
+      open: rows.reduce((s, r) => s + r.open, 0),
+      overdue: rows.reduce((s, r) => s + r.overdue, 0),
+      doneWeek: rows.reduce((s, r) => s + r.doneWeek, 0),
+    }),
+    [rows]
+  );
+
+  const roleStyles: Record<string, string> = {
+    admin: "bg-primary/15 text-primary",
+    ti: "bg-blue-500/15 text-blue-600 dark:text-blue-400",
+    marketing: "bg-pink-500/15 text-pink-600 dark:text-pink-400",
+    colaborador: "bg-muted text-muted-foreground",
+  };
+  const roleLabel: Record<string, string> = {
+    admin: "Admin",
+    ti: "TI",
+    marketing: "Marketing",
+    colaborador: "Colaborador",
+  };
+
+  return (
+    <Card>
+      <CardHeader className="flex flex-col gap-2 pb-3 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <CardTitle className="flex items-center gap-2 text-base font-semibold">
+            <Sparkles className="h-4 w-4 text-primary" />
+            Visão geral das equipes
+          </CardTitle>
+          <p className="mt-1 text-xs text-muted-foreground">
+            Como cada usuário está performando — visível apenas para administradores.
+          </p>
+        </div>
+        <div className="flex flex-wrap gap-4 text-xs">
+          <TeamTotal label="Pessoas ativas" value={totals.members} />
+          <TeamTotal label="Em aberto" value={totals.open} />
+          <TeamTotal label="Atrasadas" value={totals.overdue} tone="destructive" />
+          <TeamTotal label="Concluídas / semana" value={totals.doneWeek} tone="success" />
+        </div>
+      </CardHeader>
+      <CardContent className="pt-0">
+        {rows.length === 0 ? (
+          <p className="py-6 text-center text-sm text-muted-foreground">
+            Nenhum usuário com tarefas atribuídas no momento.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border/60 text-left text-xs uppercase tracking-wide text-muted-foreground">
+                  <th className="py-2 pr-3 font-medium">Usuário</th>
+                  <th className="py-2 px-3 font-medium">Papel</th>
+                  <th className="py-2 px-3 text-right font-medium">Em aberto</th>
+                  <th className="py-2 px-3 text-right font-medium">Atrasadas</th>
+                  <th className="py-2 px-3 text-right font-medium">Concl. semana</th>
+                  <th className="py-2 pl-3 font-medium">Conclusão</th>
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => (
+                  <tr key={r.id} className="border-b border-border/40 last:border-0 hover:bg-muted/30">
+                    <td className="py-2.5 pr-3">
+                      <div className="flex items-center gap-2.5">
+                        <UserAvatar
+                          name={r.full_name}
+                          avatarUrl={r.avatar_url}
+                          userId={r.id}
+                          className="h-8 w-8"
+                        />
+                        <span className="font-medium text-foreground">{r.full_name}</span>
+                      </div>
+                    </td>
+                    <td className="py-2.5 px-3">
+                      <span
+                        className={cn(
+                          "inline-flex rounded-md px-2 py-0.5 text-xs font-medium",
+                          roleStyles[r.role || "colaborador"]
+                        )}
+                      >
+                        {roleLabel[r.role || "colaborador"]}
+                      </span>
+                    </td>
+                    <td className="py-2.5 px-3 text-right tabular-nums">{r.open}</td>
+                    <td
+                      className={cn(
+                        "py-2.5 px-3 text-right tabular-nums",
+                        r.overdue > 0 && "font-semibold text-destructive"
+                      )}
+                    >
+                      {r.overdue}
+                    </td>
+                    <td className="py-2.5 px-3 text-right tabular-nums text-success">
+                      {r.doneWeek}
+                    </td>
+                    <td className="py-2.5 pl-3">
+                      <div className="flex items-center gap-2">
+                        <Progress value={r.completionRate} className="h-1.5 w-24" />
+                        <span className="text-xs text-muted-foreground tabular-nums">
+                          {r.completionRate}%
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+function TeamTotal({
+  label,
+  value,
+  tone,
+}: {
+  label: string;
+  value: number;
+  tone?: "destructive" | "success";
+}) {
+  return (
+    <div className="flex flex-col">
+      <span className="text-[10px] uppercase tracking-wide text-muted-foreground">{label}</span>
+      <span
+        className={cn(
+          "text-lg font-semibold tabular-nums",
+          tone === "destructive" && "text-destructive",
+          tone === "success" && "text-success",
+          !tone && "text-foreground"
+        )}
+      >
+        {value}
+      </span>
+    </div>
+  );
+}
