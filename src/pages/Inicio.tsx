@@ -133,20 +133,20 @@ export default function Inicio() {
   // Today's timesheet
   useEffect(() => {
     if (!userId) return;
-    const todayStart = startOfDay(new Date()).toISOString();
-    supabase
-      .from("timesheet_logs")
-      .select("start_time,end_time,duration_seconds,user_id")
-      .eq("user_id", userId)
-      .gte("start_time", todayStart)
-      .then(({ data }) => {
-        let total = 0;
-        ((data as any[]) || []).forEach((row) => {
-          if (row.end_time) total += row.duration_seconds || 0;
-          else total += Math.floor((Date.now() - new Date(row.start_time).getTime()) / 1000);
-        });
-        setTimesheetTodaySec(total);
+    (async () => {
+      const todayStart = startOfDay(new Date()).toISOString();
+      const { data } = await (supabase as any)
+        .from("timesheet_logs")
+        .select("start_time,end_time,duration_seconds,user_id")
+        .eq("user_id", userId)
+        .gte("start_time", todayStart);
+      let total = 0;
+      ((data as any[]) || []).forEach((row) => {
+        if (row.end_time) total += row.duration_seconds || 0;
+        else total += Math.floor((Date.now() - new Date(row.start_time).getTime()) / 1000);
       });
+      setTimesheetTodaySec(total);
+    })();
   }, [userId]);
 
   // -------- Derived data --------
