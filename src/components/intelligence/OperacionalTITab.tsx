@@ -36,6 +36,7 @@ import { BIPeopleRanking } from "./bi/BIPeopleRanking";
 import { BIStatusDonut } from "./bi/BIStatusDonut";
 import { BIBacklogAging } from "./bi/BIBacklogAging";
 import { BIDemandHeatmap } from "./bi/BIDemandHeatmap";
+import { BIDimensionHeatmap } from "./bi/BIDimensionHeatmap";
 import { BIWorkloadChart } from "./bi/BIWorkloadChart";
 import { BI_TOOLTIP_STYLE, BI_COLORS } from "./bi/bi-theme";
 import { comparePeriod, previousPeriod } from "./bi/period-compare";
