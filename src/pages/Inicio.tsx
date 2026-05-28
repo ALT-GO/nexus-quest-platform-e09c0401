@@ -309,7 +309,7 @@ export default function Inicio() {
         <Card className="overflow-hidden border-primary/20 bg-gradient-to-br from-primary/10 via-primary/5 to-background">
           <CardContent className="flex flex-col gap-4 p-6 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-4">
-              <UserAvatar name={userName} avatarUrl={avatarUrl} userId={userId} size="lg" />
+              <UserAvatar name={userName} avatarUrl={avatarUrl} userId={userId} className="h-14 w-14" fallbackClassName="text-base" />
               <div>
                 <p className="text-xs font-medium uppercase tracking-wider text-primary">
                   {roleLabel}
