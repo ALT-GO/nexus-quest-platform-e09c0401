@@ -12,6 +12,14 @@ import { useAuth } from "@/hooks/use-auth";
 import { useTickets } from "@/hooks/use-tickets";
 import { useTotalUnread, useUnreadCounts, useChatChannels } from "@/hooks/use-chat";
 import { supabase } from "@/integrations/supabase/client";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Users } from "lucide-react";
 import { formatDuration } from "@/hooks/use-timesheet";
 import {
   CheckCircle2,
@@ -92,6 +100,8 @@ export default function Inicio() {
     { id: string; full_name: string; avatar_url: string | null; role: string | null }[]
   >([]);
   const [allMarketingTasks, setAllMarketingTasks] = useState<MarketingTaskLite[]>([]);
+  // Admin view filter: "self" = own data | "all" = team consolidated | <userId> = specific member
+  const [viewMode, setViewMode] = useState<string>("self");
 
   // Fetch own profile (name + avatar)
   useEffect(() => {
@@ -153,15 +163,22 @@ export default function Inicio() {
     };
   }, [userId]);
 
-  // Today's timesheet
+  // Today's timesheet (respects admin view filter)
   useEffect(() => {
     if (!userId) return;
     (async () => {
       const todayStart = startOfDay(new Date()).toISOString();
+      let targetIds: string[] = [userId];
+      if (isAdmin && viewMode === "all") targetIds = teamMembers.map((m) => m.id);
+      else if (isAdmin && viewMode !== "self") targetIds = [viewMode];
+      if (targetIds.length === 0) {
+        setTimesheetTodaySec(0);
+        return;
+      }
       const { data } = await (supabase as any)
         .from("timesheet_logs")
         .select("start_time,end_time,duration_seconds,user_id")
-        .eq("user_id", userId)
+        .in("user_id", targetIds)
         .gte("start_time", todayStart);
       let total = 0;
       ((data as any[]) || []).forEach((row) => {
@@ -170,7 +187,7 @@ export default function Inicio() {
       });
       setTimesheetTodaySec(total);
     })();
-  }, [userId]);
+  }, [userId, viewMode, isAdmin, teamMembers]);
 
   // Admin: fetch all members + all marketing tasks for team overview
   useEffect(() => {
@@ -205,23 +222,42 @@ export default function Inicio() {
     })();
   }, [isAdmin]);
 
-  // -------- Derived data --------
-  const myTickets = useMemo(
-    () =>
-      tickets.filter(
-        (t) => t.assignee === userName || t.email === userEmail || t.requester === userName
-      ),
-    [tickets, userName, userEmail]
-  );
+  // -------- Scoped data (respects admin viewMode) --------
+  const scopedMembers = useMemo(() => {
+    if (!isAdmin || viewMode === "self") {
+      return [{ id: userId, full_name: userName, email: userEmail }];
+    }
+    if (viewMode === "all") {
+      return teamMembers.map((m) => ({ id: m.id, full_name: m.full_name, email: "" }));
+    }
+    const m = teamMembers.find((x) => x.id === viewMode);
+    return m ? [{ id: m.id, full_name: m.full_name, email: "" }] : [];
+  }, [isAdmin, viewMode, userId, userName, userEmail, teamMembers]);
+
+  const myTickets = useMemo(() => {
+    const names = new Set(scopedMembers.map((m) => m.full_name.toLowerCase()).filter(Boolean));
+    const emails = new Set(scopedMembers.map((m) => (m.email || "").toLowerCase()).filter(Boolean));
+    return tickets.filter(
+      (t) =>
+        (t.assignee && names.has(String(t.assignee).toLowerCase())) ||
+        (t.requester && names.has(String(t.requester).toLowerCase())) ||
+        (t.email && emails.has(String(t.email).toLowerCase()))
+    );
+  }, [tickets, scopedMembers]);
+
+  const scopedMarketingSource = isAdmin && viewMode !== "self" ? allMarketingTasks : marketingTasks;
+  const scopedMarketing = useMemo(() => {
+    const ids = new Set(scopedMembers.map((m) => m.id));
+    return scopedMarketingSource.filter((m) => m.assignee_id && ids.has(m.assignee_id));
+  }, [scopedMembers, scopedMarketingSource]);
 
   const myOpenTickets = useMemo(() => myTickets.filter((t) => !t.completed_at), [myTickets]);
   const myOpenMarketing = useMemo(
-    () => marketingTasks.filter((m) => !m.completed_at),
-    [marketingTasks]
+    () => scopedMarketing.filter((m) => !m.completed_at),
+    [scopedMarketing]
   );
 
   const overdueCount = useMemo(() => {
-    const now = new Date();
     const ticketsOverdue = myOpenTickets.filter((t) => isPast(new Date(t.sla_deadline)));
     const mktOverdue = myOpenMarketing.filter(
       (m) => m.due_date && isPast(new Date(m.due_date))
@@ -233,19 +269,13 @@ export default function Inicio() {
     const ws = startOfWeek(new Date(), { weekStartsOn: 1 });
     const we = endOfWeek(new Date(), { weekStartsOn: 1 });
     const t = myTickets.filter(
-      (x) =>
-        x.completed_at &&
-        new Date(x.completed_at) >= ws &&
-        new Date(x.completed_at) <= we
+      (x) => x.completed_at && new Date(x.completed_at) >= ws && new Date(x.completed_at) <= we
     ).length;
-    const m = marketingTasks.filter(
-      (x) =>
-        x.completed_at &&
-        new Date(x.completed_at) >= ws &&
-        new Date(x.completed_at) <= we
+    const m = scopedMarketing.filter(
+      (x) => x.completed_at && new Date(x.completed_at) >= ws && new Date(x.completed_at) <= we
     ).length;
     return t + m;
-  }, [myTickets, marketingTasks]);
+  }, [myTickets, scopedMarketing]);
 
   const unreadNotifications = useMemo(
     () => notifications.filter((n) => !n.read),
@@ -275,14 +305,14 @@ export default function Inicio() {
       const day = days.find((d) => isSameDay(d.date, c));
       if (day) day.total++;
     });
-    marketingTasks.forEach((m) => {
+    scopedMarketing.forEach((m) => {
       if (!m.completed_at) return;
       const c = new Date(m.completed_at);
       const day = days.find((d) => isSameDay(d.date, c));
       if (day) day.total++;
     });
     return days;
-  }, [myTickets, marketingTasks]);
+  }, [myTickets, scopedMarketing]);
 
   // Today's & upcoming tasks (combined, sorted by deadline)
   const upcomingTasks = useMemo(() => {
@@ -327,13 +357,13 @@ export default function Inicio() {
   }, [myOpenTickets, myOpenMarketing]);
 
   const completionRate = useMemo(() => {
-    const total = myTickets.length + marketingTasks.length;
+    const total = myTickets.length + scopedMarketing.length;
     if (total === 0) return 0;
     const done =
       myTickets.filter((t) => t.completed_at).length +
-      marketingTasks.filter((m) => m.completed_at).length;
+      scopedMarketing.filter((m) => m.completed_at).length;
     return Math.round((done / total) * 100);
-  }, [myTickets, marketingTasks]);
+  }, [myTickets, scopedMarketing]);
 
   const unreadChannels = useMemo(
     () =>
@@ -378,15 +408,54 @@ export default function Inicio() {
                 <p className="mt-1 text-sm text-muted-foreground">
                   {format(new Date(), "EEEE, dd 'de' MMMM 'de' yyyy", { locale: ptBR })}
                   {" · "}
-                  Você tem{" "}
-                  <span className="font-medium text-foreground">
-                    {myOpenTickets.length + myOpenMarketing.length}
-                  </span>{" "}
-                  tarefas em aberto.
+                  {viewMode === "self" ? (
+                    <>
+                      Você tem{" "}
+                      <span className="font-medium text-foreground">
+                        {myOpenTickets.length + myOpenMarketing.length}
+                      </span>{" "}
+                      tarefas em aberto.
+                    </>
+                  ) : viewMode === "all" ? (
+                    <>
+                      Visão consolidada da equipe ·{" "}
+                      <span className="font-medium text-foreground">
+                        {myOpenTickets.length + myOpenMarketing.length}
+                      </span>{" "}
+                      tarefas em aberto.
+                    </>
+                  ) : (
+                    <>
+                      Visualizando{" "}
+                      <span className="font-medium text-foreground">
+                        {teamMembers.find((m) => m.id === viewMode)?.full_name || "membro"}
+                      </span>{" "}
+                      · {myOpenTickets.length + myOpenMarketing.length} em aberto.
+                    </>
+                  )}
                 </p>
               </div>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap items-center gap-2">
+              {isAdmin && teamMembers.length > 0 && (
+                <Select value={viewMode} onValueChange={setViewMode}>
+                  <SelectTrigger className="h-9 w-[220px] bg-background">
+                    <div className="flex items-center gap-2">
+                      <Users className="h-4 w-4 text-primary" />
+                      <SelectValue placeholder="Filtrar visão" />
+                    </div>
+                  </SelectTrigger>
+                  <SelectContent className="max-h-[320px]">
+                    <SelectItem value="self">Minha visão</SelectItem>
+                    <SelectItem value="all">Equipe consolidada</SelectItem>
+                    {teamMembers.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.full_name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              )}
               <Button variant="outline" size="sm" onClick={() => navigate("/ti/service-desk")}>
                 <TicketIcon className="mr-2 h-4 w-4" />
                 Meus chamados
@@ -457,64 +526,66 @@ export default function Inicio() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {upcomingTasks.map((t) => {
-                      const overdue = t.due && isPast(t.due);
-                      const hoursLeft = t.due ? differenceInHours(t.due, new Date()) : null;
-                      return (
-                        <Link
-                          key={`${t.type}-${t.id}`}
-                          to={t.link}
-                          className="group flex items-center gap-3 rounded-lg border border-border/60 p-3 transition-all hover:border-primary/40 hover:bg-muted/40"
-                        >
-                          <div
-                            className={cn(
-                              "flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-xs font-semibold",
-                              t.type === "ticket"
-                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                                : "bg-pink-500/10 text-pink-600 dark:text-pink-400"
-                            )}
+                  <ScrollArea className="max-h-[360px] pr-3">
+                    <div className="space-y-2">
+                      {upcomingTasks.map((t) => {
+                        const overdue = t.due && isPast(t.due);
+                        const hoursLeft = t.due ? differenceInHours(t.due, new Date()) : null;
+                        return (
+                          <Link
+                            key={`${t.type}-${t.id}`}
+                            to={t.link}
+                            className="group flex items-center gap-3 rounded-lg border border-border/60 p-3 transition-all hover:border-primary/40 hover:bg-muted/40"
                           >
-                            {t.type === "ticket" ? "TI" : "MK"}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium">{t.title}</p>
-                            <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                              <PriorityDot priority={t.priority} />
-                              <span className="capitalize">
-                                {t.priority === "high"
-                                  ? "Alta"
-                                  : t.priority === "medium"
-                                  ? "Média"
-                                  : "Baixa"}
-                              </span>
-                              {t.due && (
-                                <>
-                                  <span>•</span>
-                                  <span
-                                    className={cn(
-                                      overdue
-                                        ? "font-medium text-destructive"
-                                        : hoursLeft !== null && hoursLeft <= 8
-                                        ? "font-medium text-amber-600 dark:text-amber-400"
-                                        : ""
-                                    )}
-                                  >
-                                    {overdue
-                                      ? "Atrasada"
-                                      : isToday(t.due)
-                                      ? `Hoje · ${format(t.due, "HH:mm")}`
-                                      : format(t.due, "dd MMM", { locale: ptBR })}
-                                  </span>
-                                </>
+                            <div
+                              className={cn(
+                                "flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-xs font-semibold",
+                                t.type === "ticket"
+                                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                                  : "bg-pink-500/10 text-pink-600 dark:text-pink-400"
                               )}
+                            >
+                              {t.type === "ticket" ? "TI" : "MK"}
                             </div>
-                          </div>
-                          <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                        </Link>
-                      );
-                    })}
-                  </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium">{t.title}</p>
+                              <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                                <PriorityDot priority={t.priority} />
+                                <span className="capitalize">
+                                  {t.priority === "high"
+                                    ? "Alta"
+                                    : t.priority === "medium"
+                                    ? "Média"
+                                    : "Baixa"}
+                                </span>
+                                {t.due && (
+                                  <>
+                                    <span>•</span>
+                                    <span
+                                      className={cn(
+                                        overdue
+                                          ? "font-medium text-destructive"
+                                          : hoursLeft !== null && hoursLeft <= 8
+                                          ? "font-medium text-amber-600 dark:text-amber-400"
+                                          : ""
+                                      )}
+                                    >
+                                      {overdue
+                                        ? "Atrasada"
+                                        : isToday(t.due)
+                                        ? `Hoje · ${format(t.due, "HH:mm")}`
+                                        : format(t.due, "dd MMM", { locale: ptBR })}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
                 )}
               </CardContent>
             </Card>
@@ -586,27 +657,29 @@ export default function Inicio() {
                     Nenhuma mensagem pendente.
                   </p>
                 ) : (
-                  <div className="space-y-1.5">
-                    {unreadChannels.map((c: any) => (
-                      <button
-                        key={c.id}
-                        onClick={() => window.dispatchEvent(new CustomEvent("open-chat", { detail: { channelId: c.id } }))}
-                        className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors hover:bg-muted/60"
-                      >
-                        <div className="min-w-0 flex-1">
-                          <p className="truncate text-sm font-medium">{c.name || "Canal"}</p>
-                          {c.last_message_preview && (
-                            <p className="truncate text-xs text-muted-foreground">
-                              {c.last_message_preview}
-                            </p>
-                          )}
-                        </div>
-                        <Badge className="ml-2 bg-primary text-primary-foreground">
-                          {c.unread_count}
-                        </Badge>
-                      </button>
-                    ))}
-                  </div>
+                  <ScrollArea className="max-h-[260px] pr-3">
+                    <div className="space-y-1.5">
+                      {unreadChannels.map((c: any) => (
+                        <button
+                          key={c.id}
+                          onClick={() => window.dispatchEvent(new CustomEvent("open-chat", { detail: { channelId: c.id } }))}
+                          className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors hover:bg-muted/60"
+                        >
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-sm font-medium">{c.name || "Canal"}</p>
+                            {c.last_message_preview && (
+                              <p className="truncate text-xs text-muted-foreground">
+                                {c.last_message_preview}
+                              </p>
+                            )}
+                          </div>
+                          <Badge className="ml-2 bg-primary text-primary-foreground">
+                            {c.unread_count}
+                          </Badge>
+                        </button>
+                      ))}
+                    </div>
+                  </ScrollArea>
                 )}
               </CardContent>
             </Card>
