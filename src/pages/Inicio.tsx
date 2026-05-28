@@ -526,64 +526,66 @@ export default function Inicio() {
                     </p>
                   </div>
                 ) : (
-                  <div className="space-y-2">
-                    {upcomingTasks.map((t) => {
-                      const overdue = t.due && isPast(t.due);
-                      const hoursLeft = t.due ? differenceInHours(t.due, new Date()) : null;
-                      return (
-                        <Link
-                          key={`${t.type}-${t.id}`}
-                          to={t.link}
-                          className="group flex items-center gap-3 rounded-lg border border-border/60 p-3 transition-all hover:border-primary/40 hover:bg-muted/40"
-                        >
-                          <div
-                            className={cn(
-                              "flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-xs font-semibold",
-                              t.type === "ticket"
-                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                                : "bg-pink-500/10 text-pink-600 dark:text-pink-400"
-                            )}
+                  <ScrollArea className="max-h-[360px] pr-3">
+                    <div className="space-y-2">
+                      {upcomingTasks.map((t) => {
+                        const overdue = t.due && isPast(t.due);
+                        const hoursLeft = t.due ? differenceInHours(t.due, new Date()) : null;
+                        return (
+                          <Link
+                            key={`${t.type}-${t.id}`}
+                            to={t.link}
+                            className="group flex items-center gap-3 rounded-lg border border-border/60 p-3 transition-all hover:border-primary/40 hover:bg-muted/40"
                           >
-                            {t.type === "ticket" ? "TI" : "MK"}
-                          </div>
-                          <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium">{t.title}</p>
-                            <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                              <PriorityDot priority={t.priority} />
-                              <span className="capitalize">
-                                {t.priority === "high"
-                                  ? "Alta"
-                                  : t.priority === "medium"
-                                  ? "Média"
-                                  : "Baixa"}
-                              </span>
-                              {t.due && (
-                                <>
-                                  <span>•</span>
-                                  <span
-                                    className={cn(
-                                      overdue
-                                        ? "font-medium text-destructive"
-                                        : hoursLeft !== null && hoursLeft <= 8
-                                        ? "font-medium text-amber-600 dark:text-amber-400"
-                                        : ""
-                                    )}
-                                  >
-                                    {overdue
-                                      ? "Atrasada"
-                                      : isToday(t.due)
-                                      ? `Hoje · ${format(t.due, "HH:mm")}`
-                                      : format(t.due, "dd MMM", { locale: ptBR })}
-                                  </span>
-                                </>
+                            <div
+                              className={cn(
+                                "flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-xs font-semibold",
+                                t.type === "ticket"
+                                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                                  : "bg-pink-500/10 text-pink-600 dark:text-pink-400"
                               )}
+                            >
+                              {t.type === "ticket" ? "TI" : "MK"}
                             </div>
-                          </div>
-                          <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                        </Link>
-                      );
-                    })}
-                  </div>
+                            <div className="min-w-0 flex-1">
+                              <p className="truncate text-sm font-medium">{t.title}</p>
+                              <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
+                                <PriorityDot priority={t.priority} />
+                                <span className="capitalize">
+                                  {t.priority === "high"
+                                    ? "Alta"
+                                    : t.priority === "medium"
+                                    ? "Média"
+                                    : "Baixa"}
+                                </span>
+                                {t.due && (
+                                  <>
+                                    <span>•</span>
+                                    <span
+                                      className={cn(
+                                        overdue
+                                          ? "font-medium text-destructive"
+                                          : hoursLeft !== null && hoursLeft <= 8
+                                          ? "font-medium text-amber-600 dark:text-amber-400"
+                                          : ""
+                                      )}
+                                    >
+                                      {overdue
+                                        ? "Atrasada"
+                                        : isToday(t.due)
+                                        ? `Hoje · ${format(t.due, "HH:mm")}`
+                                        : format(t.due, "dd MMM", { locale: ptBR })}
+                                    </span>
+                                  </>
+                                )}
+                              </div>
+                            </div>
+                            <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                          </Link>
+                        );
+                      })}
+                    </div>
+                  </ScrollArea>
                 )}
               </CardContent>
             </Card>
