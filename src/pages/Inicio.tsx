@@ -706,6 +706,14 @@ export default function Inicio() {
             </Card>
           </div>
         </div>
+
+        {isAdmin && (
+          <TeamOverview
+            members={teamMembers}
+            tickets={tickets}
+            marketingTasks={allMarketingTasks}
+          />
+        )}
       </div>
     </AppLayout>
   );
