@@ -10,7 +10,7 @@ import { StatusBadge } from "@/components/ui/status-badge";
 import { Progress } from "@/components/ui/progress";
 import { useAuth } from "@/hooks/use-auth";
 import { useTickets } from "@/hooks/use-tickets";
-import { useTotalUnread, useChannels } from "@/hooks/use-chat";
+import { useTotalUnread, useUnreadCounts, useChatChannels } from "@/hooks/use-chat";
 import { supabase } from "@/integrations/supabase/client";
 import { formatDuration } from "@/hooks/use-timesheet";
 import {
