@@ -15,7 +15,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { Loader2, Search, Package, UserPlus, Laptop, Smartphone, Phone, FileText, GripVertical, Tablet, Mouse, Trash2, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
+import { Loader2, Search, Package, UserPlus, Laptop, Smartphone, Phone, FileText, GripVertical, Tablet, Mouse, Trash2, ArrowUp, ArrowDown, ArrowUpDown, X, CheckCircle2 } from "lucide-react";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { StockDetailDialog } from "./StockDetailDialog";
 import { format } from "date-fns";
@@ -26,6 +26,11 @@ import { AddStockItemDialog } from "./AddStockItemDialog";
 import { SortDropdown, usePersistentSort, applySorting, SortOption } from "@/components/ui/sort-dropdown";
 import { cn } from "@/lib/utils";
 import { useInventoryStatuses } from "@/hooks/use-inventory-statuses";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 /* ── Condition (hardware) — backwards-compatible label resolver.
  *  Old DB values (ready/maintenance/blocked/scrap) were migrated to PT,
