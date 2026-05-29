@@ -219,39 +219,26 @@ export async function createTicket(data: {
   parent_ticket_id?: string;
   sla_deadline_override?: string;
 }): Promise<{ success: boolean; ticketNumber?: string; ticketId?: string }> {
-  const dynamicMap = await fetchSlaCategoryMap();
-  const slaHours = (dynamicMap[data.category] ?? slaByCategory[data.category]) ?? 24;
-  const now = new Date();
-  const slaDeadline = data.sla_deadline_override
-    ? new Date(data.sla_deadline_override)
-    : new Date(now.getTime() + slaHours * 3600000);
-
-  // Resolve the correct Kanban column based on category
-  const statusId = await resolveStatusId(data.category);
-
-  const { data: result, error } = await supabase
-    .from("tickets")
-    .insert({
-      title: data.title || data.category,
-      category: data.category,
-      description: data.description,
-      requester: data.requester,
-      email: data.email,
-      department: data.department || null,
-      priority: data.priority || "medium",
-      status_id: statusId,
-      sla_hours: slaHours,
-      sla_deadline: slaDeadline.toISOString(),
-      ticket_number: "",
-      parent_ticket_id: data.parent_ticket_id || null,
-    } as any)
-    .select("id, ticket_number")
-    .single();
+  // Use SECURITY DEFINER RPC so anonymous users (public ticket form) can create tickets
+  // without needing read access to status_config / sla_categories / tickets.
+  const { data: rpcData, error } = await supabase.rpc("create_public_ticket" as any, {
+    p_title: data.title || data.category,
+    p_category: data.category,
+    p_description: data.description,
+    p_requester: data.requester,
+    p_email: data.email,
+    p_department: data.department || null,
+    p_priority: data.priority || "medium",
+    p_parent_ticket_id: data.parent_ticket_id || null,
+    p_sla_deadline_override: data.sla_deadline_override || null,
+  });
 
   if (error) {
     console.error("Error creating ticket:", error);
     return { success: false };
   }
+
+  const result = Array.isArray(rpcData) ? rpcData[0] : rpcData;
 
   const ticketNumber = (result as any)?.ticket_number;
   const ticketTitle = data.title || data.category;
