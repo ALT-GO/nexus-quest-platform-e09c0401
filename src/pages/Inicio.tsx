@@ -500,284 +500,246 @@ export default function Inicio() {
           />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
-          {/* LEFT: Today task + Productivity */}
-          <div className="flex flex-col gap-6 lg:col-span-2">
-            {/* Today / Upcoming tasks */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <CalendarCheck2 className="h-4 w-4 text-primary" />
-                  Próximas tarefas
-                </CardTitle>
-                <Badge variant="secondary" className="font-normal">
-                  {upcomingTasks.length} pendentes
-                </Badge>
-              </CardHeader>
-              <CardContent className="pt-0">
-                {ticketsLoading ? (
-                  <p className="py-6 text-center text-sm text-muted-foreground">Carregando…</p>
-                ) : upcomingTasks.length === 0 ? (
-                  <div className="flex flex-col items-center py-8 text-center">
-                    <CheckCircle2 className="mb-2 h-8 w-8 text-success" />
-                    <p className="text-sm font-medium">Tudo em dia!</p>
-                    <p className="text-xs text-muted-foreground">
-                      Você não tem tarefas pendentes no momento.
-                    </p>
-                  </div>
-                ) : (
-                  <ScrollArea className="max-h-[360px] pr-3">
-                    <div className="space-y-2">
-                      {upcomingTasks.map((t) => {
-                        const overdue = t.due && isPast(t.due);
-                        const hoursLeft = t.due ? differenceInHours(t.due, new Date()) : null;
-                        return (
-                          <Link
-                            key={`${t.type}-${t.id}`}
-                            to={t.link}
-                            className="group flex items-center gap-3 rounded-lg border border-border/60 p-3 transition-all hover:border-primary/40 hover:bg-muted/40"
+        {/* Bento grid: compact uniform cards */}
+        <div className="grid auto-rows-[280px] grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-6">
+          {/* Próximas tarefas — wide */}
+          <Card className="flex flex-col overflow-hidden lg:col-span-4">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <CalendarCheck2 className="h-4 w-4 text-primary" />
+                Próximas tarefas
+              </CardTitle>
+              <Badge variant="secondary" className="font-normal">
+                {upcomingTasks.length}
+              </Badge>
+            </CardHeader>
+            <CardContent className="flex-1 min-h-0 pt-0">
+              {ticketsLoading ? (
+                <p className="py-6 text-center text-sm text-muted-foreground">Carregando…</p>
+              ) : upcomingTasks.length === 0 ? (
+                <div className="flex h-full flex-col items-center justify-center text-center">
+                  <CheckCircle2 className="mb-2 h-7 w-7 text-success" />
+                  <p className="text-sm font-medium">Tudo em dia!</p>
+                  <p className="text-xs text-muted-foreground">Sem tarefas pendentes.</p>
+                </div>
+              ) : (
+                <ScrollArea className="h-full pr-3">
+                  <div className="space-y-1.5">
+                    {upcomingTasks.map((t) => {
+                      const overdue = t.due && isPast(t.due);
+                      const hoursLeft = t.due ? differenceInHours(t.due, new Date()) : null;
+                      return (
+                        <Link
+                          key={`${t.type}-${t.id}`}
+                          to={t.link}
+                          className="group flex items-center gap-2.5 rounded-md border border-border/60 p-2 transition-all hover:border-primary/40 hover:bg-muted/40"
+                        >
+                          <div
+                            className={cn(
+                              "flex h-7 w-7 shrink-0 items-center justify-center rounded text-[10px] font-semibold",
+                              t.type === "ticket"
+                                ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
+                                : "bg-pink-500/10 text-pink-600 dark:text-pink-400"
+                            )}
                           >
-                            <div
-                              className={cn(
-                                "flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-xs font-semibold",
-                                t.type === "ticket"
-                                  ? "bg-blue-500/10 text-blue-600 dark:text-blue-400"
-                                  : "bg-pink-500/10 text-pink-600 dark:text-pink-400"
-                              )}
-                            >
-                              {t.type === "ticket" ? "TI" : "MK"}
-                            </div>
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-sm font-medium">{t.title}</p>
-                              <div className="mt-0.5 flex items-center gap-2 text-xs text-muted-foreground">
-                                <PriorityDot priority={t.priority} />
-                                <span className="capitalize">
-                                  {t.priority === "high"
-                                    ? "Alta"
-                                    : t.priority === "medium"
-                                    ? "Média"
-                                    : "Baixa"}
-                                </span>
-                                {t.due && (
-                                  <>
-                                    <span>•</span>
-                                    <span
-                                      className={cn(
-                                        overdue
-                                          ? "font-medium text-destructive"
-                                          : hoursLeft !== null && hoursLeft <= 8
-                                          ? "font-medium text-amber-600 dark:text-amber-400"
-                                          : ""
-                                      )}
-                                    >
-                                      {overdue
-                                        ? "Atrasada"
-                                        : isToday(t.due)
-                                        ? `Hoje · ${format(t.due, "HH:mm")}`
-                                        : format(t.due, "dd MMM", { locale: ptBR })}
-                                    </span>
-                                  </>
-                                )}
-                              </div>
-                            </div>
-                            <ArrowRight className="h-4 w-4 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
-                          </Link>
-                        );
-                      })}
-                    </div>
-                  </ScrollArea>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Productivity chart */}
-            <Card className="flex flex-1 flex-col">
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <TrendingUp className="h-4 w-4 text-primary" />
-                  Produtividade · últimos 7 dias
-                </CardTitle>
-                <div className="text-right">
-                  <p className="text-xs text-muted-foreground">Taxa de conclusão</p>
-                  <p className="text-lg font-semibold text-primary">{completionRate}%</p>
-                </div>
-              </CardHeader>
-              <CardContent className="flex flex-1 flex-col pt-0">
-                <div className="min-h-[200px] w-full flex-1">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <BarChart data={productivitySeries} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
-                      <XAxis
-                        dataKey="label"
-                        tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                        axisLine={false}
-                        tickLine={false}
-                      />
-                      <YAxis
-                        tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }}
-                        axisLine={false}
-                        tickLine={false}
-                        allowDecimals={false}
-                      />
-                      <RTooltip
-                        contentStyle={{
-                          background: "hsl(var(--card))",
-                          border: "1px solid hsl(var(--border))",
-                          borderRadius: "8px",
-                          fontSize: "12px",
-                        }}
-                        cursor={{ fill: "hsl(var(--muted) / 0.5)" }}
-                        formatter={(value: any) => [`${value} concluídas`, ""]}
-                        labelFormatter={(l) => `Dia: ${l}`}
-                      />
-                      <Bar dataKey="total" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
-                    </BarChart>
-                  </ResponsiveContainer>
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-
-          {/* RIGHT: Notifications + chat + mentions */}
-          <div className="flex flex-col gap-6">
-            {/* Unread chat */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <MessageSquare className="h-4 w-4 text-primary" />
-                  Mensagens não lidas
-                </CardTitle>
-                {totalUnreadChat > 0 && (
-                  <Badge className="bg-primary text-primary-foreground">{totalUnreadChat}</Badge>
-                )}
-              </CardHeader>
-              <CardContent className="pt-0">
-                {unreadChannels.length === 0 ? (
-                  <p className="py-4 text-center text-sm text-muted-foreground">
-                    Nenhuma mensagem pendente.
-                  </p>
-                ) : (
-                  <ScrollArea className="max-h-[260px] pr-3">
-                    <div className="space-y-1.5">
-                      {unreadChannels.map((c: any) => (
-                        <button
-                          key={c.id}
-                          onClick={() => window.dispatchEvent(new CustomEvent("open-chat", { detail: { channelId: c.id } }))}
-                          className="flex w-full items-center justify-between rounded-md px-2 py-2 text-left transition-colors hover:bg-muted/60"
-                        >
+                            {t.type === "ticket" ? "TI" : "MK"}
+                          </div>
                           <div className="min-w-0 flex-1">
-                            <p className="truncate text-sm font-medium">{c.name || "Canal"}</p>
-                            {c.last_message_preview && (
-                              <p className="truncate text-xs text-muted-foreground">
-                                {c.last_message_preview}
-                              </p>
-                            )}
-                          </div>
-                          <Badge className="ml-2 bg-primary text-primary-foreground">
-                            {c.unread_count}
-                          </Badge>
-                        </button>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Mentions */}
-            <Card>
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <AtSign className="h-4 w-4 text-primary" />
-                  Você foi mencionado
-                </CardTitle>
-                {mentions.length > 0 && (
-                  <Badge variant="secondary" className="font-normal">
-                    {mentions.length}
-                  </Badge>
-                )}
-              </CardHeader>
-              <CardContent className="pt-0">
-                {mentions.length === 0 ? (
-                  <p className="py-4 text-center text-sm text-muted-foreground">
-                    Nenhuma menção nova.
-                  </p>
-                ) : (
-                  <ScrollArea className="max-h-[260px] pr-3">
-                    <div className="space-y-2">
-                      {mentions.slice(0, 8).map((m) => (
-                        <button
-                          key={m.id}
-                          onClick={() => m.link && navigate(m.link)}
-                          className="block w-full rounded-md border border-border/60 p-2.5 text-left transition-colors hover:border-primary/40 hover:bg-muted/40"
-                        >
-                          <p className="text-xs font-medium text-foreground">{m.title}</p>
-                          <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">
-                            {m.message}
-                          </p>
-                          <p className="mt-1 text-[10px] text-muted-foreground">
-                            {format(new Date(m.created_at), "dd/MM HH:mm")}
-                          </p>
-                        </button>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                )}
-              </CardContent>
-            </Card>
-
-            {/* Other notifications */}
-            <Card className="flex flex-1 flex-col min-h-[300px]">
-              <CardHeader className="flex flex-row items-center justify-between pb-3">
-                <CardTitle className="flex items-center gap-2 text-base font-semibold">
-                  <Bell className="h-4 w-4 text-primary" />
-                  Notificações recentes
-                </CardTitle>
-                {unreadNotifications.length > 0 && (
-                  <Badge variant="secondary" className="font-normal">
-                    {unreadNotifications.length} novas
-                  </Badge>
-                )}
-              </CardHeader>
-              <CardContent className="flex flex-1 flex-col min-h-0 pt-0">
-                {notifications.length === 0 ? (
-                  <p className="py-4 text-center text-sm text-muted-foreground">
-                    Sem notificações.
-                  </p>
-                ) : (
-                  <ScrollArea className="flex-1 h-full pr-3">
-                    <div className="space-y-1.5">
-                      {notifications.map((n) => (
-                        <button
-                          key={n.id}
-                          onClick={() => n.link && navigate(n.link)}
-                          className={cn(
-                            "block w-full rounded-md px-2.5 py-2 text-left transition-colors hover:bg-muted/60",
-                            !n.read && "bg-primary/5"
-                          )}
-                        >
-                          <div className="flex items-start gap-2">
-                            {!n.read && (
-                              <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />
-                            )}
-                            <div className="min-w-0 flex-1">
-                              <p className="truncate text-xs font-medium">{n.title}</p>
-                              <p className="line-clamp-1 text-xs text-muted-foreground">
-                                {n.message}
-                              </p>
-                              <p className="mt-0.5 text-[10px] text-muted-foreground">
-                                {format(new Date(n.created_at), "dd/MM HH:mm")}
-                              </p>
+                            <p className="truncate text-xs font-medium">{t.title}</p>
+                            <div className="mt-0.5 flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                              <PriorityDot priority={t.priority} />
+                              <span>
+                                {t.priority === "high" ? "Alta" : t.priority === "medium" ? "Média" : "Baixa"}
+                              </span>
+                              {t.due && (
+                                <>
+                                  <span>•</span>
+                                  <span
+                                    className={cn(
+                                      overdue
+                                        ? "font-medium text-destructive"
+                                        : hoursLeft !== null && hoursLeft <= 8
+                                        ? "font-medium text-amber-600 dark:text-amber-400"
+                                        : ""
+                                    )}
+                                  >
+                                    {overdue
+                                      ? "Atrasada"
+                                      : isToday(t.due)
+                                      ? `Hoje · ${format(t.due, "HH:mm")}`
+                                      : format(t.due, "dd MMM", { locale: ptBR })}
+                                  </span>
+                                </>
+                              )}
                             </div>
                           </div>
-                        </button>
-                      ))}
-                    </div>
-                  </ScrollArea>
-                )}
-              </CardContent>
-            </Card>
-          </div>
+                          <ArrowRight className="h-3.5 w-3.5 text-muted-foreground opacity-0 transition-opacity group-hover:opacity-100" />
+                        </Link>
+                      );
+                    })}
+                  </div>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Mensagens não lidas */}
+          <Card className="flex flex-col overflow-hidden lg:col-span-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <MessageSquare className="h-4 w-4 text-primary" />
+                Mensagens
+              </CardTitle>
+              {totalUnreadChat > 0 && (
+                <Badge className="bg-primary text-primary-foreground">{totalUnreadChat}</Badge>
+              )}
+            </CardHeader>
+            <CardContent className="flex-1 min-h-0 pt-0">
+              {unreadChannels.length === 0 ? (
+                <div className="flex h-full items-center justify-center">
+                  <p className="text-center text-xs text-muted-foreground">Nenhuma pendente.</p>
+                </div>
+              ) : (
+                <ScrollArea className="h-full pr-3">
+                  <div className="space-y-1">
+                    {unreadChannels.map((c: any) => (
+                      <button
+                        key={c.id}
+                        onClick={() => window.dispatchEvent(new CustomEvent("open-chat", { detail: { channelId: c.id } }))}
+                        className="flex w-full items-center justify-between rounded-md px-2 py-1.5 text-left transition-colors hover:bg-muted/60"
+                      >
+                        <div className="min-w-0 flex-1">
+                          <p className="truncate text-xs font-medium">{c.name || "Canal"}</p>
+                          {c.last_message_preview && (
+                            <p className="truncate text-[10px] text-muted-foreground">
+                              {c.last_message_preview}
+                            </p>
+                          )}
+                        </div>
+                        <Badge className="ml-2 h-5 bg-primary text-[10px] text-primary-foreground">
+                          {c.unread_count}
+                        </Badge>
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Produtividade — wide */}
+          <Card className="flex flex-col overflow-hidden lg:col-span-4">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <TrendingUp className="h-4 w-4 text-primary" />
+                Produtividade · 7 dias
+              </CardTitle>
+              <div className="text-right">
+                <p className="text-[10px] text-muted-foreground">Conclusão</p>
+                <p className="text-sm font-semibold text-primary">{completionRate}%</p>
+              </div>
+            </CardHeader>
+            <CardContent className="flex-1 min-h-0 pt-0">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={productivitySeries} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
+                  <XAxis dataKey="label" tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fontSize: 11, fill: "hsl(var(--muted-foreground))" }} axisLine={false} tickLine={false} allowDecimals={false} />
+                  <RTooltip
+                    contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: "8px", fontSize: "12px" }}
+                    cursor={{ fill: "hsl(var(--muted) / 0.5)" }}
+                    formatter={(value: any) => [`${value} concluídas`, ""]}
+                    labelFormatter={(l) => `Dia: ${l}`}
+                  />
+                  <Bar dataKey="total" fill="hsl(var(--primary))" radius={[6, 6, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </CardContent>
+          </Card>
+
+          {/* Menções */}
+          <Card className="flex flex-col overflow-hidden lg:col-span-2">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <AtSign className="h-4 w-4 text-primary" />
+                Menções
+              </CardTitle>
+              {mentions.length > 0 && (
+                <Badge variant="secondary" className="font-normal">{mentions.length}</Badge>
+              )}
+            </CardHeader>
+            <CardContent className="flex-1 min-h-0 pt-0">
+              {mentions.length === 0 ? (
+                <div className="flex h-full items-center justify-center">
+                  <p className="text-center text-xs text-muted-foreground">Nenhuma menção nova.</p>
+                </div>
+              ) : (
+                <ScrollArea className="h-full pr-3">
+                  <div className="space-y-1.5">
+                    {mentions.map((m) => (
+                      <button
+                        key={m.id}
+                        onClick={() => m.link && navigate(m.link)}
+                        className="block w-full rounded-md border border-border/60 p-2 text-left transition-colors hover:border-primary/40 hover:bg-muted/40"
+                      >
+                        <p className="truncate text-xs font-medium text-foreground">{m.title}</p>
+                        <p className="mt-0.5 line-clamp-2 text-[10px] text-muted-foreground">{m.message}</p>
+                        <p className="mt-1 text-[10px] text-muted-foreground">
+                          {format(new Date(m.created_at), "dd/MM HH:mm")}
+                        </p>
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
+
+          {/* Notificações recentes — linha inteira */}
+          <Card className="flex flex-col overflow-hidden lg:col-span-6">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="flex items-center gap-2 text-sm font-semibold">
+                <Bell className="h-4 w-4 text-primary" />
+                Notificações recentes
+              </CardTitle>
+              {unreadNotifications.length > 0 && (
+                <Badge variant="secondary" className="font-normal">{unreadNotifications.length} novas</Badge>
+              )}
+            </CardHeader>
+            <CardContent className="flex-1 min-h-0 pt-0">
+              {notifications.length === 0 ? (
+                <div className="flex h-full items-center justify-center">
+                  <p className="text-center text-xs text-muted-foreground">Sem notificações.</p>
+                </div>
+              ) : (
+                <ScrollArea className="h-full pr-3">
+                  <div className="grid grid-cols-1 gap-1.5 md:grid-cols-2 xl:grid-cols-3">
+                    {notifications.map((n) => (
+                      <button
+                        key={n.id}
+                        onClick={() => n.link && navigate(n.link)}
+                        className={cn(
+                          "block w-full rounded-md px-2.5 py-2 text-left transition-colors hover:bg-muted/60",
+                          !n.read && "bg-primary/5"
+                        )}
+                      >
+                        <div className="flex items-start gap-2">
+                          {!n.read && <span className="mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full bg-primary" />}
+                          <div className="min-w-0 flex-1">
+                            <p className="truncate text-xs font-medium">{n.title}</p>
+                            <p className="line-clamp-1 text-[10px] text-muted-foreground">{n.message}</p>
+                            <p className="mt-0.5 text-[10px] text-muted-foreground">
+                              {format(new Date(n.created_at), "dd/MM HH:mm")}
+                            </p>
+                          </div>
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </ScrollArea>
+              )}
+            </CardContent>
+          </Card>
         </div>
 
         {isAdmin && (
