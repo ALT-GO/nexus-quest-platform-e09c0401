@@ -54,41 +54,54 @@ export default function ChamadoPublico() {
 
     setIsSubmitting(true);
 
-    const result = await createTicket({
-      title: formData.name,
-      category: formData.category,
-      description: formData.description,
-      requester: formData.name,
-      email: formData.email,
-      department: formData.department || undefined,
-    });
+    try {
+      const result = await createTicket({
+        title: formData.name,
+        category: formData.category,
+        description: formData.description,
+        requester: formData.name,
+        email: formData.email,
+        department: formData.department || undefined,
+      });
 
-    setIsSubmitting(false);
+      if (!result.success || !result.ticketNumber) {
+        toast.error("Erro ao abrir chamado. Tente novamente.");
+        return;
+      }
 
-    if (result.success && result.ticketNumber) {
-      // Run automations
       if (result.ticketId) {
         try {
           await runTicketCreatedAutomations(result.ticketId, formData.category);
         } catch {}
-        // Save attachment links
+
         if (attachmentLinks.length > 0) {
-          for (const link of attachmentLinks) {
-            await supabase.from("attachments").insert({
-              entity_type: "ticket",
-              entity_id: result.ticketId,
-              file_name: link.split("/").pop() || "Arquivo",
-              file_url: link,
-              added_by: formData.name,
-            } as any);
+          const attachmentResults = await Promise.allSettled(
+            attachmentLinks.map((link) =>
+              supabase.from("attachments").insert({
+                entity_type: "ticket",
+                entity_id: result.ticketId,
+                file_name: link.split("/").pop() || "Arquivo",
+                file_url: link,
+                added_by: formData.name,
+              } as any)
+            )
+          );
+
+          const failedAttachments = attachmentResults.filter(
+            (item) => item.status === "rejected"
+          ).length;
+
+          if (failedAttachments > 0) {
+            toast.warning("Chamado aberto, mas alguns links de anexo não puderam ser salvos.");
           }
         }
       }
+
       setTicketId(result.ticketNumber);
       setIsSubmitted(true);
       toast.success("Chamado aberto com sucesso!");
-    } else {
-      toast.error("Erro ao abrir chamado. Tente novamente.");
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
