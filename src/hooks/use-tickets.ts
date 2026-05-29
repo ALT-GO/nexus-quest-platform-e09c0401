@@ -229,6 +229,8 @@ export async function createTicket(data: {
     p_email: data.email,
     p_department: data.department || null,
     p_priority: data.priority || "medium",
+    p_parent_ticket_id: data.parent_ticket_id || null,
+    p_sla_deadline_override: data.sla_deadline_override || null,
   });
 
   if (error) {
