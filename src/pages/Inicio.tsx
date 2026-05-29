@@ -747,7 +747,7 @@ export default function Inicio() {
                 ) : (
                   <ScrollArea className="flex-1 h-full pr-3">
                     <div className="space-y-1.5">
-                      {notifications.slice(0, 10).map((n) => (
+                      {notifications.map((n) => (
                         <button
                           key={n.id}
                           onClick={() => n.link && navigate(n.link)}
