@@ -456,6 +456,17 @@ function CategoryStockTable({
   const [colSortKey, setColSortKey] = useState<string | null>(null);
   const [colSortDir, setColSortDir] = useState<"asc" | "desc">("asc");
 
+  // Bulk selection
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkCondition, setBulkCondition] = useState<string>("");
+  const [bulkBusy, setBulkBusy] = useState(false);
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+
+  // Condition filter (only meaningful for hardware categories)
+  const hasConditionCol = columns.some((c) => c.id === "condition");
+  const [conditionFilter, setConditionFilter] = useState<string>("__all__");
+  const { conditionOptions, statusColorMap } = useInventoryStatuses();
+
   const handleColSort = (colId: string) => {
     if (colSortKey === colId) {
       setColSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -465,7 +476,6 @@ function CategoryStockTable({
     }
   };
 
-  // Find accessor for the column being sorted
   const sortedCol = colSortKey ? columns.find((c) => c.id === colSortKey) : null;
 
   const filtered = items.filter((i) => {
@@ -478,10 +488,13 @@ function CategoryStockTable({
       const itemVal = ((i as any)[field] ?? "").toString().toLowerCase();
       if (!itemVal.includes(val.toLowerCase())) return false;
     }
+    if (hasConditionCol && conditionFilter !== "__all__") {
+      const c = ((i as any).condition || "").toString();
+      if (c !== conditionFilter) return false;
+    }
     return true;
   });
 
-  // Apply column header sort first, then fall back to dropdown sort
   const sorted = sortedCol
     ? [...filtered].sort((a, b) => {
         const aVal = sortedCol.accessor(a).toLowerCase();
@@ -500,13 +513,159 @@ function CategoryStockTable({
     dragIdx.current = null;
   };
 
+  const visibleIds = sorted.map((i) => i.id);
+  const allSelected = visibleIds.length > 0 && visibleIds.every((id) => selected.has(id));
+  const someSelected = visibleIds.some((id) => selected.has(id));
+
+  const toggleAll = () => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (allSelected) {
+        visibleIds.forEach((id) => next.delete(id));
+      } else {
+        visibleIds.forEach((id) => next.add(id));
+      }
+      return next;
+    });
+  };
+
+  const toggleOne = (id: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(id)) next.delete(id); else next.add(id);
+      return next;
+    });
+  };
+
+  const clearSelection = () => setSelected(new Set());
+
+  const selectedIds = Array.from(selected);
+  const selectedCount = selectedIds.length;
+
+  const handleBulkDelete = async () => {
+    if (selectedIds.length === 0) return;
+    setBulkBusy(true);
+    const { error } = await supabase.from("inventory").delete().in("id", selectedIds);
+    setBulkBusy(false);
+    setConfirmDeleteOpen(false);
+    if (error) {
+      toast.error("Erro ao excluir selecionados");
+    } else {
+      toast.success(`${selectedIds.length} item(ns) excluído(s)`);
+      clearSelection();
+      onAssigned();
+    }
+  };
+
+  const handleBulkCondition = async (value: string) => {
+    if (!value || selectedIds.length === 0) return;
+    setBulkBusy(true);
+    const { error } = await supabase
+      .from("inventory")
+      .update({ condition: value, updated_at: new Date().toISOString() } as any)
+      .in("id", selectedIds);
+    setBulkBusy(false);
+    setBulkCondition("");
+    if (error) {
+      toast.error("Erro ao alterar condição em massa");
+    } else {
+      toast.success(`Condição alterada para "${value}" em ${selectedIds.length} item(ns)`);
+      clearSelection();
+      onAssigned();
+    }
+  };
+
   return (
+    <>
+    {hasConditionCol && (
+      <div className="flex items-center gap-2 px-1">
+        <span className="text-xs font-medium text-muted-foreground">Condição:</span>
+        <Select value={conditionFilter} onValueChange={setConditionFilter}>
+          <SelectTrigger className="h-8 w-[200px] text-xs">
+            <SelectValue placeholder="Todas" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">Todas</SelectItem>
+            {conditionOptions.map((opt) => (
+              <SelectItem key={opt.id} value={opt.name}>
+                <span className="flex items-center gap-2">
+                  <span
+                    className="h-2 w-2 rounded-full"
+                    style={{ backgroundColor: `hsl(${opt.color})` }}
+                  />
+                  {opt.name}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+        {conditionFilter !== "__all__" && (
+          <Button variant="ghost" size="sm" className="h-8 gap-1 text-xs" onClick={() => setConditionFilter("__all__")}>
+            <X className="h-3 w-3" /> Limpar
+          </Button>
+        )}
+      </div>
+    )}
+
+    {selectedCount > 0 && (
+      <div className="flex flex-wrap items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2">
+        <span className="inline-flex items-center gap-1.5 text-sm font-medium text-primary">
+          <CheckCircle2 className="h-4 w-4" />
+          {selectedCount} selecionado{selectedCount > 1 ? "s" : ""}
+        </span>
+        <Button variant="ghost" size="sm" className="h-7 text-xs" onClick={clearSelection}>
+          Limpar seleção
+        </Button>
+        <div className="ml-auto flex flex-wrap items-center gap-2">
+          {hasConditionCol && (
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-muted-foreground">Alterar condição:</span>
+              <Select value={bulkCondition} onValueChange={handleBulkCondition} disabled={bulkBusy}>
+                <SelectTrigger className="h-8 w-[180px] text-xs">
+                  <SelectValue placeholder="Escolher condição..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {conditionOptions.map((opt) => (
+                    <SelectItem key={opt.id} value={opt.name}>
+                      <span className="flex items-center gap-2">
+                        <span
+                          className="h-2 w-2 rounded-full"
+                          style={{ backgroundColor: `hsl(${opt.color})` }}
+                        />
+                        {opt.name}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
+          <Button
+            variant="destructive"
+            size="sm"
+            className="h-8 gap-1.5 text-xs"
+            onClick={() => setConfirmDeleteOpen(true)}
+            disabled={bulkBusy}
+          >
+            <Trash2 className="h-3.5 w-3.5" /> Excluir selecionados
+          </Button>
+        </div>
+      </div>
+    )}
+
     <Card>
       <CardContent className="p-0">
         <div>
           <Table>
             <TableHeader>
               <TableRow>
+                <TableHead className="w-[40px]">
+                  <Checkbox
+                    checked={allSelected ? true : someSelected ? "indeterminate" : false}
+                    onCheckedChange={toggleAll}
+                    aria-label="Selecionar todos"
+                  />
+                </TableHead>
                 {columns.map((col, idx) => (
                   <DraggableHeader
                     key={col.id}
@@ -525,7 +684,14 @@ function CategoryStockTable({
             </TableHeader>
             <TableBody>
               {sorted.map((item) => (
-                <TableRow key={item.id}>
+                <TableRow key={item.id} data-state={selected.has(item.id) ? "selected" : undefined}>
+                  <TableCell className="p-1.5">
+                    <Checkbox
+                      checked={selected.has(item.id)}
+                      onCheckedChange={() => toggleOne(item.id)}
+                      aria-label="Selecionar item"
+                    />
+                  </TableCell>
                   {columns.map((col) => (
                     <TableCell key={col.id} className="whitespace-nowrap p-1.5">
                       {col.id === "condition" ? (
@@ -564,7 +730,7 @@ function CategoryStockTable({
               ))}
               {sorted.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={columns.length + 1} className="text-center py-8 text-muted-foreground">
+                  <TableCell colSpan={columns.length + 2} className="text-center py-8 text-muted-foreground">
                     <Package className="mx-auto mb-2 h-8 w-8" />
                     Nenhum item disponível nesta categoria
                   </TableCell>
@@ -575,6 +741,28 @@ function CategoryStockTable({
         </div>
       </CardContent>
     </Card>
+
+    <AlertDialog open={confirmDeleteOpen} onOpenChange={setConfirmDeleteOpen}>
+      <AlertDialogContent>
+        <AlertDialogHeader>
+          <AlertDialogTitle>Excluir {selectedCount} item(ns)?</AlertDialogTitle>
+          <AlertDialogDescription>
+            Esta ação não pode ser desfeita. Os itens selecionados serão excluídos permanentemente do inventário.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel disabled={bulkBusy}>Cancelar</AlertDialogCancel>
+          <AlertDialogAction
+            onClick={(e) => { e.preventDefault(); handleBulkDelete(); }}
+            disabled={bulkBusy}
+            className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+          >
+            {bulkBusy ? "Excluindo..." : "Excluir"}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+    </>
   );
 }
 
