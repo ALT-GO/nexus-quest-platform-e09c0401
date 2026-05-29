@@ -500,9 +500,9 @@ export default function Inicio() {
           />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
           {/* LEFT: Today task + Productivity */}
-          <div className="space-y-6 lg:col-span-2">
+          <div className="flex flex-col gap-6 lg:col-span-2">
             {/* Today / Upcoming tasks */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-3">
