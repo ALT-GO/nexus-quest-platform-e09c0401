@@ -727,7 +727,7 @@ export default function Inicio() {
             </Card>
 
             {/* Other notifications */}
-            <Card>
+            <Card className="flex flex-1 flex-col min-h-[300px]">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
                   <Bell className="h-4 w-4 text-primary" />
@@ -739,13 +739,13 @@ export default function Inicio() {
                   </Badge>
                 )}
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="flex flex-1 flex-col min-h-0 pt-0">
                 {notifications.length === 0 ? (
                   <p className="py-4 text-center text-sm text-muted-foreground">
                     Sem notificações.
                   </p>
                 ) : (
-                  <ScrollArea className="max-h-[260px] pr-3">
+                  <ScrollArea className="flex-1 h-full pr-3">
                     <div className="space-y-1.5">
                       {notifications.slice(0, 10).map((n) => (
                         <button
