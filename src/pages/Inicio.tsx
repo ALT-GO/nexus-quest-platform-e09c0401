@@ -591,7 +591,7 @@ export default function Inicio() {
             </Card>
 
             {/* Productivity chart */}
-            <Card>
+            <Card className="flex flex-1 flex-col">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
                   <TrendingUp className="h-4 w-4 text-primary" />
@@ -602,8 +602,8 @@ export default function Inicio() {
                   <p className="text-lg font-semibold text-primary">{completionRate}%</p>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0">
-                <div className="h-[200px] w-full">
+              <CardContent className="flex flex-1 flex-col pt-0">
+                <div className="min-h-[200px] w-full flex-1">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={productivitySeries} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
