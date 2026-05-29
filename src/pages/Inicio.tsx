@@ -500,9 +500,9 @@ export default function Inicio() {
           />
         </div>
 
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className="grid gap-6 lg:grid-cols-3 lg:items-stretch">
           {/* LEFT: Today task + Productivity */}
-          <div className="space-y-6 lg:col-span-2">
+          <div className="flex flex-col gap-6 lg:col-span-2">
             {/* Today / Upcoming tasks */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -591,7 +591,7 @@ export default function Inicio() {
             </Card>
 
             {/* Productivity chart */}
-            <Card>
+            <Card className="flex flex-1 flex-col">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
                   <TrendingUp className="h-4 w-4 text-primary" />
@@ -602,8 +602,8 @@ export default function Inicio() {
                   <p className="text-lg font-semibold text-primary">{completionRate}%</p>
                 </div>
               </CardHeader>
-              <CardContent className="pt-0">
-                <div className="h-[200px] w-full">
+              <CardContent className="flex flex-1 flex-col pt-0">
+                <div className="min-h-[200px] w-full flex-1">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={productivitySeries} margin={{ top: 8, right: 8, left: -16, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" vertical={false} />
@@ -639,7 +639,7 @@ export default function Inicio() {
           </div>
 
           {/* RIGHT: Notifications + chat + mentions */}
-          <div className="space-y-6">
+          <div className="flex flex-col gap-6">
             {/* Unread chat */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-3">
@@ -727,7 +727,7 @@ export default function Inicio() {
             </Card>
 
             {/* Other notifications */}
-            <Card>
+            <Card className="flex flex-1 flex-col min-h-[300px]">
               <CardHeader className="flex flex-row items-center justify-between pb-3">
                 <CardTitle className="flex items-center gap-2 text-base font-semibold">
                   <Bell className="h-4 w-4 text-primary" />
@@ -739,15 +739,15 @@ export default function Inicio() {
                   </Badge>
                 )}
               </CardHeader>
-              <CardContent className="pt-0">
+              <CardContent className="flex flex-1 flex-col min-h-0 pt-0">
                 {notifications.length === 0 ? (
                   <p className="py-4 text-center text-sm text-muted-foreground">
                     Sem notificações.
                   </p>
                 ) : (
-                  <ScrollArea className="max-h-[260px] pr-3">
+                  <ScrollArea className="flex-1 h-full pr-3">
                     <div className="space-y-1.5">
-                      {notifications.slice(0, 10).map((n) => (
+                      {notifications.map((n) => (
                         <button
                           key={n.id}
                           onClick={() => n.link && navigate(n.link)}
