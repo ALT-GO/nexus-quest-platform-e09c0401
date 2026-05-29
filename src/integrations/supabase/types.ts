@@ -1788,8 +1788,10 @@ export type Database = {
           p_department?: string
           p_description: string
           p_email: string
+          p_parent_ticket_id?: string
           p_priority?: string
           p_requester: string
+          p_sla_deadline_override?: string
           p_title: string
         }
         Returns: {
