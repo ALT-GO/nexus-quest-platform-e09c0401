@@ -639,7 +639,7 @@ export default function Inicio() {
           </div>
 
           {/* RIGHT: Notifications + chat + mentions */}
-          <div className="space-y-6">
+          <div className="flex flex-col gap-6">
             {/* Unread chat */}
             <Card>
               <CardHeader className="flex flex-row items-center justify-between pb-3">
