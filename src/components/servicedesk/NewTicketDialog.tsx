@@ -33,6 +33,8 @@ import { Plus, Loader2, Send, Search, Package, CheckCircle2, AlertTriangle, Cale
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { createTicket, runTicketCreatedAutomations } from "@/hooks/use-tickets";
+import { useAuth } from "@/hooks/use-auth";
+import { useQuery } from "@tanstack/react-query";
 
 const baseCategories = [
   "Acesso e permissões",
@@ -110,6 +112,18 @@ const parseStoredDate = (value: string) => (value ? new Date(`${value}T12:00:00`
 const toStoredDate = (value?: Date) => (value ? format(value, "yyyy-MM-dd") : "");
 
 export function NewTicketDialog() {
+  const { user } = useAuth();
+  const { data: currentProfile } = useQuery({
+    queryKey: ["current-user-profile", user?.id],
+    queryFn: async () => {
+      if (!user) return null;
+      const { data } = await supabase.from("profiles").select("full_name").eq("id", user.id).single();
+      return data;
+    },
+    enabled: !!user,
+  });
+  const currentUserName = (currentProfile as any)?.full_name || "";
+
   const [open, setOpen] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [category, setCategory] = useState("");
@@ -385,6 +399,8 @@ export function NewTicketDialog() {
       department: department || undefined,
       priority,
       sla_deadline_override: slaDeadlineOverride,
+      // Internal manual creation → auto-assign the logged-in user as responsible
+      assignee: currentUserName || undefined,
     });
 
     if (result.success) {
@@ -407,6 +423,7 @@ export function NewTicketDialog() {
               department: department || undefined,
               priority,
               parent_ticket_id: result.ticketId,
+              assignee: currentUserName || undefined,
             });
             if (subResult.success) {
               console.log(`[SUBTAREFA] ${subResult.ticketNumber} criada para ${sub.category}`);

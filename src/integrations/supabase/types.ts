@@ -1782,23 +1782,58 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      create_public_ticket: {
+      create_public_marketing_task: {
         Args: {
-          p_category: string
-          p_department?: string
+          p_assignee_id?: string
           p_description: string
-          p_email: string
-          p_parent_ticket_id?: string
           p_priority?: string
-          p_requester: string
-          p_sla_deadline_override?: string
+          p_requester_id?: string
+          p_requester_name: string
           p_title: string
         }
         Returns: {
+          assignee_id: string
+          assignee_name: string
           id: string
-          ticket_number: string
         }[]
       }
+      create_public_ticket:
+        | {
+            Args: {
+              p_category: string
+              p_department?: string
+              p_description: string
+              p_email: string
+              p_parent_ticket_id?: string
+              p_priority?: string
+              p_requester: string
+              p_sla_deadline_override?: string
+              p_title: string
+            }
+            Returns: {
+              id: string
+              ticket_number: string
+            }[]
+          }
+        | {
+            Args: {
+              p_assignee?: string
+              p_category: string
+              p_department?: string
+              p_description: string
+              p_email: string
+              p_parent_ticket_id?: string
+              p_priority?: string
+              p_requester: string
+              p_sla_deadline_override?: string
+              p_title: string
+            }
+            Returns: {
+              assignee: string
+              id: string
+              ticket_number: string
+            }[]
+          }
       get_chat_unread_counts: {
         Args: never
         Returns: {
@@ -1840,6 +1875,13 @@ export type Database = {
       is_chat_channel_member: {
         Args: { _channel_id: string; _user_id: string }
         Returns: boolean
+      }
+      pick_round_robin_assignee: {
+        Args: { _roles: Database["public"]["Enums"]["app_role"][] }
+        Returns: {
+          full_name: string
+          user_id: string
+        }[]
       }
     }
     Enums: {
