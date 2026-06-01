@@ -99,6 +99,16 @@ export function useTickets() {
 
   const updateTicket = useCallback(
     async (id: string, updates: Partial<Omit<Ticket, "id" | "created_at">>) => {
+      // Block status advancement when the ticket has no assignee.
+      if (updates.status_id !== undefined) {
+        const current = tickets.find((t) => t.id === id);
+        const nextAssignee = updates.assignee ?? current?.assignee ?? null;
+        if (!nextAssignee || String(nextAssignee).trim() === "") {
+          toast.error("Atribua um responsável antes de mover o chamado.");
+          return false;
+        }
+      }
+
       const dbUpdates: any = { ...updates, updated_at: new Date().toISOString() };
       if (dbUpdates.checklist && Array.isArray(dbUpdates.checklist)) {
         dbUpdates.checklist = JSON.stringify(dbUpdates.checklist);
@@ -121,7 +131,7 @@ export function useTickets() {
       );
       return true;
     },
-    []
+    [tickets]
   );
 
   const deleteTicket = useCallback(
@@ -218,9 +228,11 @@ export async function createTicket(data: {
   priority?: "low" | "medium" | "high";
   parent_ticket_id?: string;
   sla_deadline_override?: string;
-}): Promise<{ success: boolean; ticketNumber?: string; ticketId?: string }> {
+  assignee?: string;
+}): Promise<{ success: boolean; ticketNumber?: string; ticketId?: string; assignee?: string }> {
   // Use SECURITY DEFINER RPC so anonymous users (public ticket form) can create tickets
   // without needing read access to status_config / sla_categories / tickets.
+  // When no assignee is provided, the RPC auto-assigns via round-robin among TI/Admin.
   const { data: rpcData, error } = await supabase.rpc("create_public_ticket" as any, {
     p_title: data.title || data.category,
     p_category: data.category,
@@ -231,6 +243,7 @@ export async function createTicket(data: {
     p_priority: data.priority || "medium",
     p_parent_ticket_id: data.parent_ticket_id || null,
     p_sla_deadline_override: data.sla_deadline_override || null,
+    p_assignee: data.assignee || null,
   });
 
   if (error) {
@@ -270,6 +283,7 @@ export async function createTicket(data: {
     success: true,
     ticketNumber,
     ticketId: (result as any)?.id,
+    assignee: (result as any)?.assignee,
   };
 }
 
