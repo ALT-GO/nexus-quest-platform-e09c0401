@@ -145,6 +145,17 @@ export function useUpdateMarketingTask() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: async ({ id, ...updates }: Partial<MarketingTask> & { id: string }) => {
+      // Block stage advancement when the task has no responsible person
+      if (updates.stage_id !== undefined) {
+        const current = qc.getQueryData<any[]>(["marketing_tasks"]) || [];
+        const existing = current.find((t) => t.id === id);
+        const nextAssigneeId = (updates as any).assignee_id ?? existing?.assignee_id ?? null;
+        if (!nextAssigneeId) {
+          toast.error("Atribua um responsável antes de mover a tarefa.");
+          throw new Error("Tarefa sem responsável");
+        }
+      }
+
       const { error } = await supabase
         .from("marketing_tasks")
         .update({ ...updates, updated_at: new Date().toISOString() } as any)
@@ -171,7 +182,9 @@ export function useUpdateMarketingTask() {
       }
     },
     onSuccess: () => qc.invalidateQueries({ queryKey: ["marketing_tasks"] }),
-    onError: (e: any) => toast.error(e.message),
+    onError: (e: any) => {
+      if (e?.message !== "Tarefa sem responsável") toast.error(e.message);
+    },
   });
 }
 

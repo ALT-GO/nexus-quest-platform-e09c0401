@@ -51,40 +51,23 @@ Deno.serve(async (req) => {
       }
     }
 
-    // Get first stage for new tasks
-    const { data: stages } = await supabase
-      .from("marketing_stages")
-      .select("id")
-      .order("order_index")
-      .limit(1);
+    // Create the marketing task via SECURITY DEFINER RPC that also
+    // auto-assigns a responsible person via round-robin (marketing + admin).
+    const { data: rpcRows, error: rpcError } = await supabase.rpc(
+      "create_public_marketing_task",
+      {
+        p_title: `[${request_type}] Solicitação de ${requester_name}`,
+        p_description: fullDescription,
+        p_requester_name: requester_name,
+        p_requester_id: null,
+        p_priority: "medium",
+        p_assignee_id: null,
+      }
+    );
 
-    const stageId = stages?.[0]?.id || null;
-
-    // Get max order_index
-    const { data: maxOrder } = await supabase
-      .from("marketing_tasks")
-      .select("order_index")
-      .order("order_index", { ascending: false })
-      .limit(1);
-
-    const nextOrder = (maxOrder?.[0]?.order_index ?? -1) + 1;
-
-    // Create the marketing task
-    const { data: task, error: taskError } = await supabase
-      .from("marketing_tasks")
-      .insert({
-        title: `[${request_type}] Solicitação de ${requester_name}`,
-        description: fullDescription,
-        requester_name: requester_name,
-        stage_id: stageId,
-        priority: "medium",
-        progress: "Não iniciado",
-        order_index: nextOrder,
-      })
-      .select("id")
-      .single();
-
-    if (taskError) throw taskError;
+    if (rpcError) throw rpcError;
+    const task = Array.isArray(rpcRows) ? rpcRows[0] : rpcRows;
+    if (!task?.id) throw new Error("Falha ao criar solicitação de marketing.");
 
     // Ensure the tag exists and link it to the task
     const tagColor = TAG_COLORS[request_type] || "215 20% 65%";

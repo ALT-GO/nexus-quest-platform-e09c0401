@@ -49,7 +49,7 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
   const [stageId, setStageId] = useState("");
   const [priority, setPriority] = useState("medium");
   const [progress, setProgress] = useState("Não iniciado");
-  const [assigneeId, setAssigneeId] = useState("");
+  const [assigneeId, setAssigneeId] = useState(user?.id ?? "");
   const [startDate, setStartDate] = useState<Date | undefined>();
   const [dueDate, setDueDate] = useState<Date | undefined>();
   const [isRecurring, setIsRecurring] = useState(false);
@@ -59,7 +59,12 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
 
   const handleSubmit = () => {
     if (!title.trim()) return;
-    const assignee = teamMembers.find(m => m.id === assigneeId);
+    if (!assigneeId) {
+      // Enforce: every internal marketing task must have a responsible person
+      return;
+    }
+    const assignee = teamMembers.find(m => m.id === assigneeId)
+      ?? (user?.id === assigneeId ? { id: user.id, name: profileData?.full_name ?? "" } : undefined);
 
     let nextRecurrenceDate: string | null = null;
     if (isRecurring) {
@@ -96,7 +101,7 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
             link_type: "related",
           });
         }
-        setTitle(""); setDescription(""); setStageId(""); setPriority("medium"); setProgress("Não iniciado"); setAssigneeId("");
+        setTitle(""); setDescription(""); setStageId(""); setPriority("medium"); setProgress("Não iniciado"); setAssigneeId(user?.id ?? "");
         setStartDate(undefined); setDueDate(undefined);
         setIsRecurring(false); setRecurrenceRule("weekly");
         setSprintId(""); setStoryPoints(undefined);
@@ -157,7 +162,7 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
               </Select>
             </div>
             <div>
-              <Label>Responsável</Label>
+              <Label>Responsável <span className="text-destructive">*</span></Label>
               <Select value={assigneeId} onValueChange={setAssigneeId}>
                 <SelectTrigger><SelectValue placeholder="Selecione" /></SelectTrigger>
                 <SelectContent>
@@ -242,7 +247,7 @@ export function NewMarketingTaskDialog({ open, onOpenChange, stages, teamMembers
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
-          <Button onClick={handleSubmit} disabled={!title.trim() || createTask.isPending}>
+          <Button onClick={handleSubmit} disabled={!title.trim() || !assigneeId || createTask.isPending}>
             {createTask.isPending ? "Criando..." : "Criar Tarefa"}
           </Button>
         </DialogFooter>
