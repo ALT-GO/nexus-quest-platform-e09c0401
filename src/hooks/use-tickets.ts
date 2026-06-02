@@ -5,6 +5,7 @@ import { fetchSlaCategoryMap } from "@/hooks/use-sla-categories";
 import { logAuditEvent } from "@/lib/audit";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notifications";
+import { sendTicketCreatedEmail, sendTicketCompletedEmail } from "@/lib/email";
 import { ChatSuporteTI } from "@/lib/chat-suporte-ti";
 
 export interface ChecklistItem {
@@ -129,6 +130,31 @@ export function useTickets() {
           t.id === id ? { ...t, ...updates, updated_at: new Date().toISOString() } : t
         )
       );
+
+      // Trigger satisfaction survey email when ticket transitions to a final status
+      if (updates.status_id !== undefined) {
+        const current = tickets.find((t) => t.id === id);
+        if (current && current.status_id !== updates.status_id) {
+          try {
+            const { data: status } = await supabase
+              .from("status_config")
+              .select("is_final")
+              .eq("id", updates.status_id)
+              .maybeSingle();
+            if ((status as any)?.is_final && current.email) {
+              sendTicketCompletedEmail({
+                email: current.email,
+                requester: current.requester,
+                ticketNumber: current.ticket_number,
+                title: current.title,
+              });
+            }
+          } catch (e) {
+            console.warn("[use-tickets] satisfaction email check failed:", e);
+          }
+        }
+      }
+
       return true;
     },
     [tickets]
@@ -255,6 +281,17 @@ export async function createTicket(data: {
 
   const ticketNumber = (result as any)?.ticket_number;
   const ticketTitle = data.title || data.category;
+
+  // Send acknowledgment email to requester (fire-and-forget)
+  if (data.email && ticketNumber) {
+    sendTicketCreatedEmail({
+      email: data.email,
+      requester: data.requester,
+      ticketNumber,
+      title: ticketTitle,
+      category: data.category,
+    });
+  }
 
   // Notify all TI team members about the new ticket (may fail for anon users)
   try {
