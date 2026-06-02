@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.bot-post-message]
 verify_jwt = false
+
+[functions.send-smtp-email]
+verify_jwt = false
