@@ -282,6 +282,17 @@ export async function createTicket(data: {
   const ticketNumber = (result as any)?.ticket_number;
   const ticketTitle = data.title || data.category;
 
+  // Send acknowledgment email to requester (fire-and-forget)
+  if (data.email && ticketNumber) {
+    sendTicketCreatedEmail({
+      email: data.email,
+      requester: data.requester,
+      ticketNumber,
+      title: ticketTitle,
+      category: data.category,
+    });
+  }
+
   // Notify all TI team members about the new ticket (may fail for anon users)
   try {
     const { notifyTITeam } = await import("@/lib/notifications");
