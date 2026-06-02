@@ -5,6 +5,7 @@ import { fetchSlaCategoryMap } from "@/hooks/use-sla-categories";
 import { logAuditEvent } from "@/lib/audit";
 import { toast } from "sonner";
 import { sendNotification } from "@/lib/notifications";
+import { sendTicketCreatedEmail, sendTicketCompletedEmail } from "@/lib/email";
 import { ChatSuporteTI } from "@/lib/chat-suporte-ti";
 
 export interface ChecklistItem {
