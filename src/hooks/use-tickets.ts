@@ -130,6 +130,31 @@ export function useTickets() {
           t.id === id ? { ...t, ...updates, updated_at: new Date().toISOString() } : t
         )
       );
+
+      // Trigger satisfaction survey email when ticket transitions to a final status
+      if (updates.status_id !== undefined) {
+        const current = tickets.find((t) => t.id === id);
+        if (current && current.status_id !== updates.status_id) {
+          try {
+            const { data: status } = await supabase
+              .from("status_config")
+              .select("is_final")
+              .eq("id", updates.status_id)
+              .maybeSingle();
+            if ((status as any)?.is_final && current.email) {
+              sendTicketCompletedEmail({
+                email: current.email,
+                requester: current.requester,
+                ticketNumber: current.ticket_number,
+                title: current.title,
+              });
+            }
+          } catch (e) {
+            console.warn("[use-tickets] satisfaction email check failed:", e);
+          }
+        }
+      }
+
       return true;
     },
     [tickets]
