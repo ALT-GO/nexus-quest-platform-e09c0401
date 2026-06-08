@@ -86,6 +86,28 @@ function getAssetIdentifier(asset: any): string {
   return "—";
 }
 
+/** Service tag column per category */
+function getAssetServiceTag(asset: any): string {
+  if (asset.category === "notebooks") {
+    const parts = [asset.service_tag, asset.service_tag_2].filter(Boolean);
+    return parts.length ? parts.join(" / ") : "—";
+  }
+  if (asset.category === "celulares" || asset.category === "perifericos") {
+    return asset.service_tag || "—";
+  }
+  return "—";
+}
+
+/** IMEI column (celular only) */
+function getAssetImei(asset: any): string {
+  if (asset.category === "celulares") {
+    const parts = [asset.imei1, asset.imei2].filter(Boolean);
+    return parts.length ? parts.join(" / ") : "—";
+  }
+  return "—";
+}
+
+
 export function PrintableTermDialog({ open, onOpenChange, collaboratorName, assets, type }: Props) {
   const today = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   const todayShort = format(new Date(), "'São Paulo, 'dd 'de' MMMM 'de' yyyy", { locale: ptBR });
@@ -196,6 +218,8 @@ export function PrintableTermDialog({ open, onOpenChange, collaboratorName, asse
               <tr style={{ backgroundColor: "#f0f0f0" }}>
                 <th className="p-1.5 border border-[#999] text-left font-bold" style={{ fontSize: "8pt" }}>ITEM</th>
                 <th className="p-1.5 border border-[#999] text-left font-bold" style={{ fontSize: "8pt" }}>DETALHE</th>
+                <th className="p-1.5 border border-[#999] text-left font-bold" style={{ fontSize: "8pt" }}>SERVICE TAG</th>
+                <th className="p-1.5 border border-[#999] text-left font-bold" style={{ fontSize: "8pt" }}>IMEI</th>
                 <th className="p-1.5 border border-[#999] text-left font-bold" style={{ fontSize: "8pt" }}>VALOR PAGO</th>
                 <th className="p-1.5 border border-[#999] text-left font-bold" style={{ fontSize: "8pt" }}>VALOR CONTÁBIL ATUAL</th>
                 {!isDevolucao && (
@@ -206,7 +230,7 @@ export function PrintableTermDialog({ open, onOpenChange, collaboratorName, asse
             <tbody>
               {assets.length === 0 ? (
                 <tr>
-                  <td colSpan={isDevolucao ? 4 : 5} className="p-2 border border-[#999] text-center" style={{ color: "#999" }}>
+                  <td colSpan={isDevolucao ? 6 : 7} className="p-2 border border-[#999] text-center" style={{ color: "#999" }}>
                     Nenhum ativo vinculado
                   </td>
                 </tr>
@@ -224,6 +248,8 @@ export function PrintableTermDialog({ open, onOpenChange, collaboratorName, asse
                     <tr key={asset.id}>
                       <td className="p-1.5 border border-[#999]" style={{ fontSize: "9pt" }}>{getItemType(asset)}</td>
                       <td className="p-1.5 border border-[#999]" style={{ fontSize: "9pt" }}>{getAssetDetail(asset)}</td>
+                      <td className="p-1.5 border border-[#999]" style={{ fontSize: "9pt" }}>{getAssetServiceTag(asset)}</td>
+                      <td className="p-1.5 border border-[#999]" style={{ fontSize: "9pt" }}>{getAssetImei(asset)}</td>
                       <td className="p-1.5 border border-[#999]" style={{ fontSize: "9pt" }}>{valorPagoDisplay}</td>
                       <td className="p-1.5 border border-[#999]" style={{ fontSize: "9pt" }}>{valorContabilDisplay}</td>
                       {!isDevolucao && (
@@ -234,10 +260,11 @@ export function PrintableTermDialog({ open, onOpenChange, collaboratorName, asse
                 })
               )}
               <tr>
-                <td colSpan={isDevolucao ? 4 : 5} className="p-1.5 border border-[#999] font-bold" style={{ color: "#666", fontSize: "9pt" }}>
+                <td colSpan={isDevolucao ? 6 : 7} className="p-1.5 border border-[#999] font-bold" style={{ color: "#666", fontSize: "9pt" }}>
                   OBS:
                 </td>
               </tr>
+
             </tbody>
           </table>
 
