@@ -114,7 +114,7 @@ export function PrintableTermDialog({ open, onOpenChange, collaboratorName, asse
   const cargo = assets.find((a: any) => a.cargo)?.cargo || "______________________";
   const isDevolucao = type === "devolucao";
 
-  const headerTitle = isDevolucao ? "DEVOLUÇÃO DE MATERIAIS TECNOLÓGICOS" : "TERMO DE RESPONSABILIDADE";
+  const headerTitle = isDevolucao ? "DEVOLUÇÃO DE MATERIAIS TECNOLÓGICOS" : "FF.164 - TERMO DE RESPONSABILIDADE";
   const dialogTitle = isDevolucao ? "Termo de Devolução" : "Termo de Responsabilidade";
   const docCode = isDevolucao ? "FF.117" : "FF.164";
   const headerPrefix = isDevolucao ? "TERMO DE RESPONSABILIDADE DE" : "";
@@ -154,7 +154,7 @@ export function PrintableTermDialog({ open, onOpenChange, collaboratorName, asse
 
       const fileName = isDevolucao
         ? `Termo_Devolucao_${collaboratorName.replace(/\s+/g, "_")}.pdf`
-        : `Termo_Responsabilidade_${collaboratorName.replace(/\s+/g, "_")}.pdf`;
+        : `FF.164 - TERMO DE RESPONSABILIDADE - ${collaboratorName.toUpperCase()}.pdf`;
       pdf.save(fileName);
     } catch (err) {
       console.error("Erro ao gerar PDF:", err);
