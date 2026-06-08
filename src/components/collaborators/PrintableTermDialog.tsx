@@ -86,6 +86,28 @@ function getAssetIdentifier(asset: any): string {
   return "—";
 }
 
+/** Service tag column per category */
+function getAssetServiceTag(asset: any): string {
+  if (asset.category === "notebooks") {
+    const parts = [asset.service_tag, asset.service_tag_2].filter(Boolean);
+    return parts.length ? parts.join(" / ") : "—";
+  }
+  if (asset.category === "celulares" || asset.category === "perifericos") {
+    return asset.service_tag || "—";
+  }
+  return "—";
+}
+
+/** IMEI column (celular only) */
+function getAssetImei(asset: any): string {
+  if (asset.category === "celulares") {
+    const parts = [asset.imei1, asset.imei2].filter(Boolean);
+    return parts.length ? parts.join(" / ") : "—";
+  }
+  return "—";
+}
+
+
 export function PrintableTermDialog({ open, onOpenChange, collaboratorName, assets, type }: Props) {
   const today = format(new Date(), "dd 'de' MMMM 'de' yyyy", { locale: ptBR });
   const todayShort = format(new Date(), "'São Paulo, 'dd 'de' MMMM 'de' yyyy", { locale: ptBR });
