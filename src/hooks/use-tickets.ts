@@ -160,12 +160,24 @@ export function useTickets() {
 
         if (becameCompleted || becameFinalStatus) {
           try {
+            console.info("[ticket-email] triggering satisfaction email", {
+              ticketId: current.id,
+              ticketNumber: current.ticket_number,
+              email: current.email,
+              becameCompleted,
+              becameFinalStatus,
+            });
             const ok = await sendTicketCompletedEmail({
               email: current.email,
               requester: current.requester,
               ticketNumber: current.ticket_number,
               title: current.title,
               category: current.category,
+            });
+            console.info("[ticket-email] satisfaction email result", {
+              ticketId: current.id,
+              ticketNumber: current.ticket_number,
+              ok,
             });
             try {
               const { notifyTITeam } = await import("@/lib/notifications");
