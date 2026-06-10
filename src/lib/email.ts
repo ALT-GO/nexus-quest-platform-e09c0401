@@ -49,6 +49,24 @@ export async function sendEmail(args: SendEmailArgs): Promise<boolean> {
   }
 }
 
+export async function dispatchTicketSatisfactionSurvey(ticketId: string, baseUrl?: string): Promise<boolean> {
+  try {
+    const { data, error } = await supabase.functions.invoke("dispatch-satisfaction-survey", {
+      body: { ticketId, baseUrl },
+    });
+
+    if (error) {
+      console.warn("[email] dispatch-satisfaction-survey error:", error);
+      return false;
+    }
+
+    return !!(data as { success?: boolean; skipped?: boolean } | null)?.success || !!(data as { skipped?: boolean } | null)?.skipped;
+  } catch (e) {
+    console.warn("[email] satisfaction dispatch failed:", e);
+    return false;
+  }
+}
+
 export function sendTicketCreatedEmail(opts: {
   email: string;
   requester: string;

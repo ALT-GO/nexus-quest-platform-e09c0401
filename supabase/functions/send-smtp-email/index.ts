@@ -27,14 +27,21 @@ interface SmtpAttemptConfig {
   label: string;
 }
 
+function normalizeHost(host: string, port: number) {
+  if (host === "smtps.locaweb.com.br") return "smtp.locaweb.com.br";
+  if (port === 465 && host === "smtp.locaweb.com.br") return host;
+  return host;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const SMTP_HOST = Deno.env.get("SMTP_HOST") ?? "smtp.locaweb.com.br";
+    const RAW_SMTP_HOST = Deno.env.get("SMTP_HOST") ?? "smtp.locaweb.com.br";
     const SMTP_PORT = Number(Deno.env.get("SMTP_PORT") ?? "587");
+    const SMTP_HOST = normalizeHost(RAW_SMTP_HOST, SMTP_PORT);
     const SMTP_USER = Deno.env.get("SMTP_USER");
     const SMTP_PASS = Deno.env.get("SMTP_PASS");
     const SMTP_FROM_NAME = Deno.env.get("SMTP_FROM_NAME") ?? "Pesquisa de Satisfação TI - Grupo Orion";
@@ -84,11 +91,11 @@ Deno.serve(async (req) => {
     });
 
     addAttempt({
-      host: "smtps.locaweb.com.br",
+      host: "smtp.locaweb.com.br",
       port: 465,
       secure: true,
       requireTLS: false,
-      label: "fallback:smtps.locaweb.com.br:465:ssl",
+      label: "fallback:smtp.locaweb.com.br:465:ssl",
     });
 
     let info: Awaited<ReturnType<ReturnType<typeof nodemailer.createTransport>["sendMail"]>> | null = null;
