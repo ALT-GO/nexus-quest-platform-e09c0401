@@ -413,6 +413,7 @@ export function CollaboratorProfile({ name, onBack, onNameChange }: Props) {
           </Button>
         </div>
         <div className="flex items-center gap-2">
+          <ChecklistMenu />
           <Button variant="outline" onClick={() => openTermDialog("devolucao")} className="gap-2">
             <FileUp className="h-4 w-4" />
             Termo de Devolução
