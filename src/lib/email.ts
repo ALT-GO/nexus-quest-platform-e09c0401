@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface SendEmailArgs {
   to: string | string[];
+  cc?: string | string[];
+  bcc?: string | string[];
   subject: string;
   html: string;
   text?: string;
@@ -78,6 +80,7 @@ export function sendTicketCompletedEmail(opts: {
   requester: string;
   ticketNumber: string;
   title: string;
+  category?: string;
   surveyUrl?: string;
 }) {
   const surveyUrl =
@@ -93,9 +96,15 @@ export function sendTicketCompletedEmail(opts: {
     ctaLabel: "Responder pesquisa",
   });
 
+  const requesterUpper = (opts.requester || "").toUpperCase();
+  const categoryUpper = (opts.category || "").toUpperCase();
+  const subject = `PESQUISA DE SATISFAÇÃO T.I - ${requesterUpper}${categoryUpper ? ` - ${categoryUpper}` : ""}`;
+
   return sendEmail({
     to: opts.email,
-    subject: `[${opts.ticketNumber}] Como foi seu atendimento?`,
+    cc: "adm.tisp@grupoorion.com.br",
+    subject,
     html,
   });
 }
+

@@ -142,12 +142,22 @@ export function useTickets() {
               .eq("id", updates.status_id)
               .maybeSingle();
             if ((status as any)?.is_final && current.email) {
-              sendTicketCompletedEmail({
+              const ok = await sendTicketCompletedEmail({
                 email: current.email,
                 requester: current.requester,
                 ticketNumber: current.ticket_number,
                 title: current.title,
+                category: current.category,
               });
+              try {
+                const { notifyTITeam } = await import("@/lib/notifications");
+                notifyTITeam({
+                  title: ok ? "Pesquisa de satisfação enviada" : "Falha ao enviar pesquisa de satisfação",
+                  message: `${ok ? "E-mail enviado para" : "Não foi possível enviar e-mail para"} ${current.requester} <${current.email}> (cc adm.tisp@grupoorion.com.br) — chamado ${current.ticket_number}.`,
+                  type: ok ? "success" : "warning",
+                  link: `/ti/service-desk?ticket=${current.id}`,
+                });
+              } catch {}
             }
           } catch (e) {
             console.warn("[use-tickets] satisfaction email check failed:", e);

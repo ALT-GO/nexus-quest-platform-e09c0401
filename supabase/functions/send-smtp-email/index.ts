@@ -11,6 +11,8 @@ const corsHeaders = {
 
 interface SendEmailPayload {
   to: string | string[];
+  cc?: string | string[];
+  bcc?: string | string[];
   subject: string;
   html: string;
   text?: string;
@@ -53,9 +55,14 @@ Deno.serve(async (req) => {
 
     const recipients = Array.isArray(payload.to) ? payload.to : [payload.to];
 
+    const cc = payload.cc ? (Array.isArray(payload.cc) ? payload.cc : [payload.cc]) : undefined;
+    const bcc = payload.bcc ? (Array.isArray(payload.bcc) ? payload.bcc : [payload.bcc]) : undefined;
+
     await client.send({
       from: `${SMTP_FROM_NAME} <${SMTP_USER}>`,
       to: recipients,
+      cc,
+      bcc,
       replyTo: payload.replyTo ?? SMTP_USER,
       subject: payload.subject,
       content: payload.text ?? "Este e-mail requer um cliente que suporte HTML.",
