@@ -82,7 +82,7 @@ export function sendTicketCompletedEmail(opts: {
 }) {
   const surveyUrl =
     opts.surveyUrl ??
-    `${APP_BASE_URL}/pesquisa-satisfacao?ticket=${encodeURIComponent(opts.ticketNumber)}`;
+    `${APP_BASE_URL}/pesquisa-satisfacao?ticket=${encodeURIComponent(opts.ticketNumber)}&email=${encodeURIComponent(opts.email)}&name=${encodeURIComponent(opts.requester)}`;
   const html = baseTemplate({
     title: `Chamado ${opts.ticketNumber} concluído ✅`,
     bodyHtml: `

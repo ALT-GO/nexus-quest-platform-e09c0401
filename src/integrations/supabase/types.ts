@@ -1441,6 +1441,56 @@ export type Database = {
         }
         Relationships: []
       }
+      satisfaction_surveys: {
+        Row: {
+          comment: string | null
+          created_at: string
+          id: string
+          rating_communication: number
+          rating_ease_of_use: number
+          rating_resolution: number
+          rating_response_time: number
+          ticket_id: string | null
+          ticket_number: string | null
+          user_email: string
+          user_name: string
+        }
+        Insert: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating_communication: number
+          rating_ease_of_use: number
+          rating_resolution: number
+          rating_response_time: number
+          ticket_id?: string | null
+          ticket_number?: string | null
+          user_email: string
+          user_name: string
+        }
+        Update: {
+          comment?: string | null
+          created_at?: string
+          id?: string
+          rating_communication?: number
+          rating_ease_of_use?: number
+          rating_resolution?: number
+          rating_response_time?: number
+          ticket_id?: string | null
+          ticket_number?: string | null
+          user_email?: string
+          user_name?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "satisfaction_surveys_ticket_id_fkey"
+            columns: ["ticket_id"]
+            isOneToOne: false
+            referencedRelation: "tickets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       sla_category_config: {
         Row: {
           category: string
