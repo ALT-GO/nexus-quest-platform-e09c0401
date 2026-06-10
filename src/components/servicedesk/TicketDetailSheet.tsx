@@ -323,7 +323,7 @@ export function TicketDetailSheet({
       }
     }
     const finalStatus = statuses.find((s) => s.isFinal && s.id !== "cancelled");
-    const doneStatusId = finalStatus?.id || "done";
+    const doneStatusId = finalStatus?.id || ticket.status_id;
     const ok = await onUpdateTicket(ticket.id, { completed_at: new Date().toISOString(), status_id: doneStatusId, progress: "completed" } as any);
     if (ok) {
       await logHistory("completed", "Chamado marcado como concluído", "Admin");
