@@ -8,6 +8,7 @@ interface SendEmailArgs {
   html: string;
   text?: string;
   replyTo?: string;
+  from?: string;
 }
 
 const BRAND_COLOR = "hsl(262, 83%, 58%)";
