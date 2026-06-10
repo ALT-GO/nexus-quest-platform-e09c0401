@@ -8,6 +8,7 @@ interface SendEmailArgs {
   html: string;
   text?: string;
   replyTo?: string;
+  from?: string;
 }
 
 const BRAND_COLOR = "hsl(262, 83%, 58%)";
@@ -86,24 +87,29 @@ export function sendTicketCompletedEmail(opts: {
   const surveyUrl =
     opts.surveyUrl ??
     `${APP_BASE_URL}/pesquisa-satisfacao?ticket=${encodeURIComponent(opts.ticketNumber)}&email=${encodeURIComponent(opts.email)}&name=${encodeURIComponent(opts.requester)}`;
+
+  const firstName = (opts.requester || "").split(" ")[0] || opts.requester;
   const html = baseTemplate({
-    title: `Chamado ${opts.ticketNumber} concluído ✅`,
+    title: `Pesquisa de Satisfação — Chamado #${opts.ticketNumber}`,
     bodyHtml: `
-      <p>Olá ${opts.requester.split(" ")[0]}, seu chamado <strong>${opts.title}</strong> foi finalizado pela nossa equipe.</p>
-      <p>Gostaríamos muito de ouvir sua opinião sobre o atendimento. Leva menos de 1 minuto!</p>
+      <p>Olá, <strong>${firstName}</strong>, tudo bem?</p>
+      <p>O seu chamado técnico <strong>#${opts.ticketNumber}</strong> (${opts.title}) foi encerrado pela nossa equipe de TI.</p>
+      <p>Para garantirmos a qualidade do nosso atendimento e buscarmos melhorias contínuas na nossa infraestrutura, gostaríamos de saber como foi a sua experiência. Leva menos de 1 minutinho!</p>
+      <p>Por favor, clique no botão abaixo para responder à nossa rápida pesquisa de satisfação:</p>
+      <p style="margin-top:18px; font-size:12px; color:#888;">Se o botão não funcionar, acesse pelo link:<br/><a href="${surveyUrl}" style="color:hsl(262,83%,58%); word-break:break-all;">${surveyUrl}</a></p>
+      <p style="margin-top:22px;">Agradecemos desde já pela sua participação!</p>
+      <p style="margin:18px 0 0; color:#555;">Atenciosamente,<br/><strong>Equipe de TI | Grupo Orion</strong></p>
     `,
     ctaUrl: surveyUrl,
-    ctaLabel: "Responder pesquisa",
+    ctaLabel: "Responder Pesquisa de Satisfação",
   });
-
-  const requesterUpper = (opts.requester || "").toUpperCase();
-  const categoryUpper = (opts.category || "").toUpperCase();
-  const subject = `PESQUISA DE SATISFAÇÃO T.I - ${requesterUpper}${categoryUpper ? ` - ${categoryUpper}` : ""}`;
 
   return sendEmail({
     to: opts.email,
     cc: "adm.tisp@grupoorion.com.br",
-    subject,
+    from: '"Pesquisa de Satisfação TI - Grupo Orion" <satisfacaosp@grupoorion.eng.br>',
+    replyTo: "satisfacaosp@grupoorion.eng.br",
+    subject: "PESQUISA DE SATISFAÇÃO - T.I",
     html,
   });
 }

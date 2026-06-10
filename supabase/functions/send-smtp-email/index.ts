@@ -1,5 +1,4 @@
-// Outlook/Office365 SMTP sender — uses nodemailer (npm) for reliable STARTTLS.
-// Public function (no JWT) so it can be invoked from the public ticket form.
+// Generic SMTP sender via nodemailer. Configurable host/port for any provider (Locaweb, Office365, etc.).
 import nodemailer from "npm:nodemailer@6.9.14";
 
 const corsHeaders = {
@@ -17,6 +16,7 @@ interface SendEmailPayload {
   html: string;
   text?: string;
   replyTo?: string;
+  from?: string;
 }
 
 Deno.serve(async (req) => {
@@ -25,13 +25,15 @@ Deno.serve(async (req) => {
   }
 
   try {
+    const SMTP_HOST = Deno.env.get("SMTP_HOST") ?? "smtps.locaweb.com.br";
+    const SMTP_PORT = Number(Deno.env.get("SMTP_PORT") ?? "587");
     const SMTP_USER = Deno.env.get("SMTP_USER");
     const SMTP_PASS = Deno.env.get("SMTP_PASS");
-    const SMTP_FROM_NAME = Deno.env.get("SMTP_FROM_NAME") ?? "Suporte TI";
+    const SMTP_FROM_NAME = Deno.env.get("SMTP_FROM_NAME") ?? "Pesquisa de Satisfação TI - Grupo Orion";
 
     if (!SMTP_USER || !SMTP_PASS) {
       return new Response(
-        JSON.stringify({ error: "SMTP credentials not configured" }),
+        JSON.stringify({ error: "SMTP credentials not configured (SMTP_USER/SMTP_PASS)" }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -44,24 +46,26 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Port 465 → implicit TLS (secure:true). Port 587 → STARTTLS.
+    const secure = SMTP_PORT === 465;
+
     const transporter = nodemailer.createTransport({
-      host: "smtp.office365.com",
-      port: 587,
-      secure: false, // upgrade later with STARTTLS
-      requireTLS: true,
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      secure,
+      requireTLS: !secure,
       auth: { user: SMTP_USER, pass: SMTP_PASS },
-      tls: {
-        ciphers: "TLSv1.2",
-        minVersion: "TLSv1.2",
-      },
+      tls: { minVersion: "TLSv1.2" },
     });
 
     const toList = Array.isArray(payload.to) ? payload.to : [payload.to];
     const ccList = payload.cc ? (Array.isArray(payload.cc) ? payload.cc : [payload.cc]) : undefined;
     const bccList = payload.bcc ? (Array.isArray(payload.bcc) ? payload.bcc : [payload.bcc]) : undefined;
 
+    const fromAddress = payload.from ?? `"${SMTP_FROM_NAME}" <${SMTP_USER}>`;
+
     const info = await transporter.sendMail({
-      from: `"${SMTP_FROM_NAME}" <${SMTP_USER}>`,
+      from: fromAddress,
       to: toList,
       cc: ccList,
       bcc: bccList,
@@ -71,7 +75,13 @@ Deno.serve(async (req) => {
       html: payload.html,
     });
 
-    console.log("[send-smtp-email] sent:", info.messageId, "to:", toList.join(","), "cc:", (ccList ?? []).join(","));
+    console.log(
+      "[send-smtp-email] sent:",
+      info.messageId,
+      "host:", SMTP_HOST, "port:", SMTP_PORT,
+      "to:", toList.join(","),
+      "cc:", (ccList ?? []).join(","),
+    );
 
     return new Response(JSON.stringify({ success: true, messageId: info.messageId }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
