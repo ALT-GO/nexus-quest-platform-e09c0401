@@ -13,6 +13,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PrintableTermDialog } from "@/components/collaborators/PrintableTermDialog";
+import { ChecklistMenu } from "@/components/collaborators/ChecklistMenu";
 import { AssetSelectionDialog } from "@/components/collaborators/AssetSelectionDialog";
 import { LinkExistingAssetDialog } from "@/components/collaborators/LinkExistingAssetDialog";
 import { cn } from "@/lib/utils";
@@ -413,6 +414,7 @@ export function CollaboratorProfile({ name, onBack, onNameChange }: Props) {
           </Button>
         </div>
         <div className="flex items-center gap-2">
+          <ChecklistMenu />
           <Button variant="outline" onClick={() => openTermDialog("devolucao")} className="gap-2">
             <FileUp className="h-4 w-4" />
             Termo de Devolução
