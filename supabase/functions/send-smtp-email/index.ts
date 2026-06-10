@@ -19,13 +19,21 @@ interface SendEmailPayload {
   from?: string;
 }
 
+interface SmtpAttemptConfig {
+  host: string;
+  port: number;
+  secure: boolean;
+  requireTLS: boolean;
+  label: string;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
   try {
-    const SMTP_HOST = Deno.env.get("SMTP_HOST") ?? "smtps.locaweb.com.br";
+    const SMTP_HOST = Deno.env.get("SMTP_HOST") ?? "smtp.locaweb.com.br";
     const SMTP_PORT = Number(Deno.env.get("SMTP_PORT") ?? "587");
     const SMTP_USER = Deno.env.get("SMTP_USER");
     const SMTP_PASS = Deno.env.get("SMTP_PASS");
@@ -46,39 +54,88 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Port 465 → implicit TLS (secure:true). Port 587 → STARTTLS.
-    const secure = SMTP_PORT === 465;
-
-    const transporter = nodemailer.createTransport({
-      host: SMTP_HOST,
-      port: SMTP_PORT,
-      secure,
-      requireTLS: !secure,
-      auth: { user: SMTP_USER, pass: SMTP_PASS },
-      tls: { minVersion: "TLSv1.2" },
-    });
-
     const toList = Array.isArray(payload.to) ? payload.to : [payload.to];
     const ccList = payload.cc ? (Array.isArray(payload.cc) ? payload.cc : [payload.cc]) : undefined;
     const bccList = payload.bcc ? (Array.isArray(payload.bcc) ? payload.bcc : [payload.bcc]) : undefined;
 
     const fromAddress = payload.from ?? `"${SMTP_FROM_NAME}" <${SMTP_USER}>`;
 
-    const info = await transporter.sendMail({
-      from: fromAddress,
-      to: toList,
-      cc: ccList,
-      bcc: bccList,
-      replyTo: payload.replyTo ?? SMTP_USER,
-      subject: payload.subject,
-      text: payload.text ?? "Este e-mail requer um cliente que suporte HTML.",
-      html: payload.html,
+    const fallbackAttempts: SmtpAttemptConfig[] = [
+      {
+        host: SMTP_HOST,
+        port: SMTP_PORT,
+        secure: SMTP_PORT === 465,
+        requireTLS: SMTP_PORT !== 465,
+        label: `primary:${SMTP_HOST}:${SMTP_PORT}`,
+      },
+    ];
+
+    const addAttempt = (attempt: SmtpAttemptConfig) => {
+      const exists = fallbackAttempts.some((item) => item.host === attempt.host && item.port === attempt.port && item.secure === attempt.secure);
+      if (!exists) fallbackAttempts.push(attempt);
+    };
+
+    addAttempt({
+      host: "smtp.locaweb.com.br",
+      port: 587,
+      secure: false,
+      requireTLS: true,
+      label: "fallback:smtp.locaweb.com.br:587:starttls",
     });
+
+    addAttempt({
+      host: "smtps.locaweb.com.br",
+      port: 465,
+      secure: true,
+      requireTLS: false,
+      label: "fallback:smtps.locaweb.com.br:465:ssl",
+    });
+
+    let info: Awaited<ReturnType<ReturnType<typeof nodemailer.createTransport>["sendMail"]>> | null = null;
+    let lastError: Error | null = null;
+
+    for (const attempt of fallbackAttempts) {
+      try {
+        console.log(`[send-smtp-email] trying ${attempt.label}`);
+
+        const transporter = nodemailer.createTransport({
+          host: attempt.host,
+          port: attempt.port,
+          secure: attempt.secure,
+          requireTLS: attempt.requireTLS,
+          auth: { user: SMTP_USER, pass: SMTP_PASS },
+          connectionTimeout: 10_000,
+          greetingTimeout: 10_000,
+          socketTimeout: 10_000,
+          tls: { minVersion: "TLSv1.2" },
+        });
+
+        info = await transporter.sendMail({
+          from: fromAddress,
+          to: toList,
+          cc: ccList,
+          bcc: bccList,
+          replyTo: payload.replyTo ?? SMTP_USER,
+          subject: payload.subject,
+          text: payload.text ?? "Este e-mail requer um cliente que suporte HTML.",
+          html: payload.html,
+        });
+
+        console.log(`[send-smtp-email] success via ${attempt.label}`);
+        break;
+      } catch (error) {
+        lastError = error as Error;
+        console.error(`[send-smtp-email] failed via ${attempt.label}:`, error);
+      }
+    }
+
+    if (!info) {
+      throw lastError ?? new Error("Unable to deliver email with configured SMTP attempts");
+    }
 
     console.log(
       "[send-smtp-email] sent:",
       info.messageId,
-      "host:", SMTP_HOST, "port:", SMTP_PORT,
       "to:", toList.join(","),
       "cc:", (ccList ?? []).join(","),
     );
