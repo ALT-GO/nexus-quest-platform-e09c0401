@@ -13,6 +13,7 @@ import {
   DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { PrintableTermDialog } from "@/components/collaborators/PrintableTermDialog";
+import { ChecklistMenu } from "@/components/collaborators/ChecklistMenu";
 import { AssetSelectionDialog } from "@/components/collaborators/AssetSelectionDialog";
 import { LinkExistingAssetDialog } from "@/components/collaborators/LinkExistingAssetDialog";
 import { cn } from "@/lib/utils";
