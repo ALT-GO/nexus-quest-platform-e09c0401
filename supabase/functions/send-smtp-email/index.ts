@@ -1,6 +1,6 @@
-// Outlook SMTP sender — uses adm.tisp@grupoorion.com.br
+// Outlook/Office365 SMTP sender — uses nodemailer (npm) for reliable STARTTLS.
 // Public function (no JWT) so it can be invoked from the public ticket form.
-import { SMTPClient } from "https://deno.land/x/denomailer@1.6.0/mod.ts";
+import nodemailer from "npm:nodemailer@6.9.14";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -44,34 +44,36 @@ Deno.serve(async (req) => {
       );
     }
 
-    const client = new SMTPClient({
-      connection: {
-        hostname: "smtp.office365.com",
-        port: 587,
-        tls: false, // STARTTLS upgrade
-        auth: { username: SMTP_USER, password: SMTP_PASS },
+    const transporter = nodemailer.createTransport({
+      host: "smtp.office365.com",
+      port: 587,
+      secure: false, // upgrade later with STARTTLS
+      requireTLS: true,
+      auth: { user: SMTP_USER, pass: SMTP_PASS },
+      tls: {
+        ciphers: "TLSv1.2",
+        minVersion: "TLSv1.2",
       },
     });
 
-    const recipients = Array.isArray(payload.to) ? payload.to : [payload.to];
+    const toList = Array.isArray(payload.to) ? payload.to : [payload.to];
+    const ccList = payload.cc ? (Array.isArray(payload.cc) ? payload.cc : [payload.cc]) : undefined;
+    const bccList = payload.bcc ? (Array.isArray(payload.bcc) ? payload.bcc : [payload.bcc]) : undefined;
 
-    const cc = payload.cc ? (Array.isArray(payload.cc) ? payload.cc : [payload.cc]) : undefined;
-    const bcc = payload.bcc ? (Array.isArray(payload.bcc) ? payload.bcc : [payload.bcc]) : undefined;
-
-    await client.send({
-      from: `${SMTP_FROM_NAME} <${SMTP_USER}>`,
-      to: recipients,
-      cc,
-      bcc,
+    const info = await transporter.sendMail({
+      from: `"${SMTP_FROM_NAME}" <${SMTP_USER}>`,
+      to: toList,
+      cc: ccList,
+      bcc: bccList,
       replyTo: payload.replyTo ?? SMTP_USER,
       subject: payload.subject,
-      content: payload.text ?? "Este e-mail requer um cliente que suporte HTML.",
+      text: payload.text ?? "Este e-mail requer um cliente que suporte HTML.",
       html: payload.html,
     });
 
-    await client.close();
+    console.log("[send-smtp-email] sent:", info.messageId, "to:", toList.join(","), "cc:", (ccList ?? []).join(","));
 
-    return new Response(JSON.stringify({ success: true }), {
+    return new Response(JSON.stringify({ success: true, messageId: info.messageId }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
