@@ -2,6 +2,8 @@ import { supabase } from "@/integrations/supabase/client";
 
 interface SendEmailArgs {
   to: string | string[];
+  cc?: string | string[];
+  bcc?: string | string[];
   subject: string;
   html: string;
   text?: string;
