@@ -11,6 +11,8 @@ const corsHeaders = {
 
 interface SendEmailPayload {
   to: string | string[];
+  cc?: string | string[];
+  bcc?: string | string[];
   subject: string;
   html: string;
   text?: string;
