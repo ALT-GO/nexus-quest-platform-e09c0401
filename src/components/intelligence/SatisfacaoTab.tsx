@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BIStatCard } from "./bi/BIStatCard";
 import { BIChartCard } from "./bi/BIChartCard";
-import { BI_COLORS, BI_TOOLTIP_STYLE } from "./bi/bi-theme";
+import { BI_COLORS, BI_SEMANTIC, BI_TOOLTIP_STYLE } from "./bi/bi-theme";
 
 interface SurveyRow {
   id: string;
@@ -30,10 +30,10 @@ interface Props {
 }
 
 const CRITERIA = [
-  { key: "rating_response_time" as const, label: "Tempo de Resposta", color: BI_COLORS.info },
-  { key: "rating_communication" as const, label: "Comunicação", color: BI_COLORS.primary },
-  { key: "rating_resolution" as const, label: "Resolução", color: BI_COLORS.success },
-  { key: "rating_ease_of_use" as const, label: "Facilidade", color: BI_COLORS.warning },
+  { key: "rating_response_time" as const, label: "Tempo de Resposta", color: BI_SEMANTIC.created },
+  { key: "rating_communication" as const, label: "Comunicação", color: BI_SEMANTIC.primary },
+  { key: "rating_resolution" as const, label: "Resolução", color: BI_SEMANTIC.completed },
+  { key: "rating_ease_of_use" as const, label: "Facilidade", color: BI_SEMANTIC.pending },
 ];
 
 export function SatisfacaoTab({ dateRange, compact = false }: Props) {
@@ -142,7 +142,7 @@ export function SatisfacaoTab({ dateRange, compact = false }: Props) {
                 contentStyle={BI_TOOLTIP_STYLE}
                 formatter={(v: number) => [v.toFixed(2), "Média"]}
               />
-              <Bar dataKey="avg" radius={[6, 6, 0, 0]} fill={BI_COLORS.primary} />
+              <Bar dataKey="avg" radius={[6, 6, 0, 0]} fill={BI_SEMANTIC.primary} />
             </BarChart>
           </ResponsiveContainer>
         </div>
