@@ -40,6 +40,7 @@ import { BIDimensionHeatmap } from "./bi/BIDimensionHeatmap";
 import { BIWorkloadChart } from "./bi/BIWorkloadChart";
 import { BI_TOOLTIP_STYLE, BI_COLORS } from "./bi/bi-theme";
 import { comparePeriod, previousPeriod } from "./bi/period-compare";
+import { SatisfacaoTab } from "./SatisfacaoTab";
 
 import type { CostCenterFilter } from "@/pages/CentralInteligencia";
 
@@ -525,6 +526,9 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           }}
         />
       </div>
+
+      {/* Satisfação — resumo no Visão Geral */}
+      <SatisfacaoTab dateRange={dateRange} compact />
     </>
   );
 
@@ -830,6 +834,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
         productivity={productivityNode}
         time={timeNode}
         domain={domainNode}
+        satisfaction={<SatisfacaoTab dateRange={dateRange} />}
       />
 
       <TicketDrilldownDialog open={drilldownOpen} onOpenChange={setDrilldownOpen} title={drilldownTitle} tickets={drilldownTickets} />
