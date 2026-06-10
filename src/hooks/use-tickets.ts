@@ -100,9 +100,10 @@ export function useTickets() {
 
   const updateTicket = useCallback(
     async (id: string, updates: Partial<Omit<Ticket, "id" | "created_at">>) => {
+      const current = tickets.find((t) => t.id === id);
+
       // Block status advancement when the ticket has no assignee.
       if (updates.status_id !== undefined) {
-        const current = tickets.find((t) => t.id === id);
         const nextAssignee = updates.assignee ?? current?.assignee ?? null;
         if (!nextAssignee || String(nextAssignee).trim() === "") {
           toast.error("Atribua um responsável antes de mover o chamado.");
@@ -110,7 +111,8 @@ export function useTickets() {
         }
       }
 
-      const dbUpdates: any = { ...updates, updated_at: new Date().toISOString() };
+      const updatedAt = new Date().toISOString();
+      const dbUpdates: any = { ...updates, updated_at: updatedAt };
       if (dbUpdates.checklist && Array.isArray(dbUpdates.checklist)) {
         dbUpdates.checklist = JSON.stringify(dbUpdates.checklist);
       }
@@ -127,40 +129,55 @@ export function useTickets() {
       // Update local state so UI reflects change immediately
       setTickets((prev) =>
         prev.map((t) =>
-          t.id === id ? { ...t, ...updates, updated_at: new Date().toISOString() } : t
+          t.id === id ? { ...t, ...updates, updated_at: updatedAt } : t
         )
       );
 
-      // Trigger satisfaction survey email when ticket transitions to a final status
-      if (updates.status_id !== undefined) {
-        const current = tickets.find((t) => t.id === id);
-        if (current && current.status_id !== updates.status_id) {
+      // Trigger satisfaction survey email when ticket is completed,
+      // either by moving to a final status or by setting completed_at directly.
+      if (current?.email) {
+        const becameCompleted =
+          updates.completed_at !== undefined &&
+          !current.completed_at &&
+          !!updates.completed_at;
+
+        let becameFinalStatus = false;
+        if (
+          updates.status_id !== undefined &&
+          current.status_id !== updates.status_id
+        ) {
           try {
             const { data: status } = await supabase
               .from("status_config")
               .select("is_final")
               .eq("id", updates.status_id)
               .maybeSingle();
-            if ((status as any)?.is_final && current.email) {
-              const ok = await sendTicketCompletedEmail({
-                email: current.email,
-                requester: current.requester,
-                ticketNumber: current.ticket_number,
-                title: current.title,
-                category: current.category,
-              });
-              try {
-                const { notifyTITeam } = await import("@/lib/notifications");
-                notifyTITeam({
-                  title: ok ? "Pesquisa de satisfação enviada" : "Falha ao enviar pesquisa de satisfação",
-                  message: `${ok ? "E-mail enviado para" : "Não foi possível enviar e-mail para"} ${current.requester} <${current.email}> (cc adm.tisp@grupoorion.com.br) — chamado ${current.ticket_number}.`,
-                  type: ok ? "success" : "warning",
-                  link: `/ti/service-desk?ticket=${current.id}`,
-                });
-              } catch {}
-            }
+            becameFinalStatus = !!(status as any)?.is_final;
           } catch (e) {
-            console.warn("[use-tickets] satisfaction email check failed:", e);
+            console.warn("[use-tickets] final status check failed:", e);
+          }
+        }
+
+        if (becameCompleted || becameFinalStatus) {
+          try {
+            const ok = await sendTicketCompletedEmail({
+              email: current.email,
+              requester: current.requester,
+              ticketNumber: current.ticket_number,
+              title: current.title,
+              category: current.category,
+            });
+            try {
+              const { notifyTITeam } = await import("@/lib/notifications");
+              notifyTITeam({
+                title: ok ? "Pesquisa de satisfação enviada" : "Falha ao enviar pesquisa de satisfação",
+                message: `${ok ? "E-mail enviado para" : "Não foi possível enviar e-mail para"} ${current.requester} <${current.email}> (cc adm.tisp@grupoorion.com.br) — chamado ${current.ticket_number}.`,
+                type: ok ? "success" : "warning",
+                link: `/ti/service-desk?ticket=${current.id}`,
+              });
+            } catch {}
+          } catch (e) {
+            console.warn("[use-tickets] satisfaction email send failed:", e);
           }
         }
       }
