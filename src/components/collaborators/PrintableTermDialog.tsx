@@ -153,7 +153,7 @@ export function PrintableTermDialog({ open, onOpenChange, collaboratorName, asse
       }
 
       const fileName = isDevolucao
-        ? `Termo_Devolucao_${collaboratorName.replace(/\s+/g, "_")}.pdf`
+        ? `FF.117 - TERMO DE DEVOLUÇÃO - ${collaboratorName.toUpperCase()}.pdf`
         : `FF.164 - TERMO DE RESPONSABILIDADE - ${collaboratorName.toUpperCase()}.pdf`;
       pdf.save(fileName);
     } catch (err) {
