@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BIStatCard } from "./bi/BIStatCard";
 import { BIChartCard } from "./bi/BIChartCard";
-import { BI_COLORS, BI_SEMANTIC, BI_TOOLTIP_STYLE } from "./bi/bi-theme";
+import { BI_SEMANTIC, BI_TOOLTIP_STYLE } from "./bi/bi-theme";
 
 interface SurveyRow {
   id: string;
