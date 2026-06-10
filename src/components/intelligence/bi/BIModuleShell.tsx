@@ -1,34 +1,27 @@
 import { ReactNode } from "react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { LayoutDashboard, Users, Clock, Briefcase } from "lucide-react";
+import { LayoutDashboard, Users, Clock, Briefcase, Smile } from "lucide-react";
 
-export type BISubTabKey = "overview" | "productivity" | "time" | "domain";
+export type BISubTabKey = "overview" | "productivity" | "time" | "domain" | "satisfaction";
 
 interface Props {
-  /** Current tab; controlled. */
   value: BISubTabKey;
   onChange: (v: BISubTabKey) => void;
-  /** Label for the "Domínio" tab. TI: "Ativos & Custos" — Marketing: "Eventos & Metas". */
   domainLabel: string;
-  /** Insights ribbon — rendered above tabs, always visible. */
   insights?: ReactNode;
-  /** Sticky filters row, rendered between insights and tabs. */
   filters?: ReactNode;
-  /** Slot contents per tab. */
   overview: ReactNode;
   productivity: ReactNode;
   time: ReactNode;
   domain: ReactNode;
+  /** Optional Satisfação tab content. Tab is only shown when this is provided. */
+  satisfaction?: ReactNode;
 }
 
-/**
- * Shared BI shell — provides parity between TI and Marketing dashboards.
- * Insights bar pinned at top, then sticky filters, then sub-tabs.
- */
 export function BIModuleShell({
   value, onChange, domainLabel,
   insights, filters,
-  overview, productivity, time, domain,
+  overview, productivity, time, domain, satisfaction,
 }: Props) {
   return (
     <div className="space-y-4">
@@ -57,12 +50,21 @@ export function BIModuleShell({
             <Briefcase className="h-3.5 w-3.5" />
             {domainLabel}
           </TabsTrigger>
+          {satisfaction && (
+            <TabsTrigger value="satisfaction" className="gap-2 data-[state=active]:bg-background data-[state=active]:shadow-sm">
+              <Smile className="h-3.5 w-3.5" />
+              Satisfação
+            </TabsTrigger>
+          )}
         </TabsList>
 
         <TabsContent value="overview" className="mt-5 space-y-5 focus-visible:outline-none">{overview}</TabsContent>
         <TabsContent value="productivity" className="mt-5 space-y-5 focus-visible:outline-none">{productivity}</TabsContent>
         <TabsContent value="time" className="mt-5 space-y-5 focus-visible:outline-none">{time}</TabsContent>
         <TabsContent value="domain" className="mt-5 space-y-5 focus-visible:outline-none">{domain}</TabsContent>
+        {satisfaction && (
+          <TabsContent value="satisfaction" className="mt-5 space-y-5 focus-visible:outline-none">{satisfaction}</TabsContent>
+        )}
       </Tabs>
     </div>
   );
