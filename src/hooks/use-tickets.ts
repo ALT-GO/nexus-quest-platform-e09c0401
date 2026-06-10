@@ -4,8 +4,8 @@ import { slaByCategory } from "@/hooks/use-sla";
 import { fetchSlaCategoryMap } from "@/hooks/use-sla-categories";
 import { logAuditEvent } from "@/lib/audit";
 import { toast } from "sonner";
-import { notifyTITeam, sendNotification } from "@/lib/notifications";
-import { sendTicketCreatedEmail, sendTicketCompletedEmail } from "@/lib/email";
+import { sendNotification } from "@/lib/notifications";
+import { dispatchTicketSatisfactionSurvey, sendTicketCreatedEmail } from "@/lib/email";
 import { ChatSuporteTI } from "@/lib/chat-suporte-ti";
 
 export interface ChecklistItem {
@@ -161,27 +161,10 @@ export function useTickets() {
         if (becameCompleted || becameFinalStatus) {
           void (async () => {
             try {
-              await notifyTITeam({
-                title: "Pesquisa de satisfação acionada",
-                message: `Tentando enviar e-mail para ${current.requester} <${current.email}> (cc adm.tisp@grupoorion.com.br) — chamado ${current.ticket_number}.`,
-                type: "info",
-                link: `/ti/service-desk?ticket=${current.id}`,
-              });
-
-              const ok = await sendTicketCompletedEmail({
-                email: current.email,
-                requester: current.requester,
-                ticketNumber: current.ticket_number,
-                title: current.title,
-                category: current.category,
-              });
-
-              await notifyTITeam({
-                title: ok ? "Pesquisa de satisfação enviada" : "Falha ao enviar pesquisa de satisfação",
-                message: `${ok ? "E-mail enviado para" : "Não foi possível enviar e-mail para"} ${current.requester} <${current.email}> (cc adm.tisp@grupoorion.com.br) — chamado ${current.ticket_number}.`,
-                type: ok ? "success" : "warning",
-                link: `/ti/service-desk?ticket=${current.id}`,
-              });
+              await dispatchTicketSatisfactionSurvey(
+                current.id,
+                typeof window !== "undefined" ? window.location.origin : undefined,
+              );
             } catch (e) {
               console.warn("[use-tickets] satisfaction flow failed:", e);
             }
