@@ -4,7 +4,7 @@ import { slaByCategory } from "@/hooks/use-sla";
 import { fetchSlaCategoryMap } from "@/hooks/use-sla-categories";
 import { logAuditEvent } from "@/lib/audit";
 import { toast } from "sonner";
-import { sendNotification } from "@/lib/notifications";
+import { notifyTITeam, sendNotification } from "@/lib/notifications";
 import { sendTicketCreatedEmail, sendTicketCompletedEmail } from "@/lib/email";
 import { ChatSuporteTI } from "@/lib/chat-suporte-ti";
 
@@ -160,13 +160,6 @@ export function useTickets() {
 
         if (becameCompleted || becameFinalStatus) {
           try {
-            console.info("[ticket-email] triggering satisfaction email", {
-              ticketId: current.id,
-              ticketNumber: current.ticket_number,
-              email: current.email,
-              becameCompleted,
-              becameFinalStatus,
-            });
             const ok = await sendTicketCompletedEmail({
               email: current.email,
               requester: current.requester,
@@ -174,20 +167,16 @@ export function useTickets() {
               title: current.title,
               category: current.category,
             });
-            console.info("[ticket-email] satisfaction email result", {
-              ticketId: current.id,
-              ticketNumber: current.ticket_number,
-              ok,
-            });
             try {
-              const { notifyTITeam } = await import("@/lib/notifications");
-              notifyTITeam({
+              await notifyTITeam({
                 title: ok ? "Pesquisa de satisfação enviada" : "Falha ao enviar pesquisa de satisfação",
                 message: `${ok ? "E-mail enviado para" : "Não foi possível enviar e-mail para"} ${current.requester} <${current.email}> (cc adm.tisp@grupoorion.com.br) — chamado ${current.ticket_number}.`,
                 type: ok ? "success" : "warning",
                 link: `/ti/service-desk?ticket=${current.id}`,
               });
-            } catch {}
+            } catch (notifyError) {
+              console.warn("[use-tickets] TI notification failed:", notifyError);
+            }
           } catch (e) {
             console.warn("[use-tickets] satisfaction email send failed:", e);
           }
