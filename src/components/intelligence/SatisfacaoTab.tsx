@@ -200,7 +200,7 @@ export function SatisfacaoTab({ dateRange, compact = false }: Props) {
         title="Respostas recebidas"
         icon={MessageSquare}
         padded={false}
-        actions={
+        action={
           <Button
             variant="outline"
             size="sm"
