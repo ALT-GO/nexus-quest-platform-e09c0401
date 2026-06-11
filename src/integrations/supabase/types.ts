@@ -470,6 +470,63 @@ export type Database = {
         }
         Relationships: []
       }
+      email_templates: {
+        Row: {
+          body_html: string
+          cc: string
+          cta_label: string
+          enabled: boolean
+          font_family: string
+          footer_text: string
+          from_address: string
+          greeting: string
+          header_title: string
+          heading_title: string
+          id: string
+          primary_color: string
+          reply_to: string
+          subject: string
+          template_key: string
+          updated_at: string
+        }
+        Insert: {
+          body_html: string
+          cc?: string
+          cta_label?: string
+          enabled?: boolean
+          font_family?: string
+          footer_text?: string
+          from_address?: string
+          greeting?: string
+          header_title?: string
+          heading_title: string
+          id?: string
+          primary_color?: string
+          reply_to?: string
+          subject: string
+          template_key: string
+          updated_at?: string
+        }
+        Update: {
+          body_html?: string
+          cc?: string
+          cta_label?: string
+          enabled?: boolean
+          font_family?: string
+          footer_text?: string
+          from_address?: string
+          greeting?: string
+          header_title?: string
+          heading_title?: string
+          id?: string
+          primary_color?: string
+          reply_to?: string
+          subject?: string
+          template_key?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       integrity_duplicate_ignores: {
         Row: {
           created_at: string
