@@ -49,86 +49,43 @@ export async function sendEmail(args: SendEmailArgs): Promise<boolean> {
   }
 }
 
-export async function dispatchTicketSatisfactionSurvey(ticketId: string, baseUrl?: string): Promise<boolean> {
+async function dispatchTicketTemplateEmail(ticketId: string, templateKey: string, baseUrl?: string): Promise<boolean> {
   try {
-    const { data, error } = await supabase.functions.invoke("dispatch-satisfaction-survey", {
-      body: { ticketId, baseUrl },
+    const { data, error } = await supabase.functions.invoke("send-ticket-template-email", {
+      body: { ticketId, templateKey, baseUrl: baseUrl ?? APP_BASE_URL },
     });
-
     if (error) {
-      console.warn("[email] dispatch-satisfaction-survey error:", error);
+      console.warn(`[email] send-ticket-template-email (${templateKey}) error:`, error);
       return false;
     }
-
-    return !!(data as { success?: boolean; skipped?: boolean } | null)?.success || !!(data as { skipped?: boolean } | null)?.skipped;
+    const d = data as { success?: boolean; skipped?: boolean } | null;
+    return !!d?.success || !!d?.skipped;
   } catch (e) {
-    console.warn("[email] satisfaction dispatch failed:", e);
+    console.warn(`[email] template dispatch failed (${templateKey}):`, e);
     return false;
   }
 }
 
+export function dispatchTicketSatisfactionSurvey(ticketId: string, baseUrl?: string) {
+  return dispatchTicketTemplateEmail(ticketId, "ticket_completed", baseUrl);
+}
+
 export function sendTicketCreatedEmail(opts: {
+  ticketId?: string;
   email: string;
   requester: string;
   ticketNumber: string;
   title: string;
   category: string;
 }) {
+  if (opts.ticketId) {
+    return dispatchTicketTemplateEmail(opts.ticketId, "ticket_created");
+  }
+  // Fallback: render minimal email when ticketId is unavailable.
   const html = baseTemplate({
     title: `Recebemos seu chamado, ${opts.requester.split(" ")[0]}!`,
-    bodyHtml: `
-      <p>Seu chamado foi registrado com sucesso e nossa equipe já foi notificada.</p>
-      <div style="background:#f5f5f7; border-radius:8px; padding:16px; margin:16px 0;">
-        <p style="margin:0 0 6px;"><strong>Número:</strong> ${opts.ticketNumber}</p>
-        <p style="margin:0 0 6px;"><strong>Assunto:</strong> ${opts.title}</p>
-        <p style="margin:0;"><strong>Categoria:</strong> ${opts.category}</p>
-      </div>
-      <p>Você receberá uma nova notificação quando o atendimento for concluído.</p>
-    `,
+    bodyHtml: `<p>Seu chamado <strong>${opts.ticketNumber}</strong> (${opts.title}) foi registrado.</p>`,
   });
-
-  return sendEmail({
-    to: opts.email,
-    subject: `[${opts.ticketNumber}] Recebemos seu chamado`,
-    html,
-  });
-}
-
-export function sendTicketCompletedEmail(opts: {
-  email: string;
-  requester: string;
-  ticketNumber: string;
-  title: string;
-  category?: string;
-  surveyUrl?: string;
-}) {
-  const surveyUrl =
-    opts.surveyUrl ??
-    `${APP_BASE_URL}/pesquisa-satisfacao?ticket=${encodeURIComponent(opts.ticketNumber)}&email=${encodeURIComponent(opts.email)}&name=${encodeURIComponent(opts.requester)}`;
-
-  const firstName = (opts.requester || "").split(" ")[0] || opts.requester;
-  const html = baseTemplate({
-    title: `Pesquisa de Satisfação — Chamado #${opts.ticketNumber}`,
-    bodyHtml: `
-      <p>Olá, <strong>${firstName}</strong>, tudo bem?</p>
-      <p>O seu chamado técnico <strong>#${opts.ticketNumber}</strong> (${opts.title}) foi encerrado pela nossa equipe de TI.</p>
-      <p>Para garantirmos a qualidade do nosso atendimento e buscarmos melhorias contínuas na nossa infraestrutura, gostaríamos de saber como foi a sua experiência. Leva menos de 1 minutinho!</p>
-      <p>Por favor, clique no botão abaixo para responder à nossa rápida pesquisa de satisfação:</p>
-      <p style="margin-top:18px; font-size:12px; color:#888;">Se o botão não funcionar, acesse pelo link:<br/><a href="${surveyUrl}" style="color:hsl(262,83%,58%); word-break:break-all;">${surveyUrl}</a></p>
-      <p style="margin-top:22px;">Agradecemos desde já pela sua participação!</p>
-      <p style="margin:18px 0 0; color:#555;">Atenciosamente,<br/><strong>Equipe de TI | Grupo Orion</strong></p>
-    `,
-    ctaUrl: surveyUrl,
-    ctaLabel: "Responder Pesquisa de Satisfação",
-  });
-
-  return sendEmail({
-    to: opts.email,
-    cc: "adm.tisp@grupoorion.com.br",
-    from: '"Pesquisa de Satisfação TI - Grupo Orion" <satisfacaosp@grupoorion.eng.br>',
-    replyTo: "satisfacaosp@grupoorion.eng.br",
-    subject: "PESQUISA DE SATISFAÇÃO - T.I",
-    html,
-  });
+  return sendEmail({ to: opts.email, subject: `[${opts.ticketNumber}] Recebemos seu chamado`, html });
 }
 
