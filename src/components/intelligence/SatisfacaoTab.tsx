@@ -3,12 +3,16 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Smile, Loader2, MessageSquare, Star } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Smile, Loader2, MessageSquare, Star, Download } from "lucide-react";
+import * as XLSX from "xlsx";
+import { toast } from "sonner";
+import { Button } from "@/components/ui/button";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { BIStatCard } from "./bi/BIStatCard";
 import { BIChartCard } from "./bi/BIChartCard";
 import { BI_SEMANTIC, BI_TOOLTIP_STYLE } from "./bi/bi-theme";
+import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
+import { useAuth } from "@/hooks/use-auth";
 
 interface SurveyRow {
   id: string;
@@ -37,6 +41,7 @@ const CRITERIA = [
 ];
 
 export function SatisfacaoTab({ dateRange, compact = false }: Props) {
+  const { isAdmin } = useAuth();
   const [rows, setRows] = useState<SurveyRow[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -92,6 +97,48 @@ export function SatisfacaoTab({ dateRange, compact = false }: Props) {
     if (!averages.length) return 0;
     return averages.reduce((s, a) => s + a.avg, 0) / averages.length;
   }, [averages]);
+
+  const handleExportExcel = () => {
+    if (!rows.length) {
+      toast.error("Nenhuma resposta para exportar");
+      return;
+    }
+    const sheetData = rows.map((r) => ({
+      Data: format(new Date(r.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR }),
+      Chamado: r.ticket_number || "—",
+      Nome: r.user_name,
+      "E-mail": r.user_email,
+      "Tempo de Resposta": r.rating_response_time,
+      Comunicação: r.rating_communication,
+      Resolução: r.rating_resolution,
+      Facilidade: r.rating_ease_of_use,
+      "Média": (
+        (r.rating_response_time + r.rating_communication + r.rating_resolution + r.rating_ease_of_use) /
+        4
+      ).toFixed(2),
+      Comentário: r.comment || "",
+    }));
+    const ws = XLSX.utils.json_to_sheet(sheetData);
+    ws["!cols"] = [
+      { wch: 16 }, { wch: 14 }, { wch: 24 }, { wch: 28 },
+      { wch: 16 }, { wch: 14 }, { wch: 12 }, { wch: 12 }, { wch: 10 }, { wch: 50 },
+    ];
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Satisfação");
+    XLSX.writeFile(wb, `pesquisa-satisfacao-${format(new Date(), "yyyy-MM-dd")}.xlsx`);
+    toast.success("Planilha exportada!");
+  };
+
+  const handleDelete = async (id: string) => {
+    const { error } = await supabase.from("satisfaction_surveys" as any).delete().eq("id", id);
+    if (error) {
+      toast.error("Erro ao excluir resposta");
+      console.error(error);
+      return;
+    }
+    setRows((prev) => prev.filter((r) => r.id !== id));
+    toast.success("Resposta excluída");
+  };
 
   if (loading) {
     return (
@@ -149,7 +196,23 @@ export function SatisfacaoTab({ dateRange, compact = false }: Props) {
       </BIChartCard>
 
       {/* Responses table */}
-      <BIChartCard title="Respostas recebidas" icon={MessageSquare} padded={false}>
+      <BIChartCard
+        title="Respostas recebidas"
+        icon={MessageSquare}
+        padded={false}
+        actions={
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={handleExportExcel}
+            disabled={!rows.length}
+            className="gap-1.5"
+          >
+            <Download className="h-4 w-4" />
+            Exportar Excel
+          </Button>
+        }
+      >
         {rows.length === 0 ? (
           <p className="px-6 py-10 text-center text-sm text-muted-foreground">
             Nenhuma resposta de pesquisa de satisfação no período selecionado.
@@ -167,6 +230,7 @@ export function SatisfacaoTab({ dateRange, compact = false }: Props) {
                   <TableHead className="text-center">Resolução</TableHead>
                   <TableHead className="text-center">Facilidade</TableHead>
                   <TableHead>Comentário</TableHead>
+                  {isAdmin && <TableHead className="w-10"></TableHead>}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -184,6 +248,15 @@ export function SatisfacaoTab({ dateRange, compact = false }: Props) {
                     <TableCell className="max-w-xs truncate text-xs text-muted-foreground" title={r.comment || ""}>
                       {r.comment || "—"}
                     </TableCell>
+                    {isAdmin && (
+                      <TableCell className="w-10 text-right">
+                        <ConfirmDeleteDialog
+                          onConfirm={() => handleDelete(r.id)}
+                          title="Excluir resposta"
+                          description={`Tem certeza que deseja excluir esta resposta de ${r.user_name}? Esta ação não pode ser desfeita.`}
+                        />
+                      </TableCell>
+                    )}
                   </TableRow>
                 ))}
               </TableBody>
