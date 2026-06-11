@@ -1,5 +1,5 @@
-// Generic SMTP sender via nodemailer. Configurable host/port for any provider (Locaweb, Office365, etc.).
-import nodemailer from "npm:nodemailer@6.9.14";
+// Email sender via Microsoft Graph API (Client Credentials flow).
+// Keeps the existing function name so existing callers (dispatch-satisfaction-survey, etc.) keep working.
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -16,21 +16,42 @@ interface SendEmailPayload {
   html: string;
   text?: string;
   replyTo?: string;
-  from?: string;
+  from?: string; // ignored when sending via Graph (sender is fixed to MICROSOFT_SENDER_EMAIL)
 }
 
-interface SmtpAttemptConfig {
-  host: string;
-  port: number;
-  secure: boolean;
-  requireTLS: boolean;
-  label: string;
+function toRecipients(value?: string | string[]) {
+  if (!value) return [];
+  const list = Array.isArray(value) ? value : [value];
+  return list
+    .map((addr) => addr?.trim())
+    .filter(Boolean)
+    .map((address) => ({ emailAddress: { address } }));
 }
 
-function normalizeHost(host: string, port: number) {
-  if (host === "smtps.locaweb.com.br") return "smtp.locaweb.com.br";
-  if (port === 465 && host === "smtp.locaweb.com.br") return host;
-  return host;
+async function getGraphAccessToken(tenantId: string, clientId: string, clientSecret: string) {
+  const tokenUrl = `https://login.microsoftonline.com/${tenantId}/oauth2/v2.0/token`;
+  const body = new URLSearchParams({
+    client_id: clientId,
+    client_secret: clientSecret,
+    scope: "https://graph.microsoft.com/.default",
+    grant_type: "client_credentials",
+  });
+
+  const res = await fetch(tokenUrl, {
+    method: "POST",
+    headers: { "Content-Type": "application/x-www-form-urlencoded" },
+    body: body.toString(),
+  });
+
+  const text = await res.text();
+  if (!res.ok) {
+    throw new Error(`Graph token request failed (${res.status}): ${text}`);
+  }
+  const json = JSON.parse(text);
+  if (!json.access_token) {
+    throw new Error(`Graph token response missing access_token: ${text}`);
+  }
+  return json.access_token as string;
 }
 
 Deno.serve(async (req) => {
@@ -39,16 +60,19 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const RAW_SMTP_HOST = Deno.env.get("SMTP_HOST") ?? "smtp.locaweb.com.br";
-    const SMTP_PORT = Number(Deno.env.get("SMTP_PORT") ?? "587");
-    const SMTP_HOST = normalizeHost(RAW_SMTP_HOST, SMTP_PORT);
-    const SMTP_USER = Deno.env.get("SMTP_USER");
-    const SMTP_PASS = Deno.env.get("SMTP_PASS");
-    const SMTP_FROM_NAME = Deno.env.get("SMTP_FROM_NAME") ?? "Pesquisa de Satisfação TI - Grupo Orion";
+    const MS_CLIENT_ID = Deno.env.get("MICROSOFT_CLIENT_ID");
+    const MS_TENANT_ID = Deno.env.get("MICROSOFT_TENANT_ID");
+    const MS_CLIENT_SECRET = Deno.env.get("MICROSOFT_CLIENT_SECRET");
+    const MS_SENDER_EMAIL = Deno.env.get("MICROSOFT_SENDER_EMAIL");
+    const MS_FROM_NAME =
+      Deno.env.get("SMTP_FROM_NAME") ?? "Pesquisa de Satisfação TI - Grupo Orion";
 
-    if (!SMTP_USER || !SMTP_PASS) {
+    if (!MS_CLIENT_ID || !MS_TENANT_ID || !MS_CLIENT_SECRET || !MS_SENDER_EMAIL) {
       return new Response(
-        JSON.stringify({ error: "SMTP credentials not configured (SMTP_USER/SMTP_PASS)" }),
+        JSON.stringify({
+          error:
+            "Microsoft Graph credentials not configured (MICROSOFT_CLIENT_ID/TENANT_ID/CLIENT_SECRET/SENDER_EMAIL)",
+        }),
         { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } },
       );
     }
@@ -61,93 +85,73 @@ Deno.serve(async (req) => {
       );
     }
 
-    const toList = Array.isArray(payload.to) ? payload.to : [payload.to];
-    const ccList = payload.cc ? (Array.isArray(payload.cc) ? payload.cc : [payload.cc]) : undefined;
-    const bccList = payload.bcc ? (Array.isArray(payload.bcc) ? payload.bcc : [payload.bcc]) : undefined;
+    const toRecip = toRecipients(payload.to);
+    const ccRecip = toRecipients(payload.cc);
+    const bccRecip = toRecipients(payload.bcc);
 
-    const fromAddress = payload.from ?? `"${SMTP_FROM_NAME}" <${SMTP_USER}>`;
+    if (toRecip.length === 0) {
+      return new Response(
+        JSON.stringify({ error: "No valid recipients in 'to'" }),
+        { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
 
-    const fallbackAttempts: SmtpAttemptConfig[] = [
-      {
-        host: SMTP_HOST,
-        port: SMTP_PORT,
-        secure: SMTP_PORT === 465,
-        requireTLS: SMTP_PORT !== 465,
-        label: `primary:${SMTP_HOST}:${SMTP_PORT}`,
+    console.log("[send-smtp-email] requesting Graph token");
+    const accessToken = await getGraphAccessToken(MS_TENANT_ID, MS_CLIENT_ID, MS_CLIENT_SECRET);
+
+    const replyToAddress = payload.replyTo ?? MS_SENDER_EMAIL;
+
+    const message: Record<string, unknown> = {
+      subject: payload.subject,
+      body: { contentType: "HTML", content: payload.html },
+      toRecipients: toRecip,
+      from: {
+        emailAddress: { address: MS_SENDER_EMAIL, name: MS_FROM_NAME },
       },
-    ];
-
-    const addAttempt = (attempt: SmtpAttemptConfig) => {
-      const exists = fallbackAttempts.some((item) => item.host === attempt.host && item.port === attempt.port && item.secure === attempt.secure);
-      if (!exists) fallbackAttempts.push(attempt);
+      sender: {
+        emailAddress: { address: MS_SENDER_EMAIL, name: MS_FROM_NAME },
+      },
+      replyTo: [{ emailAddress: { address: replyToAddress } }],
     };
 
-    addAttempt({
-      host: "smtp.locaweb.com.br",
-      port: 587,
-      secure: false,
-      requireTLS: true,
-      label: "fallback:smtp.locaweb.com.br:587:starttls",
-    });
+    if (ccRecip.length) message.ccRecipients = ccRecip;
+    if (bccRecip.length) message.bccRecipients = bccRecip;
 
-    addAttempt({
-      host: "smtp.locaweb.com.br",
-      port: 465,
-      secure: true,
-      requireTLS: false,
-      label: "fallback:smtp.locaweb.com.br:465:ssl",
-    });
-
-    let info: Awaited<ReturnType<ReturnType<typeof nodemailer.createTransport>["sendMail"]>> | null = null;
-    let lastError: Error | null = null;
-
-    for (const attempt of fallbackAttempts) {
-      try {
-        console.log(`[send-smtp-email] trying ${attempt.label}`);
-
-        const transporter = nodemailer.createTransport({
-          host: attempt.host,
-          port: attempt.port,
-          secure: attempt.secure,
-          requireTLS: attempt.requireTLS,
-          auth: { user: SMTP_USER, pass: SMTP_PASS },
-          connectionTimeout: 10_000,
-          greetingTimeout: 10_000,
-          socketTimeout: 10_000,
-          tls: { minVersion: "TLSv1.2" },
-        });
-
-        info = await transporter.sendMail({
-          from: fromAddress,
-          to: toList,
-          cc: ccList,
-          bcc: bccList,
-          replyTo: payload.replyTo ?? SMTP_USER,
-          subject: payload.subject,
-          text: payload.text ?? "Este e-mail requer um cliente que suporte HTML.",
-          html: payload.html,
-        });
-
-        console.log(`[send-smtp-email] success via ${attempt.label}`);
-        break;
-      } catch (error) {
-        lastError = error as Error;
-        console.error(`[send-smtp-email] failed via ${attempt.label}:`, error);
-      }
-    }
-
-    if (!info) {
-      throw lastError ?? new Error("Unable to deliver email with configured SMTP attempts");
-    }
+    const sendUrl = `https://graph.microsoft.com/v1.0/users/${encodeURIComponent(MS_SENDER_EMAIL)}/sendMail`;
 
     console.log(
-      "[send-smtp-email] sent:",
-      info.messageId,
-      "to:", toList.join(","),
-      "cc:", (ccList ?? []).join(","),
+      "[send-smtp-email] sending via Graph as",
+      MS_SENDER_EMAIL,
+      "to:",
+      toRecip.map((r) => r.emailAddress.address).join(","),
+      "cc:",
+      ccRecip.map((r) => r.emailAddress.address).join(","),
     );
 
-    return new Response(JSON.stringify({ success: true, messageId: info.messageId }), {
+    const sendRes = await fetch(sendUrl, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        message,
+        saveToSentItems: true,
+      }),
+    });
+
+    if (!sendRes.ok) {
+      const errText = await sendRes.text();
+      console.error("[send-smtp-email] Graph sendMail failed:", sendRes.status, errText);
+      return new Response(
+        JSON.stringify({ error: `Graph sendMail failed (${sendRes.status}): ${errText}` }),
+        { status: 502, headers: { ...corsHeaders, "Content-Type": "application/json" } },
+      );
+    }
+
+    console.log("[send-smtp-email] sent successfully via Microsoft Graph");
+
+    return new Response(JSON.stringify({ success: true, provider: "microsoft-graph" }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (err) {
