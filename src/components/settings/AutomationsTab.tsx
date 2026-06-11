@@ -50,6 +50,7 @@ import {
   Megaphone,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { EmailTemplatesSection } from "./EmailTemplatesSection";
 
 const categories = [
   "Acesso e permissões",
@@ -627,6 +628,9 @@ export function AutomationsTab() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Email Templates Editor */}
+      {scope === "ti" && <EmailTemplatesSection />}
 
       {/* Tips */}
       <Card>

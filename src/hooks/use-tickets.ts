@@ -302,6 +302,7 @@ export async function createTicket(data: {
   // Send acknowledgment email to requester (fire-and-forget)
   if (data.email && ticketNumber) {
     sendTicketCreatedEmail({
+      ticketId: (result as any)?.id,
       email: data.email,
       requester: data.requester,
       ticketNumber,
