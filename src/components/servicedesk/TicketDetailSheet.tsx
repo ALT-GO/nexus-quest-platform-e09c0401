@@ -629,6 +629,14 @@ export function TicketDetailSheet({
                 <span className="text-sm">{format(new Date(ticket.created_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })}</span>
               </PropRow>
 
+              <PropRow icon={CheckCircle2} label="Data de conclusão">
+                <span className={cn("text-sm", !ticket.completed_at && "text-muted-foreground italic")}>
+                  {ticket.completed_at
+                    ? format(new Date(ticket.completed_at), "dd/MM/yyyy 'às' HH:mm", { locale: ptBR })
+                    : "Não concluído"}
+                </span>
+              </PropRow>
+
               <PropRow icon={Clock} label="Vencimento SLA">
                 <input
                   type="datetime-local"
