@@ -123,10 +123,11 @@ export function useChannelMessages(channelId: string | null) {
         .eq("channel_id", channelId!)
         .is("deleted_at", null)
         .is("parent_message_id", null)
-        .order("created_at", { ascending: true })
+        .order("created_at", { ascending: false })
         .limit(200);
       if (error) throw error;
-      return data as ChatMessage[];
+      // Reverse to display oldest → newest in the UI
+      return ((data as ChatMessage[]) || []).slice().reverse();
     },
   });
 
