@@ -634,6 +634,9 @@ export function AutomationsTab() {
       {/* Assignment Queue (TI only) */}
       {scope === "ti" && <AssignmentQueueSection />}
 
+      {/* Category Checklists (TI only) */}
+      {scope === "ti" && <CategoryChecklistSection />}
+
       {/* Email Templates Editor */}
       {scope === "ti" && <EmailTemplatesSection />}
 
