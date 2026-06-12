@@ -116,6 +116,10 @@ export function useChannelMessages(channelId: string | null) {
   const query = useQuery({
     queryKey: ["chat-messages", channelId],
     enabled: !!channelId,
+    staleTime: 0,
+    refetchOnMount: "always",
+    refetchOnWindowFocus: true,
+    refetchInterval: 20_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("chat_messages")
@@ -131,7 +135,15 @@ export function useChannelMessages(channelId: string | null) {
     },
   });
 
-  // Realtime
+  // Force a fresh refetch whenever channel changes (covers re-opening the panel)
+  useEffect(() => {
+    if (channelId) {
+      qc.invalidateQueries({ queryKey: ["chat-messages", channelId] });
+    }
+  }, [channelId, qc]);
+
+  // Realtime: optimistically append on INSERT (so we don't rely solely on refetch),
+  // and also invalidate to reconcile.
   useEffect(() => {
     if (!channelId) return;
     const channel = supabase
@@ -139,7 +151,18 @@ export function useChannelMessages(channelId: string | null) {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "chat_messages", filter: `channel_id=eq.${channelId}` },
-        () => qc.invalidateQueries({ queryKey: ["chat-messages", channelId] })
+        (payload: any) => {
+          if (payload.eventType === "INSERT" && payload.new) {
+            const newMsg = payload.new as ChatMessage;
+            qc.setQueryData<ChatMessage[]>(["chat-messages", channelId], (old) => {
+              if (!old) return old;
+              if (old.some((m) => m.id === newMsg.id)) return old;
+              if (newMsg.deleted_at || newMsg.parent_message_id) return old;
+              return [...old, newMsg];
+            });
+          }
+          qc.invalidateQueries({ queryKey: ["chat-messages", channelId] });
+        }
       )
       .subscribe();
     return () => {
