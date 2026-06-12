@@ -175,6 +175,30 @@ export type Database = {
           },
         ]
       }
+      category_checklist_templates: {
+        Row: {
+          category: string
+          created_at: string
+          id: string
+          items: Json
+          updated_at: string
+        }
+        Insert: {
+          category: string
+          created_at?: string
+          id?: string
+          items?: Json
+          updated_at?: string
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          id?: string
+          items?: Json
+          updated_at?: string
+        }
+        Relationships: []
+      }
       chat_channel_members: {
         Row: {
           channel_id: string

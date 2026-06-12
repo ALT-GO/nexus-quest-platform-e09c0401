@@ -52,6 +52,7 @@ import {
 import { cn } from "@/lib/utils";
 import { EmailTemplatesSection } from "./EmailTemplatesSection";
 import { AssignmentQueueSection } from "./AssignmentQueueSection";
+import { CategoryChecklistSection } from "./CategoryChecklistSection";
 
 const categories = [
   "Acesso e permissões",
@@ -632,6 +633,9 @@ export function AutomationsTab() {
 
       {/* Assignment Queue (TI only) */}
       {scope === "ti" && <AssignmentQueueSection />}
+
+      {/* Category Checklists (TI only) */}
+      {scope === "ti" && <CategoryChecklistSection />}
 
       {/* Email Templates Editor */}
       {scope === "ti" && <EmailTemplatesSection />}
