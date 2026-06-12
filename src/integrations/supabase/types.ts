@@ -1632,6 +1632,39 @@ export type Database = {
         }
         Relationships: []
       }
+      ticket_assignment_queue: {
+        Row: {
+          created_at: string
+          full_name: string
+          id: string
+          is_active: boolean
+          last_assigned_at: string | null
+          position: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          full_name: string
+          id?: string
+          is_active?: boolean
+          last_assigned_at?: string | null
+          position?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          full_name?: string
+          id?: string
+          is_active?: boolean
+          last_assigned_at?: string | null
+          position?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       ticket_comments: {
         Row: {
           author: string
