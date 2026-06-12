@@ -51,6 +51,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { EmailTemplatesSection } from "./EmailTemplatesSection";
+import { AssignmentQueueSection } from "./AssignmentQueueSection";
 
 const categories = [
   "Acesso e permissões",
@@ -628,6 +629,9 @@ export function AutomationsTab() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {/* Assignment Queue (TI only) */}
+      {scope === "ti" && <AssignmentQueueSection />}
 
       {/* Email Templates Editor */}
       {scope === "ti" && <EmailTemplatesSection />}
