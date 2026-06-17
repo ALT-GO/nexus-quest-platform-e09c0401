@@ -142,7 +142,7 @@ export function ChecklistMenu({ collaboratorName }: Props = {}) {
       for (let i = 0; i < chosen.length; i++) {
         const o = chosen[i];
         const bytes = await buildChecklistPdf(o, logoBytes);
-        const blob = new Blob([bytes], { type: "application/pdf" });
+        const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
         const w = window.open(url, "_blank");
         if (w) {
@@ -164,7 +164,7 @@ export function ChecklistMenu({ collaboratorName }: Props = {}) {
       const logoBytes = await getLogoBytes();
       for (const o of chosen) {
         const bytes = await buildChecklistPdf(o, logoBytes);
-        const blob = new Blob([bytes], { type: "application/pdf" });
+        const blob = new Blob([bytes as BlobPart], { type: "application/pdf" });
         const url = URL.createObjectURL(blob);
         const a = document.createElement("a");
         a.href = url;
