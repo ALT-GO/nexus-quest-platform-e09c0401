@@ -45,6 +45,7 @@ export function SatisfacaoTab({ dateRange, compact = false }: Props) {
   const { isAdmin } = useAuth();
   const [rows, setRows] = useState<SurveyRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
