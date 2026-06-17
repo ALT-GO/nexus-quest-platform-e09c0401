@@ -3,7 +3,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Smile, Loader2, MessageSquare, Star, Download } from "lucide-react";
+import { Smile, Loader2, MessageSquare, Star, Download, Eye } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -44,6 +45,7 @@ export function SatisfacaoTab({ dateRange, compact = false }: Props) {
   const { isAdmin } = useAuth();
   const [rows, setRows] = useState<SurveyRow[]>([]);
   const [loading, setLoading] = useState(true);
+  const [previewOpen, setPreviewOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -201,16 +203,29 @@ export function SatisfacaoTab({ dateRange, compact = false }: Props) {
         icon={MessageSquare}
         padded={false}
         action={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportExcel}
-            disabled={!rows.length}
-            className="gap-1.5"
-          >
-            <Download className="h-4 w-4" />
-            Exportar Excel
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPreviewOpen(true)}
+              disabled={!rows.length}
+              className="gap-1.5"
+              title="Pré-visualizar todas as respostas"
+            >
+              <Eye className="h-4 w-4" />
+              Pré-visualizar
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportExcel}
+              disabled={!rows.length}
+              className="gap-1.5"
+            >
+              <Download className="h-4 w-4" />
+              Exportar Excel
+            </Button>
+          </div>
         }
       >
         {rows.length === 0 ? (
@@ -264,6 +279,77 @@ export function SatisfacaoTab({ dateRange, compact = false }: Props) {
           </div>
         )}
       </BIChartCard>
+
+      <Dialog open={previewOpen} onOpenChange={setPreviewOpen}>
+        <DialogContent className="max-w-[95vw] w-[95vw] max-h-[90vh] p-0 flex flex-col">
+          <DialogHeader className="px-6 pt-5 pb-3 border-b">
+            <DialogTitle className="flex items-center gap-2">
+              <Eye className="h-5 w-5 text-primary" />
+              Pré-visualização — Respostas de Satisfação ({rows.length})
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex-1 min-h-0 overflow-auto">
+            <table className="w-max min-w-full caption-bottom text-sm">
+              <thead className="sticky top-0 z-10 bg-background border-b">
+                <tr>
+                  <th className="h-11 px-3 text-left font-medium text-muted-foreground whitespace-nowrap">Data</th>
+                  <th className="h-11 px-3 text-left font-medium text-muted-foreground whitespace-nowrap">Chamado</th>
+                  <th className="h-11 px-3 text-left font-medium text-muted-foreground whitespace-nowrap">Nome</th>
+                  <th className="h-11 px-3 text-left font-medium text-muted-foreground whitespace-nowrap">E-mail</th>
+                  <th className="h-11 px-3 text-center font-medium text-muted-foreground whitespace-nowrap">Tempo Resp.</th>
+                  <th className="h-11 px-3 text-center font-medium text-muted-foreground whitespace-nowrap">Comunicação</th>
+                  <th className="h-11 px-3 text-center font-medium text-muted-foreground whitespace-nowrap">Resolução</th>
+                  <th className="h-11 px-3 text-center font-medium text-muted-foreground whitespace-nowrap">Facilidade</th>
+                  <th className="h-11 px-3 text-center font-medium text-muted-foreground whitespace-nowrap">Média</th>
+                  <th className="h-11 px-3 text-left font-medium text-muted-foreground whitespace-nowrap min-w-[400px]">Comentário / Observações</th>
+                  {isAdmin && <th className="h-11 px-3 text-right font-medium text-muted-foreground whitespace-nowrap sticky right-0 bg-background">Ações</th>}
+                </tr>
+              </thead>
+              <tbody>
+                {rows.map((r) => {
+                  const media = (
+                    (r.rating_response_time + r.rating_communication + r.rating_resolution + r.rating_ease_of_use) / 4
+                  ).toFixed(2);
+                  return (
+                    <tr key={r.id} className="border-b hover:bg-muted/50 transition-colors">
+                      <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">
+                        {format(new Date(r.created_at), "dd/MM/yyyy HH:mm", { locale: ptBR })}
+                      </td>
+                      <td className="px-3 py-2 whitespace-nowrap text-xs">{r.ticket_number || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap font-medium">{r.user_name}</td>
+                      <td className="px-3 py-2 whitespace-nowrap text-xs text-muted-foreground">{r.user_email}</td>
+                      <td className="px-3 py-2 text-center font-medium tabular-nums">{r.rating_response_time}</td>
+                      <td className="px-3 py-2 text-center font-medium tabular-nums">{r.rating_communication}</td>
+                      <td className="px-3 py-2 text-center font-medium tabular-nums">{r.rating_resolution}</td>
+                      <td className="px-3 py-2 text-center font-medium tabular-nums">{r.rating_ease_of_use}</td>
+                      <td className="px-3 py-2 text-center font-semibold tabular-nums">{media}</td>
+                      <td className="px-3 py-2 text-sm min-w-[400px] whitespace-pre-wrap break-words">
+                        {r.comment || <span className="text-muted-foreground italic">—</span>}
+                      </td>
+                      {isAdmin && (
+                        <td className="px-3 py-2 text-right sticky right-0 bg-background">
+                          <ConfirmDeleteDialog
+                            onConfirm={() => handleDelete(r.id)}
+                            title="Excluir resposta"
+                            description={`Tem certeza que deseja excluir esta resposta de ${r.user_name}? Esta ação não pode ser desfeita.`}
+                          />
+                        </td>
+                      )}
+                    </tr>
+                  );
+                })}
+                {rows.length === 0 && (
+                  <tr>
+                    <td colSpan={isAdmin ? 11 : 10} className="px-6 py-10 text-center text-sm text-muted-foreground">
+                      Nenhuma resposta no período.
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
