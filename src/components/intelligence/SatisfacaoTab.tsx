@@ -203,16 +203,29 @@ export function SatisfacaoTab({ dateRange, compact = false }: Props) {
         icon={MessageSquare}
         padded={false}
         action={
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportExcel}
-            disabled={!rows.length}
-            className="gap-1.5"
-          >
-            <Download className="h-4 w-4" />
-            Exportar Excel
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setPreviewOpen(true)}
+              disabled={!rows.length}
+              className="gap-1.5"
+              title="Pré-visualizar todas as respostas"
+            >
+              <Eye className="h-4 w-4" />
+              Pré-visualizar
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleExportExcel}
+              disabled={!rows.length}
+              className="gap-1.5"
+            >
+              <Download className="h-4 w-4" />
+              Exportar Excel
+            </Button>
+          </div>
         }
       >
         {rows.length === 0 ? (
