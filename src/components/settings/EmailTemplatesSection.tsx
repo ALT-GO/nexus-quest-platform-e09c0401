@@ -49,12 +49,12 @@ const TEMPLATE_META: Record<string, { label: string; desc: string; vars: string[
   ticket_created: {
     label: "Abertura de chamado",
     desc: "Enviado automaticamente ao solicitante quando um novo chamado é registrado.",
-    vars: ["{{ticket_number}}", "{{title}}", "{{category}}", "{{requester}}", "{{first_name}}", "{{email}}"],
+    vars: ["{{ticket_number}}", "{{title}}", "{{category}}", "{{requester}}", "{{first_name}}", "{{email}}", "{{created_at}}", "{{description}}"],
   },
   ticket_completed: {
     label: "Pesquisa de satisfação",
     desc: "Enviado quando o chamado é concluído. Inclui o botão para a pesquisa.",
-    vars: ["{{ticket_number}}", "{{title}}", "{{category}}", "{{requester}}", "{{first_name}}", "{{email}}", "{{survey_url}}"],
+    vars: ["{{ticket_number}}", "{{title}}", "{{category}}", "{{requester}}", "{{first_name}}", "{{email}}", "{{survey_url}}", "{{created_at}}", "{{description}}"],
   },
 };
 
