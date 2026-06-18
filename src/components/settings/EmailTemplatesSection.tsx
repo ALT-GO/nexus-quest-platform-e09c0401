@@ -85,7 +85,7 @@ export function EmailTemplatesSection() {
 
   const handleSave = async (tpl: EmailTemplate) => {
     setSaving(tpl.template_key);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("email_templates" as any)
       .update({
         enabled: tpl.enabled,
@@ -102,10 +102,13 @@ export function EmailTemplatesSection() {
         reply_to: tpl.reply_to,
         cc: tpl.cc,
       } as any)
-      .eq("id", tpl.id as any);
+      .eq("id", tpl.id as any)
+      .select();
     setSaving(null);
     if (error) {
-      toast.error("Erro ao salvar template (verifique se você é admin)");
+      toast.error(`Erro ao salvar template: ${error.message}`);
+    } else if (!data || (data as any[]).length === 0) {
+      toast.error("Nada foi salvo — verifique se você tem permissão de administrador.");
     } else {
       toast.success("Template salvo. Próximos envios usarão essas configurações.");
     }
