@@ -49,12 +49,12 @@ const TEMPLATE_META: Record<string, { label: string; desc: string; vars: string[
   ticket_created: {
     label: "Abertura de chamado",
     desc: "Enviado automaticamente ao solicitante quando um novo chamado é registrado.",
-    vars: ["{{ticket_number}}", "{{title}}", "{{category}}", "{{requester}}", "{{first_name}}", "{{email}}"],
+    vars: ["{{ticket_number}}", "{{title}}", "{{category}}", "{{requester}}", "{{first_name}}", "{{email}}", "{{created_at}}", "{{description}}"],
   },
   ticket_completed: {
     label: "Pesquisa de satisfação",
     desc: "Enviado quando o chamado é concluído. Inclui o botão para a pesquisa.",
-    vars: ["{{ticket_number}}", "{{title}}", "{{category}}", "{{requester}}", "{{first_name}}", "{{email}}", "{{survey_url}}"],
+    vars: ["{{ticket_number}}", "{{title}}", "{{category}}", "{{requester}}", "{{first_name}}", "{{email}}", "{{survey_url}}", "{{created_at}}", "{{description}}"],
   },
 };
 
@@ -85,7 +85,7 @@ export function EmailTemplatesSection() {
 
   const handleSave = async (tpl: EmailTemplate) => {
     setSaving(tpl.template_key);
-    const { error } = await supabase
+    const { data, error } = await supabase
       .from("email_templates" as any)
       .update({
         enabled: tpl.enabled,
@@ -102,10 +102,13 @@ export function EmailTemplatesSection() {
         reply_to: tpl.reply_to,
         cc: tpl.cc,
       } as any)
-      .eq("id", tpl.id as any);
+      .eq("id", tpl.id as any)
+      .select();
     setSaving(null);
     if (error) {
-      toast.error("Erro ao salvar template (verifique se você é admin)");
+      toast.error(`Erro ao salvar template: ${error.message}`);
+    } else if (!data || (data as any[]).length === 0) {
+      toast.error("Nada foi salvo — verifique se você tem permissão de administrador.");
     } else {
       toast.success("Template salvo. Próximos envios usarão essas configurações.");
     }

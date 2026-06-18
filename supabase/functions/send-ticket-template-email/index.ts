@@ -83,7 +83,7 @@ Deno.serve(async (req) => {
     }
 
     const { data: ticket, error: tErr } = await supabase
-      .from('tickets').select('id, ticket_number, title, category, requester, email, completed_at')
+      .from('tickets').select('id, ticket_number, title, category, requester, email, completed_at, created_at, description')
       .eq('id', ticketId).maybeSingle();
     if (tErr || !ticket) {
       return new Response(JSON.stringify({ error: 'Chamado não encontrado' }), {
@@ -104,6 +104,9 @@ Deno.serve(async (req) => {
     const surveyUrl = buildSurveyUrl(baseUrl, {
       ticket_number: ticket.ticket_number, email: ticket.email, requester: ticket.requester,
     });
+    const createdAtFmt = ticket.created_at
+      ? new Date(ticket.created_at).toLocaleString('pt-BR', { timeZone: 'America/Sao_Paulo', dateStyle: 'short', timeStyle: 'short' })
+      : '';
     const vars: Record<string, string> = {
       ticket_number: ticket.ticket_number,
       title: ticket.title || '',
@@ -112,6 +115,8 @@ Deno.serve(async (req) => {
       first_name: firstName(ticket.requester),
       email: ticket.email,
       survey_url: surveyUrl,
+      created_at: createdAtFmt,
+      description: ticket.description || '',
     };
 
     // Dedup notifications for satisfaction
