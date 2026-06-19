@@ -1,6 +1,8 @@
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
 import { useRef, useState } from "react";
+import html2canvas from "html2canvas-pro";
+import { jsPDF } from "jspdf";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Printer, X, Download, Loader2 } from "lucide-react";
