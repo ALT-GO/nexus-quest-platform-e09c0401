@@ -125,41 +125,25 @@ export function PrintableTermDialog({ open, onOpenChange, collaboratorName, asse
   const handlePrint = () => window.print();
 
   const handleDownloadPdf = async () => {
-    if (!contentRef.current) return;
+    // Usamos o próprio motor de impressão do navegador para gerar um PDF
+    // idêntico ao da opção "Imprimir → Salvar como PDF". O html2canvas
+    // distorce espaços e justificação (gera "ALBERTONICACIO", "Assinaturado
+    // Empregado", etc.), então delegamos ao window.print().
+    const fileName = isDevolucao
+      ? `FF.117 - TERMO DE DEVOLUÇÃO - ${collaboratorName.toUpperCase()}`
+      : `FF.164 - TERMO DE RESPONSABILIDADE - ${collaboratorName.toUpperCase()}`;
+
     setDownloading(true);
+    const originalTitle = document.title;
+    document.title = fileName; // vira o nome sugerido em "Salvar como PDF"
     try {
-      const html2canvas = (await import("html2canvas-pro")).default;
-      const { jsPDF } = await import("jspdf");
-
-      const pages = contentRef.current.querySelectorAll<HTMLElement>(".print-page");
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
-      const pdfW = 210;
-      const pdfH = 297;
-
-      for (let i = 0; i < pages.length; i++) {
-        const canvas = await html2canvas(pages[i], {
-          scale: 2,
-          useCORS: true,
-          backgroundColor: "#ffffff",
-          logging: false,
-        });
-
-        const imgData = canvas.toDataURL("image/jpeg", 0.95);
-        const imgW = pdfW;
-        const imgH = (canvas.height * pdfW) / canvas.width;
-
-        if (i > 0) pdf.addPage();
-        pdf.addImage(imgData, "JPEG", 0, 0, imgW, Math.min(imgH, pdfH));
-      }
-
-      const fileName = isDevolucao
-        ? `FF.117 - TERMO DE DEVOLUÇÃO - ${collaboratorName.toUpperCase()}.pdf`
-        : `FF.164 - TERMO DE RESPONSABILIDADE - ${collaboratorName.toUpperCase()}.pdf`;
-      pdf.save(fileName);
-    } catch (err) {
-      console.error("Erro ao gerar PDF:", err);
+      window.print();
+    } finally {
+      setTimeout(() => {
+        document.title = originalTitle;
+        setDownloading(false);
+      }, 500);
     }
-    setDownloading(false);
   };
 
   return (
