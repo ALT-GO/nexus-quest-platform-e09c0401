@@ -127,24 +127,79 @@ export function PrintableTermDialog({ open, onOpenChange, collaboratorName, asse
   const handlePrint = () => window.print();
 
   const handleDownloadPdf = async () => {
-    // Usamos o próprio motor de impressão do navegador para gerar um PDF
-    // idêntico ao da opção "Imprimir → Salvar como PDF". O html2canvas
-    // distorce espaços e justificação (gera "ALBERTONICACIO", "Assinaturado
-    // Empregado", etc.), então delegamos ao window.print().
     const fileName = isDevolucao
       ? `FF.117 - TERMO DE DEVOLUÇÃO - ${collaboratorName.toUpperCase()}`
       : `FF.164 - TERMO DE RESPONSABILIDADE - ${collaboratorName.toUpperCase()}`;
 
     setDownloading(true);
-    const originalTitle = document.title;
-    document.title = fileName; // vira o nome sugerido em "Salvar como PDF"
     try {
-      window.print();
+      const node = contentRef.current;
+      if (!node) return;
+
+      // Ensure Inter font is loaded before capturing
+      await document.fonts.load('12px Inter');
+      await document.fonts.ready;
+
+      // Clone the content to a hidden container so we can tweak styles
+      // without affecting the visible DOM.
+      const cloneContainer = document.createElement('div');
+      cloneContainer.style.position = 'fixed';
+      cloneContainer.style.left = '-9999px';
+      cloneContainer.style.top = '0';
+      cloneContainer.style.width = '210mm';
+      cloneContainer.style.zIndex = '-1';
+      document.body.appendChild(cloneContainer);
+
+      const clone = node.cloneNode(true) as HTMLDivElement;
+      cloneContainer.appendChild(clone);
+
+      // Force text-align left and normal word-spacing in the clone
+      // to avoid html2canvas justify/Inter font spacing bugs.
+      const allEls = clone.querySelectorAll('*');
+      allEls.forEach((el) => {
+        const htmlEl = el as HTMLElement;
+        htmlEl.style.textAlign = 'left';
+        htmlEl.style.wordSpacing = 'normal';
+        htmlEl.style.letterSpacing = 'normal';
+      });
+
+      // Wait a tick for styles to apply
+      await new Promise((r) => setTimeout(r, 200));
+
+      const canvas = await html2canvas(clone, {
+        scale: 2,
+        useCORS: true,
+        backgroundColor: '#ffffff',
+        logging: false,
+      });
+
+      const imgData = canvas.toDataURL('image/png');
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      const pageWidth = 210;
+      const pageHeight = 297;
+      const imgWidth = pageWidth;
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(imgData, 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      pdf.save(`${fileName}.pdf`);
+
+      document.body.removeChild(cloneContainer);
+    } catch (e) {
+      console.error('Erro ao gerar PDF:', e);
     } finally {
-      setTimeout(() => {
-        document.title = originalTitle;
-        setDownloading(false);
-      }, 500);
+      setDownloading(false);
     }
   };
 
