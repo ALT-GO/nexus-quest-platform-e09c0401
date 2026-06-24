@@ -1961,43 +1961,25 @@ export type Database = {
           id: string
         }[]
       }
-      create_public_ticket:
-        | {
-            Args: {
-              p_category: string
-              p_department?: string
-              p_description: string
-              p_email: string
-              p_parent_ticket_id?: string
-              p_priority?: string
-              p_requester: string
-              p_sla_deadline_override?: string
-              p_title: string
-            }
-            Returns: {
-              id: string
-              ticket_number: string
-            }[]
-          }
-        | {
-            Args: {
-              p_assignee?: string
-              p_category: string
-              p_department?: string
-              p_description: string
-              p_email: string
-              p_parent_ticket_id?: string
-              p_priority?: string
-              p_requester: string
-              p_sla_deadline_override?: string
-              p_title: string
-            }
-            Returns: {
-              assignee: string
-              id: string
-              ticket_number: string
-            }[]
-          }
+      create_public_ticket: {
+        Args: {
+          p_assignee?: string
+          p_category: string
+          p_department?: string
+          p_description: string
+          p_email: string
+          p_parent_ticket_id?: string
+          p_priority?: string
+          p_requester: string
+          p_sla_deadline_override?: string
+          p_title: string
+        }
+        Returns: {
+          assignee: string
+          id: string
+          ticket_number: string
+        }[]
+      }
       get_chat_unread_counts: {
         Args: never
         Returns: {
