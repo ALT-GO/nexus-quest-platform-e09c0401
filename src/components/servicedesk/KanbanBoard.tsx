@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import {
   DragDropContext,
   Droppable,
@@ -110,18 +110,28 @@ export function KanbanBoard({
 }: KanbanBoardProps) {
   const { data: avatars } = useProfileAvatars();
   const activeTimerMap = useActiveTimerIds();
+  const knownStatusIds = useMemo(() => new Set(statuses.map((s) => s.id)), [statuses]);
+  const fallbackStatusId = useMemo(() => {
+    const novos = statuses.find((s) => s.nome === "Novos Chamados");
+    return novos?.id ?? statuses[0]?.id ?? null;
+  }, [statuses]);
   const getColumnTickets = useCallback(
     (statusId: string) =>
       tickets
-        .filter((t) => t.statusId === statusId)
+        .filter((t) => {
+          // Defensive: tickets pointing to a missing/inactive column fall back to "Novos Chamados"
+          if (knownStatusIds.has(t.statusId)) return t.statusId === statusId;
+          return statusId === fallbackStatusId;
+        })
         .sort((a, b) => {
           const ac = a.completedAt ? 1 : 0;
           const bc = b.completedAt ? 1 : 0;
           if (ac !== bc) return ac - bc;
           return (a.orderIndex ?? 0) - (b.orderIndex ?? 0);
         }),
-    [tickets]
+    [tickets, knownStatusIds, fallbackStatusId]
   );
+
 
   const handleDragEnd = useCallback(
     (result: DropResult) => {
