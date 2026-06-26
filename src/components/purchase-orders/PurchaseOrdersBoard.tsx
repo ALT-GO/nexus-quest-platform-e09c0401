@@ -255,7 +255,12 @@ export function PurchaseOrdersBoard({ department }: Props) {
                 <TableCell className="text-right">
                   <div className="flex justify-end gap-1">
                     <Button variant="ghost" size="icon" onClick={() => openEdit(row)}><Pencil className="h-4 w-4" /></Button>
-                    <Button variant="ghost" size="icon" onClick={() => setDeleteTarget(row)}><Trash2 className="h-4 w-4 text-destructive" /></Button>
+                    <ConfirmDeleteDialog
+                      onConfirm={() => handleDelete(row)}
+                      title="Excluir pedido"
+                      description={`Confirma a exclusão do pedido "${row.description}"?`}
+                    />
+
                   </div>
                 </TableCell>
               </TableRow>
