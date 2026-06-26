@@ -86,6 +86,17 @@ export function PurchaseOrdersBoard({ department }: Props) {
   const [editing, setEditing] = useState<PurchaseOrder | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>("opening_date");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir(key === "opening_date" || key === "finalization_date" ? "desc" : "asc");
+    }
+  }
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["purchase_orders", department],
