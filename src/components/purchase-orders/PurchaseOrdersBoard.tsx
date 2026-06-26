@@ -160,12 +160,10 @@ export function PurchaseOrdersBoard({ department }: Props) {
     qc.invalidateQueries({ queryKey: ["purchase_orders", department] });
   }
 
-  async function handleDelete() {
-    if (!deleteTarget) return;
-    const { error } = await (supabase as any).from("purchase_orders").delete().eq("id", deleteTarget.id);
+  async function handleDelete(row: PurchaseOrder) {
+    const { error } = await (supabase as any).from("purchase_orders").delete().eq("id", row.id);
     if (error) { toast.error("Erro ao excluir: " + error.message); return; }
     toast.success("Pedido excluído");
-    setDeleteTarget(null);
     qc.invalidateQueries({ queryKey: ["purchase_orders", department] });
   }
 
