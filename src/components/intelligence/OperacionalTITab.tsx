@@ -53,6 +53,8 @@ interface InventoryItem {
   id: string;
   category: string;
   status: string;
+  condition: string | null;
+  collaborator: string | null;
   cost_center_eng: string | null;
   cost_center_man: string | null;
   operadora: string | null;
@@ -60,6 +62,32 @@ interface InventoryItem {
   valor_pago: number | null;
   data_aquisicao: string | null;
   created_at: string;
+}
+
+const HARDWARE_CATS = new Set(["notebooks", "celulares", "tablets", "perifericos"]);
+const HARDWARE_PROBLEM_CONDITIONS = new Set([
+  "Defeito",
+  "Em manutenção",
+  "Bloqueado",
+  "Sucata",
+  "Reservado",
+]);
+
+/**
+ * Returns the effective status used in the "Resumo de Ativos por Status" table.
+ * For hardware categories the breakdown comes from `condition`:
+ *  - problem conditions (Defeito, Em manutenção, Bloqueado, Sucata, Reservado) win
+ *  - otherwise "Em uso" if it has a collaborator, "Disponível" if not
+ * For linhas/licencas it keeps the original `status` value.
+ */
+function effectiveAssetStatus(item: InventoryItem): string {
+  if (HARDWARE_CATS.has(item.category)) {
+    const cond = (item.condition || "").trim();
+    if (HARDWARE_PROBLEM_CONDITIONS.has(cond)) return cond;
+    const owned = !!(item.collaborator && item.collaborator.trim() !== "");
+    return owned ? "Em uso" : "Disponível";
+  }
+  return item.status;
 }
 
 const categoryLabels: Record<string, string> = {
