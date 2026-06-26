@@ -71,6 +71,9 @@ export function AppSidebar() {
   if (hasPermission("ver_metas_marketing")) {
     marketingChildren.push({ title: "Metas", href: "/marketing/metas", icon: Target });
   }
+  if (hasPermission("ver_solicitacoes_marketing")) {
+    marketingChildren.push({ title: "Pedidos de Compras", href: "/marketing/pedidos-compras", icon: ShoppingCart });
+  }
 
   const totalUnreadChat = useTotalUnread();
 
