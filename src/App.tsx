@@ -123,6 +123,13 @@ function AppRoutes() {
             <Route path="/ti/cofre-senhas" element={
               <PermissionRoute permission="ver_cofre_senhas"><CofreSenhas /></PermissionRoute>
             } />
+            <Route path="/ti/pedidos-compras" element={
+              <PermissionRoute permission="ver_service_desk"><PedidosComprasTI /></PermissionRoute>
+            } />
+            <Route path="/marketing/pedidos-compras" element={
+              <PermissionRoute permission="ver_solicitacoes_marketing"><PedidosComprasMarketing /></PermissionRoute>
+            } />
+
             <Route path="/central-inteligencia" element={
               <PermissionRoute permission="ver_central_inteligencia"><CentralInteligencia /></PermissionRoute>
             } />
