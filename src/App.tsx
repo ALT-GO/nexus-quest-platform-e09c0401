@@ -20,6 +20,8 @@ import PesquisaSatisfacao from "./pages/PesquisaSatisfacao";
 import Configuracoes from "./pages/Configuracoes";
 import GestaoFaturas from "./pages/ti/GestaoFaturas";
 import CofreSenhas from "./pages/ti/CofreSenhas";
+import PedidosComprasTI from "./pages/ti/PedidosCompras";
+import PedidosComprasMarketing from "./pages/marketing/PedidosCompras";
 
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
