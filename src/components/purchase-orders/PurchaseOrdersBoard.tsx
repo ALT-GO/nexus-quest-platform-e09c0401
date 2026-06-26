@@ -78,6 +78,25 @@ function fmtDate(v: string | null) {
   try { return format(parseISO(v), "dd/MM/yyyy"); } catch { return v; }
 }
 
+function SortableHead({ label, k, sortKey, sortDir, onClick, className }: {
+  label: string; k: SortKey; sortKey: SortKey; sortDir: SortDir; onClick: (k: SortKey) => void; className?: string;
+}) {
+  const active = sortKey === k;
+  const Icon = !active ? ArrowUpDown : sortDir === "asc" ? ArrowUp : ArrowDown;
+  return (
+    <TableHead className={className}>
+      <button
+        type="button"
+        onClick={() => onClick(k)}
+        className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+      >
+        {label}
+        <Icon className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-50"}`} />
+      </button>
+    </TableHead>
+  );
+}
+
 export function PurchaseOrdersBoard({ department }: Props) {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
