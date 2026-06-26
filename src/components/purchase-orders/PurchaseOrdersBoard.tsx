@@ -83,7 +83,6 @@ export function PurchaseOrdersBoard({ department }: Props) {
   const [editing, setEditing] = useState<PurchaseOrder | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
-  const [deleteTarget, setDeleteTarget] = useState<PurchaseOrder | null>(null);
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["purchase_orders", department],
