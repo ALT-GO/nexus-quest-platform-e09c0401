@@ -124,7 +124,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
 
   // Inventory fetch
   useEffect(() => {
-    const fields = "id, category, status, cost_center_eng, cost_center_man, operadora, valor_mensal, valor_pago, data_aquisicao, created_at";
+    const fields = "id, category, status, condition, collaborator, cost_center_eng, cost_center_man, operadora, valor_mensal, valor_pago, data_aquisicao, created_at";
     supabase.from("inventory").select(fields).then(({ data }) => {
       if (data) setInventoryItems(data as InventoryItem[]);
     });
