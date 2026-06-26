@@ -114,14 +114,26 @@ export function PurchaseOrdersBoard({ department }: Props) {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return data.filter((r) => {
+    const result = data.filter((r) => {
       if (statusFilter !== "all" && r.status !== statusFilter) return false;
       if (!q) return true;
       return [r.sc_number, r.pc_number, r.cost_center, r.description, r.insumo, r.status]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q));
     });
-  }, [data, search, statusFilter]);
+    const isDate = sortKey === "opening_date" || sortKey === "finalization_date";
+    const sign = sortDir === "asc" ? 1 : -1;
+    return [...result].sort((a, b) => {
+      const va = (a as any)[sortKey];
+      const vb = (b as any)[sortKey];
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      if (isDate) return (new Date(va).getTime() - new Date(vb).getTime()) * sign;
+      return String(va).localeCompare(String(vb), "pt-BR", { numeric: true }) * sign;
+    });
+  }, [data, search, statusFilter, sortKey, sortDir]);
+
 
   function openCreate() {
     setEditing(null);
