@@ -18,8 +18,11 @@ import {
 } from "@/components/ui/select";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Loader2, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { format, parseISO } from "date-fns";
+
+type SortKey = "sc_number" | "pc_number" | "cost_center" | "description" | "opening_date" | "status" | "finalization_date" | "insumo";
+type SortDir = "asc" | "desc";
 
 export interface PurchaseOrder {
   id: string;
