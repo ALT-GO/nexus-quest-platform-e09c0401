@@ -23,6 +23,7 @@ import {
   Headphones,
   CalendarDays,
   MessageCircle,
+  ShoppingCart,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -55,6 +56,9 @@ export function AppSidebar() {
   if (hasPermission("ver_cofre_senhas")) {
     tiChildren.push({ title: "Cofre de Senhas", href: "/ti/cofre-senhas", icon: KeyRound });
   }
+  if (hasPermission("ver_service_desk")) {
+    tiChildren.push({ title: "Pedidos de Compras", href: "/ti/pedidos-compras", icon: ShoppingCart });
+  }
 
   // Build marketing children based on page permissions
   const marketingChildren: { title: string; href: string; icon?: React.ElementType }[] = [];
@@ -66,6 +70,9 @@ export function AppSidebar() {
   }
   if (hasPermission("ver_metas_marketing")) {
     marketingChildren.push({ title: "Metas", href: "/marketing/metas", icon: Target });
+  }
+  if (hasPermission("ver_solicitacoes_marketing")) {
+    marketingChildren.push({ title: "Pedidos de Compras", href: "/marketing/pedidos-compras", icon: ShoppingCart });
   }
 
   const totalUnreadChat = useTotalUnread();

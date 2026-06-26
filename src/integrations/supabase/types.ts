@@ -1522,6 +1522,57 @@ export type Database = {
         }
         Relationships: []
       }
+      purchase_orders: {
+        Row: {
+          cost_center: string | null
+          created_at: string
+          created_by: string | null
+          department: string
+          description: string
+          finalization_date: string | null
+          finalization_note: string | null
+          id: string
+          insumo: string | null
+          opening_date: string | null
+          pc_number: string | null
+          sc_number: string | null
+          status: string | null
+          updated_at: string
+        }
+        Insert: {
+          cost_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          department: string
+          description: string
+          finalization_date?: string | null
+          finalization_note?: string | null
+          id?: string
+          insumo?: string | null
+          opening_date?: string | null
+          pc_number?: string | null
+          sc_number?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cost_center?: string | null
+          created_at?: string
+          created_by?: string | null
+          department?: string
+          description?: string
+          finalization_date?: string | null
+          finalization_note?: string | null
+          id?: string
+          insumo?: string | null
+          opening_date?: string | null
+          pc_number?: string | null
+          sc_number?: string | null
+          status?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       satisfaction_surveys: {
         Row: {
           comment: string | null

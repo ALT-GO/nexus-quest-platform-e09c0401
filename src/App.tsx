@@ -20,6 +20,8 @@ import PesquisaSatisfacao from "./pages/PesquisaSatisfacao";
 import Configuracoes from "./pages/Configuracoes";
 import GestaoFaturas from "./pages/ti/GestaoFaturas";
 import CofreSenhas from "./pages/ti/CofreSenhas";
+import PedidosComprasTI from "./pages/ti/PedidosCompras";
+import PedidosComprasMarketing from "./pages/marketing/PedidosCompras";
 
 import Login from "./pages/auth/Login";
 import Signup from "./pages/auth/Signup";
@@ -121,6 +123,13 @@ function AppRoutes() {
             <Route path="/ti/cofre-senhas" element={
               <PermissionRoute permission="ver_cofre_senhas"><CofreSenhas /></PermissionRoute>
             } />
+            <Route path="/ti/pedidos-compras" element={
+              <PermissionRoute permission="ver_service_desk"><PedidosComprasTI /></PermissionRoute>
+            } />
+            <Route path="/marketing/pedidos-compras" element={
+              <PermissionRoute permission="ver_solicitacoes_marketing"><PedidosComprasMarketing /></PermissionRoute>
+            } />
+
             <Route path="/central-inteligencia" element={
               <PermissionRoute permission="ver_central_inteligencia"><CentralInteligencia /></PermissionRoute>
             } />
