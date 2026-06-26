@@ -243,14 +243,14 @@ export function PurchaseOrdersBoard({ department }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nº SC</TableHead>
-              <TableHead>Nº PC</TableHead>
-              <TableHead>Centro de Custo</TableHead>
-              <TableHead className="min-w-[280px]">Descrição</TableHead>
-              <TableHead>Abertura</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Finalização</TableHead>
-              <TableHead>Insumo</TableHead>
+              <SortableHead label="Nº SC" k="sc_number" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+              <SortableHead label="Nº PC" k="pc_number" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+              <SortableHead label="Centro de Custo" k="cost_center" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+              <SortableHead label="Descrição" k="description" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} className="min-w-[280px]" />
+              <SortableHead label="Abertura" k="opening_date" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+              <SortableHead label="Status" k="status" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+              <SortableHead label="Finalização" k="finalization_date" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+              <SortableHead label="Insumo" k="insumo" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
               <TableHead className="w-[100px] text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
