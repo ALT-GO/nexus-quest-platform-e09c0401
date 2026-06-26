@@ -327,13 +327,7 @@ export function PurchaseOrdersBoard({ department }: Props) {
         </DialogContent>
       </Dialog>
 
-      <ConfirmDeleteDialog
-        open={!!deleteTarget}
-        onOpenChange={(o) => !o && setDeleteTarget(null)}
-        onConfirm={handleDelete}
-        title="Excluir pedido"
-        description={`Confirma a exclusão do pedido "${deleteTarget?.description ?? ""}"?`}
-      />
     </div>
   );
 }
+
