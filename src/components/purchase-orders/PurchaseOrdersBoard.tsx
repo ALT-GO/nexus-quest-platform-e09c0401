@@ -18,8 +18,11 @@ import {
 } from "@/components/ui/select";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { toast } from "sonner";
-import { Plus, Pencil, Trash2, Search, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Loader2, ArrowUp, ArrowDown, ArrowUpDown } from "lucide-react";
 import { format, parseISO } from "date-fns";
+
+type SortKey = "sc_number" | "pc_number" | "cost_center" | "description" | "opening_date" | "status" | "finalization_date" | "insumo";
+type SortDir = "asc" | "desc";
 
 export interface PurchaseOrder {
   id: string;
@@ -75,6 +78,25 @@ function fmtDate(v: string | null) {
   try { return format(parseISO(v), "dd/MM/yyyy"); } catch { return v; }
 }
 
+function SortableHead({ label, k, sortKey, sortDir, onClick, className }: {
+  label: string; k: SortKey; sortKey: SortKey; sortDir: SortDir; onClick: (k: SortKey) => void; className?: string;
+}) {
+  const active = sortKey === k;
+  const Icon = !active ? ArrowUpDown : sortDir === "asc" ? ArrowUp : ArrowDown;
+  return (
+    <TableHead className={className}>
+      <button
+        type="button"
+        onClick={() => onClick(k)}
+        className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+      >
+        {label}
+        <Icon className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-50"}`} />
+      </button>
+    </TableHead>
+  );
+}
+
 export function PurchaseOrdersBoard({ department }: Props) {
   const qc = useQueryClient();
   const [search, setSearch] = useState("");
@@ -83,6 +105,17 @@ export function PurchaseOrdersBoard({ department }: Props) {
   const [editing, setEditing] = useState<PurchaseOrder | null>(null);
   const [form, setForm] = useState<FormState>(emptyForm);
   const [saving, setSaving] = useState(false);
+  const [sortKey, setSortKey] = useState<SortKey>("opening_date");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  function toggleSort(key: SortKey) {
+    if (sortKey === key) {
+      setSortDir(sortDir === "asc" ? "desc" : "asc");
+    } else {
+      setSortKey(key);
+      setSortDir(key === "opening_date" || key === "finalization_date" ? "desc" : "asc");
+    }
+  }
 
   const { data = [], isLoading } = useQuery({
     queryKey: ["purchase_orders", department],
@@ -100,14 +133,26 @@ export function PurchaseOrdersBoard({ department }: Props) {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    return data.filter((r) => {
+    const result = data.filter((r) => {
       if (statusFilter !== "all" && r.status !== statusFilter) return false;
       if (!q) return true;
       return [r.sc_number, r.pc_number, r.cost_center, r.description, r.insumo, r.status]
         .filter(Boolean)
         .some((v) => String(v).toLowerCase().includes(q));
     });
-  }, [data, search, statusFilter]);
+    const isDate = sortKey === "opening_date" || sortKey === "finalization_date";
+    const sign = sortDir === "asc" ? 1 : -1;
+    return [...result].sort((a, b) => {
+      const va = (a as any)[sortKey];
+      const vb = (b as any)[sortKey];
+      if (va == null && vb == null) return 0;
+      if (va == null) return 1;
+      if (vb == null) return -1;
+      if (isDate) return (new Date(va).getTime() - new Date(vb).getTime()) * sign;
+      return String(va).localeCompare(String(vb), "pt-BR", { numeric: true }) * sign;
+    });
+  }, [data, search, statusFilter, sortKey, sortDir]);
+
 
   function openCreate() {
     setEditing(null);
@@ -217,14 +262,14 @@ export function PurchaseOrdersBoard({ department }: Props) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Nº SC</TableHead>
-              <TableHead>Nº PC</TableHead>
-              <TableHead>Centro de Custo</TableHead>
-              <TableHead className="min-w-[280px]">Descrição</TableHead>
-              <TableHead>Abertura</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Finalização</TableHead>
-              <TableHead>Insumo</TableHead>
+              <SortableHead label="Nº SC" k="sc_number" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+              <SortableHead label="Nº PC" k="pc_number" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+              <SortableHead label="Centro de Custo" k="cost_center" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+              <SortableHead label="Descrição" k="description" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} className="min-w-[280px]" />
+              <SortableHead label="Abertura" k="opening_date" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+              <SortableHead label="Status" k="status" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+              <SortableHead label="Finalização" k="finalization_date" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
+              <SortableHead label="Insumo" k="insumo" sortKey={sortKey} sortDir={sortDir} onClick={toggleSort} />
               <TableHead className="w-[100px] text-right">Ações</TableHead>
             </TableRow>
           </TableHeader>
