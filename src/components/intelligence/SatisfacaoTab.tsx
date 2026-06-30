@@ -200,6 +200,10 @@ export function SatisfacaoTab({ dateRange, compact = false }: Props) {
   const [rows, setRows] = useState<SurveyRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [previewOpen, setPreviewOpen] = useState(false);
+  const [gaugeCfg, setGaugeCfg] = useState<GaugeConfig>(() => loadCfg("sat.gaugeCfg", DEFAULT_GAUGE));
+  const [trendCfg, setTrendCfg] = useState<TrendConfig>(() => loadCfg("sat.trendCfg", DEFAULT_TREND));
+  useEffect(() => { try { localStorage.setItem("sat.gaugeCfg", JSON.stringify(gaugeCfg)); } catch {} }, [gaugeCfg]);
+  useEffect(() => { try { localStorage.setItem("sat.trendCfg", JSON.stringify(trendCfg)); } catch {} }, [trendCfg]);
 
   useEffect(() => {
     let cancelled = false;
