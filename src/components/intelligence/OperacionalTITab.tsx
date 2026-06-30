@@ -34,7 +34,7 @@ import { BIChartCard } from "./bi/BIChartCard";
 import { BIInsightsBar, type BIInsight } from "./bi/BIInsightsBar";
 import { BIPeopleRanking } from "./bi/BIPeopleRanking";
 import { BIStatusDonut } from "./bi/BIStatusDonut";
-import { BIBacklogAging } from "./bi/BIBacklogAging";
+import { BIBacklogOverview } from "./bi/BIBacklogOverview";
 import { BIDemandHeatmap } from "./bi/BIDemandHeatmap";
 import { BIDimensionHeatmap } from "./bi/BIDimensionHeatmap";
 import { BIWorkloadChart } from "./bi/BIWorkloadChart";
