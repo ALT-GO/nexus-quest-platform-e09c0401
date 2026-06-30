@@ -654,13 +654,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           value={`${avgResolutionHours}h`}
           icon={Clock} tone="primary"
         />
-        <BIStatCard
-          title="SLA"
-          value={`${slaCumprido}%`}
-          icon={CheckCircle2}
-          tone={slaCumprido >= 90 ? "success" : slaCumprido >= 70 ? "warning" : "destructive"}
-          current={slaCumprido} previous={prevSlaCumprido} higherIsBetter
-        />
+        <BISlaGaugeCard value={slaCumprido} previous={prevSlaCumprido} />
       </div>
 
       <BacklogChart
