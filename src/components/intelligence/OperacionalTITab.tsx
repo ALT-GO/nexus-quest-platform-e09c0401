@@ -672,13 +672,15 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
         getCompletedDate={(t) => (t.completed_at ? new Date(t.completed_at) : null)}
       />
 
-      <BIBacklogAging
-        title="Aging do Backlog"
-        openItems={allOpenTickets}
+      <BIBacklogOverview
+        title="Visão de Backlog & Conclusão"
+        createdItems={mainTickets}
         getCreatedDate={(t) => t.created_at ? new Date(t.created_at) : null}
-        entityNoun="chamado"
-        onBucketClick={(label, items) => openDrilldown(`Backlog · ${label}`, items)}
+        getCompletedDate={(t) => t.completed_at ? new Date(t.completed_at) : null}
+        goal={90}
+        monthsWindow={6}
       />
+
 
       <TimeByCategoryChart
         title="Tempo Gasto por Categoria de Chamado"
