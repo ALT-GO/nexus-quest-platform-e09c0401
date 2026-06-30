@@ -314,15 +314,16 @@ export function SatisfacaoTab({ dateRange, compact = false }: Props) {
       <BIChartCard title="Média por critério" icon={Smile} iconColor="text-primary">
         <div className="h-[260px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={averages} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+            <BarChart data={averages.map((a) => ({ ...a, pct: Number((a.avg * 10).toFixed(2)) }))} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
               <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-              <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} tickFormatter={(v) => `${v}%`} />
               <Tooltip
                 contentStyle={BI_TOOLTIP_STYLE}
-                formatter={(v: number) => [v.toFixed(2), "Média"]}
+                formatter={(v: number) => [`${v.toFixed(1)}%`, "Satisfação"]}
               />
-              <Bar dataKey="avg" radius={[6, 6, 0, 0]} fill={BI_SEMANTIC.primary} />
+              <ReferenceLine y={90} stroke="hsl(var(--foreground))" strokeDasharray="4 4" strokeOpacity={0.4} label={{ value: "Meta 90%", position: "insideTopRight", fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+              <Bar dataKey="pct" radius={[6, 6, 0, 0]} fill={BI_SEMANTIC.primary} />
             </BarChart>
           </ResponsiveContainer>
         </div>
