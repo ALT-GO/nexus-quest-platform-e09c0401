@@ -13,7 +13,7 @@ import {
 import {
   Clock, CheckCircle2, AlertTriangle, Monitor, Wrench, Ticket, Loader2,
   Laptop, Smartphone, Phone, KeyRound, DollarSign, TrendingDown, Wifi,
-  PieChart as PieIcon, ExternalLink,
+  PieChart as PieIcon, ExternalLink, Smile,
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
