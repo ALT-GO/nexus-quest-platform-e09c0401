@@ -2,9 +2,18 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
-import { Smile, Loader2, MessageSquare, Star, Download, Eye } from "lucide-react";
+import {
+  Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Line, LineChart,
+  Pie, PieChart, RadialBar, RadialBarChart, ReferenceLine,
+  ResponsiveContainer, Tooltip, XAxis, YAxis,
+} from "recharts";
+import { Smile, Loader2, MessageSquare, Star, Download, Eye, Settings2 } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Slider } from "@/components/ui/slider";
+import { Label } from "@/components/ui/label";
+import { Tooltip as UITooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import * as XLSX from "xlsx";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -14,6 +23,151 @@ import { BIChartCard } from "./bi/BIChartCard";
 import { BI_SEMANTIC, BI_TOOLTIP_STYLE } from "./bi/bi-theme";
 import { ConfirmDeleteDialog } from "@/components/ui/confirm-delete-dialog";
 import { useAuth } from "@/hooks/use-auth";
+
+// ---------- Chart configuration types & presets ----------
+type CriterionKey = "overall" | "rating_response_time" | "rating_communication" | "rating_resolution" | "rating_ease_of_use";
+
+const CRITERION_OPTIONS: { value: CriterionKey; label: string }[] = [
+  { value: "overall", label: "Média geral (todos os critérios)" },
+  { value: "rating_response_time", label: "Tempo de resposta" },
+  { value: "rating_communication", label: "Comunicação" },
+  { value: "rating_resolution", label: "Resolução" },
+  { value: "rating_ease_of_use", label: "Facilidade" },
+];
+
+const COLOR_PRESETS: { value: string; label: string; color: string }[] = [
+  { value: "auto", label: "Automático (semântico)", color: "hsl(142 71% 45%)" },
+  { value: "green", label: "Verde", color: "hsl(142 71% 45%)" },
+  { value: "blue", label: "Azul", color: "hsl(217 91% 60%)" },
+  { value: "purple", label: "Roxo", color: "hsl(262 83% 58%)" },
+  { value: "orange", label: "Laranja", color: "hsl(25 95% 53%)" },
+  { value: "pink", label: "Rosa", color: "hsl(330 81% 60%)" },
+  { value: "red", label: "Vermelho", color: "hsl(0 84% 60%)" },
+  { value: "teal", label: "Turquesa", color: "hsl(174 72% 42%)" },
+];
+
+type GaugeType = "gauge" | "radial" | "progress";
+type TrendType = "area" | "line" | "bar";
+
+interface GaugeConfig {
+  type: GaugeType;
+  color: string;
+  criterion: CriterionKey;
+  goal: number;
+}
+interface TrendConfig {
+  type: TrendType;
+  color: string;
+  criterion: CriterionKey;
+  months: number;
+}
+
+const DEFAULT_GAUGE: GaugeConfig = { type: "gauge", color: "auto", criterion: "overall", goal: 90 };
+const DEFAULT_TREND: TrendConfig = { type: "area", color: "auto", criterion: "overall", months: 6 };
+
+function loadCfg<T>(key: string, fallback: T): T {
+  try {
+    const raw = localStorage.getItem(key);
+    return raw ? { ...fallback, ...JSON.parse(raw) } : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+// ---------- Reusable edit popover ----------
+interface EditPopoverProps<T> {
+  cfg: T;
+  onChange: (next: T) => void;
+  onReset: () => void;
+  chartTypes: { value: string; label: string }[];
+  showMonths?: boolean;
+  showGoal?: boolean;
+}
+function ChartEditPopover<T extends Record<string, any>>({
+  cfg, onChange, onReset, chartTypes, showMonths, showGoal,
+}: EditPopoverProps<T>) {
+  const update = (patch: Partial<T>) => onChange({ ...cfg, ...patch });
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <Button variant="ghost" size="icon" className="h-7 w-7" title="Editar gráfico">
+          <Settings2 className="h-4 w-4" />
+        </Button>
+      </PopoverTrigger>
+      <PopoverContent className="w-72 space-y-3" align="end">
+        <p className="text-sm font-semibold">Editar gráfico</p>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">Tipo de gráfico</Label>
+          <Select value={cfg.type} onValueChange={(v) => update({ type: v } as any)}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {chartTypes.map((t) => (
+                <SelectItem key={t.value} value={t.value}>{t.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">Paleta de cores</Label>
+          <Select value={cfg.color} onValueChange={(v) => update({ color: v } as any)}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {COLOR_PRESETS.map((p) => (
+                <SelectItem key={p.value} value={p.value}>
+                  <span className="flex items-center gap-2">
+                    <span className="h-3 w-3 rounded-full border" style={{ background: p.color }} />
+                    {p.label}
+                  </span>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">Filtro: critério</Label>
+          <Select value={cfg.criterion} onValueChange={(v) => update({ criterion: v } as any)}>
+            <SelectTrigger className="h-8"><SelectValue /></SelectTrigger>
+            <SelectContent>
+              {CRITERION_OPTIONS.map((c) => (
+                <SelectItem key={c.value} value={c.value}>{c.label}</SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        </div>
+
+        {showMonths && (
+          <div className="space-y-1.5">
+            <Label className="text-xs">Janela: últimos {cfg.months} meses</Label>
+            <Slider
+              value={[cfg.months]}
+              min={3} max={12} step={1}
+              onValueChange={(v) => update({ months: v[0] } as any)}
+            />
+          </div>
+        )}
+
+        {showGoal && (
+          <div className="space-y-1.5">
+            <Label className="text-xs">Meta: {cfg.goal}%</Label>
+            <Slider
+              value={[cfg.goal]}
+              min={0} max={100} step={1}
+              onValueChange={(v) => update({ goal: v[0] } as any)}
+            />
+          </div>
+        )}
+
+        <Button variant="outline" size="sm" className="w-full" onClick={onReset}>
+          Restaurar padrão
+        </Button>
+      </PopoverContent>
+    </Popover>
+  );
+}
+
 
 interface SurveyRow {
   id: string;
