@@ -35,6 +35,7 @@ import { BIInsightsBar, type BIInsight } from "./bi/BIInsightsBar";
 import { BIPeopleRanking } from "./bi/BIPeopleRanking";
 import { BIStatusDonut } from "./bi/BIStatusDonut";
 import { BIBacklogOverview } from "./bi/BIBacklogOverview";
+import { BISlaGaugeCard } from "./bi/BISlaGaugeCard";
 import { BIDemandHeatmap } from "./bi/BIDemandHeatmap";
 import { BIDimensionHeatmap } from "./bi/BIDimensionHeatmap";
 import { BIWorkloadChart } from "./bi/BIWorkloadChart";
@@ -654,13 +655,7 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           value={`${avgResolutionHours}h`}
           icon={Clock} tone="primary"
         />
-        <BIStatCard
-          title="SLA"
-          value={`${slaCumprido}%`}
-          icon={CheckCircle2}
-          tone={slaCumprido >= 90 ? "success" : slaCumprido >= 70 ? "warning" : "destructive"}
-          current={slaCumprido} previous={prevSlaCumprido} higherIsBetter
-        />
+        <BISlaGaugeCard value={slaCumprido} previous={prevSlaCumprido} />
       </div>
 
       <BacklogChart
