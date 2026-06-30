@@ -122,6 +122,22 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
 
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [allTimesheetData, setAllTimesheetData] = useState<{ ticket_id: string | null; start_time: string; end_time: string | null; duration_seconds: number }[]>([]);
+  const [satisfactionRows, setSatisfactionRows] = useState<{ created_at: string; rating_response_time: number; rating_communication: number; rating_resolution: number; rating_ease_of_use: number; }[]>([]);
+
+  useEffect(() => {
+    const load = () => {
+      supabase
+        .from("satisfaction_surveys" as any)
+        .select("created_at, rating_response_time, rating_communication, rating_resolution, rating_ease_of_use")
+        .then(({ data }) => { if (data) setSatisfactionRows(data as any); });
+    };
+    load();
+    const ch = supabase
+      .channel("operacional-satisfaction-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "satisfaction_surveys" }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
 
   // Inventory fetch
   useEffect(() => {
