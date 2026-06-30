@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { format } from "date-fns";
 import { ptBR } from "date-fns/locale";
-import { Bar, BarChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, Cell, Pie, PieChart, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { Smile, Loader2, MessageSquare, Star, Download, Eye } from "lucide-react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import * as XLSX from "xlsx";
@@ -142,6 +142,51 @@ export function SatisfacaoTab({ dateRange, compact = false }: Props) {
     toast.success("Resposta excluída");
   };
 
+  const fmtPct = (v: number) => (v ? `${(v * 10).toFixed(1)}%` : "—");
+  const overallPct = overallAvg * 10;
+  const GOAL_PCT = 90;
+
+  // Monthly evolution (last 6 months including current)
+  const monthlySeries = useMemo(() => {
+    const months: { key: string; label: string; year: number; month: number }[] = [];
+    const now = new Date();
+    for (let i = 5; i >= 0; i--) {
+      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+      months.push({
+        key: `${d.getFullYear()}-${d.getMonth()}`,
+        label: format(d, "MMM", { locale: ptBR }).replace(".", ""),
+        year: d.getFullYear(),
+        month: d.getMonth(),
+      });
+    }
+    return months.map((m) => {
+      const monthRows = rows.filter((r) => {
+        const d = new Date(r.created_at);
+        return d.getFullYear() === m.year && d.getMonth() === m.month;
+      });
+      const avg = monthRows.length
+        ? monthRows.reduce(
+            (s, r) =>
+              s +
+              (r.rating_response_time + r.rating_communication + r.rating_resolution + r.rating_ease_of_use) / 4,
+            0,
+          ) / monthRows.length
+        : 0;
+      return { month: m.label, pct: avg ? Number((avg * 10).toFixed(2)) : 0, hasData: monthRows.length > 0 };
+    });
+  }, [rows]);
+
+  // Gauge data (semi-circle)
+  const gaugeData = useMemo(() => {
+    const v = Math.max(0, Math.min(100, overallPct));
+    return [
+      { name: "filled", value: v },
+      { name: "rest", value: 100 - v },
+    ];
+  }, [overallPct]);
+
+  const gaugeColor = overallPct >= 90 ? "hsl(var(--success))" : overallPct >= 70 ? "hsl(var(--warning))" : overallPct ? "hsl(var(--destructive))" : "hsl(var(--muted))";
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-12">
@@ -153,45 +198,132 @@ export function SatisfacaoTab({ dateRange, compact = false }: Props) {
   return (
     <div className="space-y-5">
       {/* KPI cards */}
-      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+      <div className="grid gap-4 lg:grid-cols-3">
         <BIStatCard
           title="Respostas no período"
           value={rows.length}
           icon={MessageSquare}
           tone="info"
         />
-        <BIStatCard
-          title="Nota Geral"
-          value={overallAvg ? overallAvg.toFixed(1) : "—"}
-          icon={Star}
-          tone={overallAvg >= 8 ? "success" : overallAvg >= 6 ? "warning" : overallAvg ? "destructive" : "info"}
-          description="Média global (1 a 10)"
-        />
-        {averages.map((a) => (
-          <BIStatCard
-            key={a.key}
-            title={a.label}
-            value={a.avg ? a.avg.toFixed(1) : "—"}
-            icon={Smile}
-            tone={a.avg >= 8 ? "success" : a.avg >= 6 ? "warning" : a.avg ? "destructive" : "info"}
-            description="Média (1 a 10)"
-          />
-        ))}
+
+        {/* Custom Nota Geral card with gauge + monthly trend */}
+        <div className="lg:col-span-2 rounded-xl border border-border/60 bg-gradient-to-br from-card to-card/40 p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-3 mb-3">
+            <div>
+              <p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Nota Geral</p>
+              <p className="text-xs text-muted-foreground mt-0.5">Meta: {GOAL_PCT}%</p>
+            </div>
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success">
+              <Star className="h-5 w-5" />
+            </div>
+          </div>
+          <div className="grid gap-4 md:grid-cols-2">
+            {/* Gauge */}
+            <div className="relative h-[170px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={gaugeData}
+                    cx="50%"
+                    cy="85%"
+                    startAngle={180}
+                    endAngle={0}
+                    innerRadius={70}
+                    outerRadius={100}
+                    paddingAngle={0}
+                    dataKey="value"
+                    stroke="none"
+                  >
+                    <Cell fill={gaugeColor} />
+                    <Cell fill="hsl(var(--muted))" fillOpacity={0.35} />
+                  </Pie>
+                  {/* Goal tick: render as a thin pie slice */}
+                  <Pie
+                    data={[
+                      { value: GOAL_PCT - 0.6 },
+                      { value: 1.2 },
+                      { value: Math.max(0, 100 - GOAL_PCT - 0.6) },
+                    ]}
+                    cx="50%"
+                    cy="85%"
+                    startAngle={180}
+                    endAngle={0}
+                    innerRadius={66}
+                    outerRadius={104}
+                    dataKey="value"
+                    stroke="none"
+                    isAnimationActive={false}
+                  >
+                    <Cell fill="transparent" />
+                    <Cell fill="hsl(var(--foreground))" />
+                    <Cell fill="transparent" />
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-end pb-2">
+                <span className="text-3xl font-bold tabular-nums tracking-tight" style={{ color: gaugeColor }}>
+                  {overallPct ? `${overallPct.toFixed(1)}%` : "—"}
+                </span>
+                <span className="text-[10px] uppercase tracking-wider text-muted-foreground">Média global</span>
+              </div>
+            </div>
+            {/* Monthly evolution */}
+            <div className="h-[170px]">
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={monthlySeries} margin={{ top: 18, right: 10, bottom: 4, left: -20 }}>
+                  <defs>
+                    <linearGradient id="satFill" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="0%" stopColor={gaugeColor} stopOpacity={0.4} />
+                      <stop offset="100%" stopColor={gaugeColor} stopOpacity={0} />
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis domain={[0, 100]} tick={{ fontSize: 10 }} axisLine={false} tickLine={false} width={36} tickFormatter={(v) => `${v}%`} />
+                  <Tooltip
+                    contentStyle={BI_TOOLTIP_STYLE}
+                    formatter={(v: number) => [`${v.toFixed(1)}%`, "Satisfação"]}
+                  />
+                  <ReferenceLine y={GOAL_PCT} stroke="hsl(var(--foreground))" strokeDasharray="4 4" strokeOpacity={0.5} label={{ value: `Meta ${GOAL_PCT}%`, position: "insideTopRight", fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+                  <Area type="monotone" dataKey="pct" stroke={gaugeColor} strokeWidth={2.5} fill="url(#satFill)" dot={{ r: 3, fill: gaugeColor }} activeDot={{ r: 5 }} />
+                </AreaChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Criteria KPI row */}
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        {averages.map((a) => {
+          const pct = a.avg * 10;
+          return (
+            <BIStatCard
+              key={a.key}
+              title={a.label}
+              value={a.avg ? `${pct.toFixed(1)}%` : "—"}
+              icon={Smile}
+              tone={pct >= 80 ? "success" : pct >= 60 ? "warning" : a.avg ? "destructive" : "info"}
+              description="Satisfação (0–100%)"
+            />
+          );
+        })}
       </div>
 
       {/* Chart: average per criterion */}
       <BIChartCard title="Média por critério" icon={Smile} iconColor="text-primary">
         <div className="h-[260px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <BarChart data={averages} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
+            <BarChart data={averages.map((a) => ({ ...a, pct: Number((a.avg * 10).toFixed(2)) }))} margin={{ top: 8, right: 8, bottom: 8, left: 8 }}>
               <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" />
               <XAxis dataKey="label" tick={{ fontSize: 12 }} />
-              <YAxis domain={[0, 10]} tick={{ fontSize: 12 }} />
+              <YAxis domain={[0, 100]} tick={{ fontSize: 12 }} tickFormatter={(v) => `${v}%`} />
               <Tooltip
                 contentStyle={BI_TOOLTIP_STYLE}
-                formatter={(v: number) => [v.toFixed(2), "Média"]}
+                formatter={(v: number) => [`${v.toFixed(1)}%`, "Satisfação"]}
               />
-              <Bar dataKey="avg" radius={[6, 6, 0, 0]} fill={BI_SEMANTIC.primary} />
+              <ReferenceLine y={90} stroke="hsl(var(--foreground))" strokeDasharray="4 4" strokeOpacity={0.4} label={{ value: "Meta 90%", position: "insideTopRight", fontSize: 10, fill: "hsl(var(--muted-foreground))" }} />
+              <Bar dataKey="pct" radius={[6, 6, 0, 0]} fill={BI_SEMANTIC.primary} />
             </BarChart>
           </ResponsiveContainer>
         </div>
