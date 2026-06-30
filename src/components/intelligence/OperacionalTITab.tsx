@@ -184,6 +184,16 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     });
   }, [mainTickets, techFilter, categoryFilter]);
 
+  // Period comparisons
+  const createdCompare = useMemo(
+    () => comparePeriod(mainTickets, (t) => t.created_at ? new Date(t.created_at) : null, dateRange),
+    [mainTickets, dateRange]
+  );
+  const completedCompare = useMemo(
+    () => comparePeriod(mainTickets, (t) => t.completed_at ? new Date(t.completed_at) : null, dateRange),
+    [mainTickets, dateRange]
+  );
+
   // Completion rate in period
   const completionRate = useMemo(() => {
     if (filtered.length === 0) return 0;
@@ -206,16 +216,6 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     , 0) / inRange.length;
     return Math.round(avg * 10);
   }, [satisfactionRows, dateRange]);
-
-  // Period comparisons
-  const createdCompare = useMemo(
-    () => comparePeriod(mainTickets, (t) => t.created_at ? new Date(t.created_at) : null, dateRange),
-    [mainTickets, dateRange]
-  );
-  const completedCompare = useMemo(
-    () => comparePeriod(mainTickets, (t) => t.completed_at ? new Date(t.completed_at) : null, dateRange),
-    [mainTickets, dateRange]
-  );
 
   const avgResolutionHours = useMemo(() => {
     if (completedTickets.length === 0) return 0;
