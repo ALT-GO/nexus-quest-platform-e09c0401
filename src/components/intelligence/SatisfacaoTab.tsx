@@ -768,5 +768,6 @@ export function SatisfacaoTab({ dateRange, compact = false }: Props) {
         </DialogContent>
       </Dialog>
     </div>
+    </TooltipProvider>
   );
 }
