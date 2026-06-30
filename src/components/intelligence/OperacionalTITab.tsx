@@ -184,6 +184,29 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     });
   }, [mainTickets, techFilter, categoryFilter]);
 
+  // Completion rate in period
+  const completionRate = useMemo(() => {
+    if (filtered.length === 0) return 0;
+    return Math.round((completedTickets.length / filtered.length) * 100);
+  }, [filtered, completedTickets]);
+  const prevCompletionRate = useMemo(() => {
+    if (createdCompare.previous === 0) return 0;
+    return Math.round((completedCompare.previous / createdCompare.previous) * 100);
+  }, [createdCompare, completedCompare]);
+
+  // Satisfaction average (filtered by dateRange) in %
+  const satisfactionPct = useMemo(() => {
+    const inRange = satisfactionRows.filter((r) => {
+      const d = new Date(r.created_at);
+      return d >= dateRange.start && d <= dateRange.end;
+    });
+    if (inRange.length === 0) return 0;
+    const avg = inRange.reduce((s, r) =>
+      s + (r.rating_response_time + r.rating_communication + r.rating_resolution + r.rating_ease_of_use) / 4
+    , 0) / inRange.length;
+    return Math.round(avg * 10);
+  }, [satisfactionRows, dateRange]);
+
   // Period comparisons
   const createdCompare = useMemo(
     () => comparePeriod(mainTickets, (t) => t.created_at ? new Date(t.created_at) : null, dateRange),
