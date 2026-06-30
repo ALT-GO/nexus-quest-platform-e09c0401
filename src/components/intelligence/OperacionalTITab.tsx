@@ -13,7 +13,7 @@ import {
 import {
   Clock, CheckCircle2, AlertTriangle, Monitor, Wrench, Ticket, Loader2,
   Laptop, Smartphone, Phone, KeyRound, DollarSign, TrendingDown, Wifi,
-  PieChart as PieIcon, ExternalLink,
+  PieChart as PieIcon, ExternalLink, Smile,
 } from "lucide-react";
 import {
   PieChart, Pie, Cell, Tooltip, ResponsiveContainer,
@@ -122,6 +122,22 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
 
   const [inventoryItems, setInventoryItems] = useState<InventoryItem[]>([]);
   const [allTimesheetData, setAllTimesheetData] = useState<{ ticket_id: string | null; start_time: string; end_time: string | null; duration_seconds: number }[]>([]);
+  const [satisfactionRows, setSatisfactionRows] = useState<{ created_at: string; rating_response_time: number; rating_communication: number; rating_resolution: number; rating_ease_of_use: number; }[]>([]);
+
+  useEffect(() => {
+    const load = () => {
+      supabase
+        .from("satisfaction_surveys" as any)
+        .select("created_at, rating_response_time, rating_communication, rating_resolution, rating_ease_of_use")
+        .then(({ data }) => { if (data) setSatisfactionRows(data as any); });
+    };
+    load();
+    const ch = supabase
+      .channel("operacional-satisfaction-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "satisfaction_surveys" }, load)
+      .subscribe();
+    return () => { supabase.removeChannel(ch); };
+  }, []);
 
   // Inventory fetch
   useEffect(() => {
@@ -177,6 +193,29 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     () => comparePeriod(mainTickets, (t) => t.completed_at ? new Date(t.completed_at) : null, dateRange),
     [mainTickets, dateRange]
   );
+
+  // Completion rate in period
+  const completionRate = useMemo(() => {
+    if (filtered.length === 0) return 0;
+    return Math.round((completedTickets.length / filtered.length) * 100);
+  }, [filtered, completedTickets]);
+  const prevCompletionRate = useMemo(() => {
+    if (createdCompare.previous === 0) return 0;
+    return Math.round((completedCompare.previous / createdCompare.previous) * 100);
+  }, [createdCompare, completedCompare]);
+
+  // Satisfaction average (filtered by dateRange) in %
+  const satisfactionPct = useMemo(() => {
+    const inRange = satisfactionRows.filter((r) => {
+      const d = new Date(r.created_at);
+      return d >= dateRange.start && d <= dateRange.end;
+    });
+    if (inRange.length === 0) return 0;
+    const avg = inRange.reduce((s, r) =>
+      s + (r.rating_response_time + r.rating_communication + r.rating_resolution + r.rating_ease_of_use) / 4
+    , 0) / inRange.length;
+    return Math.round(avg * 10);
+  }, [satisfactionRows, dateRange]);
 
   const avgResolutionHours = useMemo(() => {
     if (completedTickets.length === 0) return 0;
@@ -497,13 +536,13 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     <>
       <ActiveTimersCard />
 
-      {/* KPIs — standardized */}
+      {/* KPIs — resumo executivo (Visão Geral) */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <BIStatCard
-          title="Chamados no período" value={filtered.length} icon={Ticket} tone="info"
-          current={createdCompare.current} previous={createdCompare.previous}
-          higherIsBetter={false}
-          description={`${completedTickets.length} concluídos`}
+          title="Chamados no período" value={`${completionRate}%`} icon={Ticket} tone="info"
+          current={completionRate} previous={prevCompletionRate}
+          higherIsBetter={true}
+          description={`${completedTickets.length} de ${filtered.length} concluídos · Meta: 90%`}
           onClick={() => navigate("/ti/service-desk")}
         />
         <BIStatCard
@@ -515,55 +554,19 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           tone={slaCumprido >= 90 ? "success" : slaCumprido >= 70 ? "warning" : "destructive"}
           current={slaCumprido} previous={prevSlaCumprido}
           higherIsBetter={true}
+          description="Meta: 90%"
           onClick={() => navigate("/ti/service-desk")}
         />
         <BIStatCard
-          title="Chamados Abertos" value={allOpenTickets.length} icon={AlertTriangle}
-          tone={allOpenTickets.length > 20 ? "destructive" : "warning"}
-          description="Sem conclusão"
-          onClick={() => navigate("/ti/service-desk")}
+          title="Pesquisa de Satisfação" value={`${satisfactionPct}%`} icon={Smile}
+          tone={satisfactionPct >= 90 ? "success" : satisfactionPct >= 70 ? "warning" : "destructive"}
+          description="Meta: 90%"
+          onClick={() => setSubTab("satisfaction")}
         />
       </div>
-
-      {/* Trend */}
-      <TrendChart
-        title="Evolução de Chamados ao Longo do Tempo"
-        dateRange={dateRange}
-        series={[
-          { key: "criados", label: "Criados", gradient: "info", type: "bar",
-            getDate: (t) => t.created_at ? new Date(t.created_at) : null, items: filtered },
-          { key: "concluidos", label: "Concluídos", gradient: "success", type: "line",
-            getDate: (t) => t.completed_at ? new Date(t.completed_at) : null, items: completedTickets },
-        ]}
-      />
-
-      {/* Status donut + Category donut */}
-      <div className="grid gap-5 lg:grid-cols-2">
-        <BIStatusDonut
-          title="Distribuição por Status"
-          data={statusDonutData}
-          centerLabel="chamados"
-          hint={`${filtered.length} no período`}
-          onSliceClick={(s) => {
-            const list = s.name === "Concluídos" ? completedTickets : filtered.filter((t) => !t.completed_at);
-            openDrilldown(s.name, list);
-          }}
-        />
-        <BIStatusDonut
-          title="Distribuição por Categoria"
-          data={ticketsByCategoryDonut}
-          centerLabel="categorias"
-          hint={`${ticketsByCategoryDonut.length} categorias`}
-          onSliceClick={(s) => {
-            openDrilldown(`Chamados — ${s.name}`, filtered.filter((t) => t.category === s.name));
-          }}
-        />
-      </div>
-
-      {/* Satisfação — resumo no Visão Geral */}
-      <SatisfacaoTab dateRange={dateRange} compact />
     </>
   );
+
 
   const productivityNode = (
     <>
