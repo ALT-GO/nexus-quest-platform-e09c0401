@@ -536,13 +536,13 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
     <>
       <ActiveTimersCard />
 
-      {/* KPIs — standardized */}
+      {/* KPIs — resumo executivo (Visão Geral) */}
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <BIStatCard
-          title="Chamados no período" value={filtered.length} icon={Ticket} tone="info"
-          current={createdCompare.current} previous={createdCompare.previous}
-          higherIsBetter={false}
-          description={`${completedTickets.length} concluídos`}
+          title="Chamados no período" value={`${completionRate}%`} icon={Ticket} tone="info"
+          current={completionRate} previous={prevCompletionRate}
+          higherIsBetter={true}
+          description={`${completedTickets.length} de ${filtered.length} concluídos · Meta: 90%`}
           onClick={() => navigate("/ti/service-desk")}
         />
         <BIStatCard
@@ -554,55 +554,19 @@ export function OperacionalTITab({ dateRange, costCenter }: OperacionalTITabProp
           tone={slaCumprido >= 90 ? "success" : slaCumprido >= 70 ? "warning" : "destructive"}
           current={slaCumprido} previous={prevSlaCumprido}
           higherIsBetter={true}
+          description="Meta: 90%"
           onClick={() => navigate("/ti/service-desk")}
         />
         <BIStatCard
-          title="Chamados Abertos" value={allOpenTickets.length} icon={AlertTriangle}
-          tone={allOpenTickets.length > 20 ? "destructive" : "warning"}
-          description="Sem conclusão"
-          onClick={() => navigate("/ti/service-desk")}
+          title="Pesquisa de Satisfação" value={`${satisfactionPct}%`} icon={Smile}
+          tone={satisfactionPct >= 90 ? "success" : satisfactionPct >= 70 ? "warning" : "destructive"}
+          description="Meta: 90%"
+          onClick={() => setSubTab("satisfaction")}
         />
       </div>
-
-      {/* Trend */}
-      <TrendChart
-        title="Evolução de Chamados ao Longo do Tempo"
-        dateRange={dateRange}
-        series={[
-          { key: "criados", label: "Criados", gradient: "info", type: "bar",
-            getDate: (t) => t.created_at ? new Date(t.created_at) : null, items: filtered },
-          { key: "concluidos", label: "Concluídos", gradient: "success", type: "line",
-            getDate: (t) => t.completed_at ? new Date(t.completed_at) : null, items: completedTickets },
-        ]}
-      />
-
-      {/* Status donut + Category donut */}
-      <div className="grid gap-5 lg:grid-cols-2">
-        <BIStatusDonut
-          title="Distribuição por Status"
-          data={statusDonutData}
-          centerLabel="chamados"
-          hint={`${filtered.length} no período`}
-          onSliceClick={(s) => {
-            const list = s.name === "Concluídos" ? completedTickets : filtered.filter((t) => !t.completed_at);
-            openDrilldown(s.name, list);
-          }}
-        />
-        <BIStatusDonut
-          title="Distribuição por Categoria"
-          data={ticketsByCategoryDonut}
-          centerLabel="categorias"
-          hint={`${ticketsByCategoryDonut.length} categorias`}
-          onSliceClick={(s) => {
-            openDrilldown(`Chamados — ${s.name}`, filtered.filter((t) => t.category === s.name));
-          }}
-        />
-      </div>
-
-      {/* Satisfação — resumo no Visão Geral */}
-      <SatisfacaoTab dateRange={dateRange} compact />
     </>
   );
+
 
   const productivityNode = (
     <>
