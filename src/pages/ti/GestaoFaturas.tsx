@@ -316,24 +316,43 @@ function MensalidadeTab({ category }: { category: "linhas" | "licencas" }) {
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="whitespace-nowrap">ID</TableHead>
-                <TableHead className="whitespace-nowrap">Status</TableHead>
-                {isLinhas ? (
-                  <>
-                    <TableHead className="whitespace-nowrap">Número</TableHead>
-                    <TableHead className="whitespace-nowrap">Colaborador</TableHead>
-                    <TableHead className="whitespace-nowrap">Operadora</TableHead>
-                  </>
-                ) : (
-                  <>
-                    <TableHead className="whitespace-nowrap">E-mail</TableHead>
-                    <TableHead className="whitespace-nowrap">Colaborador</TableHead>
-                    <TableHead className="whitespace-nowrap">Licença</TableHead>
-                  </>
-                )}
-                <TableHead className="whitespace-nowrap">CC - Eng</TableHead>
-                <TableHead className="whitespace-nowrap">CC - Man</TableHead>
-                <TableHead className="whitespace-nowrap text-right">Valor Mensal (R$)</TableHead>
+                {(() => {
+                  const hdr = (key: string, label: string, align: "left" | "right" = "left") => (
+                    <TableHead key={key} className={`whitespace-nowrap ${align === "right" ? "text-right" : ""}`}>
+                      <ExcelColumnHeader
+                        label={label}
+                        values={items.map((i) => columnGetters[key](i))}
+                        selected={columnFilters[key] ?? null}
+                        onChange={setColFilter(key)}
+                        sortDir={sortKey === key ? sortDir : null}
+                        onSort={handleSort(key)}
+                        align={align}
+                      />
+                    </TableHead>
+                  );
+                  return (
+                    <>
+                      {hdr("asset_code", "ID")}
+                      {hdr("status", "Status")}
+                      {isLinhas ? (
+                        <>
+                          {hdr("numero", "Número")}
+                          {hdr("collaborator", "Colaborador")}
+                          {hdr("operadora", "Operadora")}
+                        </>
+                      ) : (
+                        <>
+                          {hdr("email_address", "E-mail")}
+                          {hdr("collaborator", "Colaborador")}
+                          {hdr("licenca", "Licença")}
+                        </>
+                      )}
+                      {hdr("cost_center_eng", "CC - Eng")}
+                      {hdr("cost_center_man", "CC - Man")}
+                      {hdr("valor_mensal", "Valor Mensal (R$)", "right")}
+                    </>
+                  );
+                })()}
               </TableRow>
             </TableHeader>
             <TableBody>
