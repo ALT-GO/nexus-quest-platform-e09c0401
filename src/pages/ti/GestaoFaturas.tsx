@@ -972,7 +972,7 @@ export default function GestaoFaturas() {
                 </table>
               )}
 
-              <div className="pt-8 mt-auto" style={{ pageBreakInside: "avoid" }}>
+              <div className="signature-block pt-8 mt-auto relative bg-white" style={{ pageBreakInside: "avoid", marginTop: "3rem", marginBottom: "2.5rem", zIndex: 10 }}>
                 <div className="flex justify-between gap-8">
                   <div className="flex-1 text-center">
                     <div className="border-t border-gray-600 pt-1 mt-12">
@@ -990,7 +990,7 @@ export default function GestaoFaturas() {
               </div>
             </div>
 
-            <div className="print-footer-container mt-auto pt-2">
+            <div className="print-footer-container mt-auto pt-2 relative" style={{ zIndex: 0 }}>
               <FooterTimbrado />
             </div>
           </div>
