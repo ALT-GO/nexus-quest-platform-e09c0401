@@ -98,7 +98,7 @@ function MensalidadeTab({ category }: { category: "linhas" | "licencas" }) {
     setColumnFilters((prev) => ({ ...prev, [key]: next }));
   };
 
-
+  const { data: items = [], isLoading } = useQuery({
     queryKey: ["mensalidade", category],
     queryFn: async () => {
       const { data, error } = await supabase
