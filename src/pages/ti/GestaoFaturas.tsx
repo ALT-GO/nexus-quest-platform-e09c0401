@@ -72,8 +72,33 @@ function MensalidadeTab({ category }: { category: "linhas" | "licencas" }) {
   const [filterLicenca, setFilterLicenca] = useState("todas");
   const [filtersOpen, setFiltersOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [columnFilters, setColumnFilters] = useState<Record<string, string[] | null>>({});
+  const [sortKey, setSortKey] = useState<string | null>(null);
+  const [sortDir, setSortDir] = useState<SortDir>(null);
 
-  const { data: items = [], isLoading } = useQuery({
+  const columnGetters = useMemo<Record<string, (i: any) => string>>(() => ({
+    asset_code: (i) => i.asset_code || "",
+    status: (i) => i.status || "",
+    numero: (i) => i.numero || "",
+    collaborator: (i) => i.collaborator || "",
+    operadora: (i) => i.operadora || "",
+    email_address: (i) => i.email_address || "",
+    licenca: (i) => i.licenca || "",
+    cost_center_eng: (i) => i.cost_center_eng || "",
+    cost_center_man: (i) => i.cost_center_man || "",
+    valor_mensal: (i) => (i.valor_mensal != null ? String(i.valor_mensal) : ""),
+  }), []);
+
+  const handleSort = (key: string) => (dir: SortDir) => {
+    setSortKey(dir ? key : null);
+    setSortDir(dir);
+  };
+
+  const setColFilter = (key: string) => (next: string[] | null) => {
+    setColumnFilters((prev) => ({ ...prev, [key]: next }));
+  };
+
+
     queryKey: ["mensalidade", category],
     queryFn: async () => {
       const { data, error } = await supabase
