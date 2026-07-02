@@ -29,6 +29,9 @@ import { InlineCellEditor } from "@/components/assets/InlineCellEditor";
 import {
   Dialog, DialogContent, DialogHeader, DialogTitle,
 } from "@/components/ui/dialog";
+import {
+  ExcelColumnHeader, applyColumnFilters, applyColumnSort, type SortDir,
+} from "@/components/ui/excel-column-header";
 
 type Operadora = "Claro" | "Vivo" | "Salvy" | "Microsoft";
 
