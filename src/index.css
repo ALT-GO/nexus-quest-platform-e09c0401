@@ -332,6 +332,7 @@
   }
 
   /* Footer pinned to bottom */
+  /* Footer pinned to bottom - decorative wave stays behind content */
   .print-footer-container {
     position: absolute !important;
     bottom: -15mm !important;
@@ -342,6 +343,8 @@
     break-inside: avoid !important;
     width: calc(100% + 40mm) !important;
     line-height: 0 !important;
+    z-index: 0 !important;
+    pointer-events: none !important;
   }
 
   .print-footer-img {
@@ -349,13 +352,21 @@
     display: block !important;
     print-color-adjust: exact !important;
     -webkit-print-color-adjust: exact !important;
+    position: relative !important;
+    z-index: 0 !important;
   }
 
   /* Signatures */
-  .print-signatures {
+  .print-signatures,
+  .signature-block {
+    position: relative !important;
+    z-index: 10 !important;
+    background: #ffffff !important;
     page-break-inside: avoid !important;
     break-inside: avoid !important;
     margin-top: 30px !important;
+    margin-bottom: 25mm !important;
+    padding-bottom: 8mm !important;
   }
 
   /* Typography */
