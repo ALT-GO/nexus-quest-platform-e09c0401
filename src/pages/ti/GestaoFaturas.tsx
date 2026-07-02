@@ -164,8 +164,10 @@ function MensalidadeTab({ category }: { category: "linhas" | "licencas" }) {
       });
     }
 
+    result = applyColumnFilters(result, columnFilters, columnGetters);
+    result = applyColumnSort(result, sortKey, sortDir, columnGetters);
     return result;
-  }, [items, filterStatus, filterOperadora, filterCC, filterLicenca, isLinhas, searchQuery]);
+  }, [items, filterStatus, filterOperadora, filterCC, filterLicenca, isLinhas, searchQuery, columnFilters, sortKey, sortDir, columnGetters]);
 
   const activeFilterCount = [
     filterStatus !== "todas",
